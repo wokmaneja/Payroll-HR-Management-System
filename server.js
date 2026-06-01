@@ -1,0 +1,625 @@
+const express = require('express');
+const cors = require('cors');
+const sqlite3 = require('sqlite3').verbose();
+const path = require('path');
+const fs = require('fs');
+const http = require('http');
+const https = require('https');
+const crypto = require('crypto');
+const { machineIdSync } = require('node-machine-id');
+
+// ─── Hardware License Security ───────────────────────────────────────────────
+const MACHINE_ID = machineIdSync({original: true});
+const HARDWARE_KEY = crypto.createHash('sha256').update(MACHINE_ID).digest();
+
+function encryptLicense(payload) {
+    const iv = crypto.randomBytes(16);
+    const cipher = crypto.createCipheriv('aes-256-gcm', HARDWARE_KEY, iv);
+    let encrypted = cipher.update(JSON.stringify(payload), 'utf8', 'hex');
+    encrypted += cipher.final('hex');
+    const authTag = cipher.getAuthTag().toString('hex');
+    return {
+        iv: iv.toString('hex'),
+        encryptedData: encrypted,
+        authTag: authTag
+    };
+}
+
+function decryptLicense(encryptedObj) {
+    try {
+        if (!encryptedObj || !encryptedObj.iv) return null;
+        const iv = Buffer.from(encryptedObj.iv, 'hex');
+        const authTag = Buffer.from(encryptedObj.authTag, 'hex');
+        const decipher = crypto.createDecipheriv('aes-256-gcm', HARDWARE_KEY, iv);
+        decipher.setAuthTag(authTag);
+        let decrypted = decipher.update(encryptedObj.encryptedData, 'hex', 'utf8');
+        decrypted += decipher.final('utf8');
+        return JSON.parse(decrypted);
+    } catch (e) {
+        return null; // Decryption failed (hardware mismatch or tampered data)
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+const app = express();
+const port = process.env.PORT || 5050;
+const host = '0.0.0.0'; // Bind to 0.0.0.0 for local network access (protected by auth middleware)
+
+// ─── Version Info ────────────────────────────────────────────────────────────
+const APP_VERSION = '1.0.0';
+const GITHUB_OWNER = 'chronniac';
+const GITHUB_REPO  = 'WokManeja';
+// ─────────────────────────────────────────────────────────────────────────────
+
+// SECURITY FIX: Removed app.use(cors()) to prevent CSRF exploits from malicious sites. 
+// Same-origin requests from the bundled frontend will continue to work normally.
+app.use(express.json({ limit: '50mb' }));
+app.use(express.static(path.join(__dirname, 'public')));
+
+// ─── Authentication Middleware ───────────────────────────────────────────────
+const activeSessions = new Map(); // token -> user object
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        // Hardware License Lock Check
+        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (licRows.length === 0) {
+            return res.status(402).json({ error: 'License Required', reason: 'missing' });
+        }
+        const dbLicense = JSON.parse(licRows[0].data);
+        const licenseData = decryptLicense(dbLicense);
+        
+        if (!licenseData) {
+            return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware' });
+        }
+        if (new Date(licenseData.expires) < new Date()) {
+            return res.status(402).json({ error: 'License Expired', reason: 'expired' });
+        }
+
+        const { username, password } = req.body;
+        const rows = await runQuery("SELECT data FROM docs WHERE collection = 'users'");
+        const users = rows.map(r => JSON.parse(r.data));
+        const found = users.find(u => u.username === username && u.password === password);
+        
+        if (!found) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+        
+        const crypto = require('crypto');
+        const token = crypto.randomBytes(32).toString('hex');
+        
+        // Remove password before sending/storing session
+        const safeUser = { ...found };
+        delete safeUser.password;
+        
+        activeSessions.set(token, safeUser);
+        res.json({ token, user: safeUser });
+    } catch (err) {
+        console.error('Login error:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.post('/api/auth/change-password', async (req, res) => {
+    try {
+        const authHeader = req.headers.authorization;
+        if (!authHeader || !authHeader.startsWith('Bearer ')) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const token = authHeader.split(' ')[1];
+        if (!activeSessions.has(token)) {
+            return res.status(401).json({ error: 'Unauthorized' });
+        }
+        const user = activeSessions.get(token);
+        const { currentPassword, newPassword } = req.body;
+        const rows = await runQuery("SELECT data FROM docs WHERE id = ? AND collection = 'users'", [user._id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
+        const userDoc = JSON.parse(rows[0].data);
+        if (userDoc.password !== currentPassword) {
+            return res.status(401).json({ error: 'Incorrect current password' });
+        }
+        userDoc.password = newPassword;
+        userDoc._updated = new Date().toISOString();
+        await runExec("UPDATE docs SET data = ? WHERE id = ? AND collection = 'users'", [JSON.stringify(userDoc), user._id]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Change password error:', err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
+// ─── License Endpoints ───────────────────────────────────────────────────────
+app.get('/api/license/status', async (req, res) => {
+    try {
+        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (licRows.length === 0) return res.json({ status: 'missing' });
+        
+        const dbLicense = JSON.parse(licRows[0].data);
+        const licenseData = decryptLicense(dbLicense);
+        
+        if (!licenseData) return res.json({ status: 'hardware_mismatch' });
+        
+        const now = new Date();
+        const exp = new Date(licenseData.expires);
+        if (exp < now) return res.json({ status: 'expired', expires: licenseData.expires });
+        
+        const daysLeft = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+        res.json({ status: 'active', plan: licenseData.plan, expires: licenseData.expires, daysLeft });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Error' });
+    }
+});
+
+app.post('/api/license/activate', async (req, res) => {
+    try {
+        const { key } = req.body;
+        if (!key || !key.startsWith('WM-')) return res.status(400).json({ error: 'Invalid license key format.' });
+        
+        // Mock validation
+        const plan = key.includes('-PRO-') ? 'pro' : 'enterprise';
+        const expires = new Date();
+        expires.setFullYear(expires.getFullYear() + 1); // 1 year license
+        
+        const payload = {
+            key: key,
+            plan: plan,
+            expires: expires.toISOString(),
+            machineId: MACHINE_ID
+        };
+        
+        const encrypted = encryptLicense(payload);
+        encrypted._id = 'app_license';
+        
+        const existing = await runQuery("SELECT id FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (existing.length > 0) {
+            await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
+        } else {
+            await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['app_license', 'settings', JSON.stringify(encrypted)]);
+        }
+        
+        res.json({ success: true, plan, expires: payload.expires });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Protect all /api/ routes (except login & license endpoints)
+app.use('/api', (req, res, next) => {
+    // allow auth & license endpoints
+    if (req.path.startsWith('/auth/') || req.path.startsWith('/license/')) return next();
+    
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
+    }
+    
+    const token = authHeader.split(' ')[1];
+    if (!activeSessions.has(token)) {
+        return res.status(401).json({ error: 'Unauthorized: Session expired or invalid' });
+    }
+    
+    req.user = activeSessions.get(token);
+    next();
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Determine data directory (outside executable if packaged)
+const isPkg = typeof process.pkg !== 'undefined';
+const dataPath = isPkg ? path.dirname(process.execPath) : __dirname;
+
+// Initialize SQLite database
+const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) => {
+    if (err) {
+        console.error('Error opening database', err.message);
+    } else {
+        console.log('Connected to the SQLite database.');
+        db.run(`CREATE TABLE IF NOT EXISTS docs (
+            id TEXT,
+            collection TEXT,
+            data TEXT,
+            PRIMARY KEY (id, collection)
+        )`, () => {
+            if (typeof setupAutoBackup === 'function') setupAutoBackup();
+            
+            // Seed default admin user if database is completely empty
+            db.all("SELECT id FROM docs WHERE collection = 'users'", [], (err, rows) => {
+                if (!err && rows.length === 0) {
+                    const adminDoc = {
+                        _id: 'seed-admin',
+                        _created: new Date().toISOString(),
+                        name: 'Administrator',
+                        username: 'admin',
+                        password: 'admin123',
+                        role: 'admin'
+                    };
+                    db.run("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", [adminDoc._id, 'users', JSON.stringify(adminDoc)]);
+                    console.log('Seeded default admin user (admin / admin123).');
+                }
+            });
+        });
+    }
+});
+
+// Helper function to query
+const runQuery = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+        db.all(sql, params, (err, rows) => {
+            if (err) reject(err);
+            else resolve(rows);
+        });
+    });
+};
+
+const runExec = (sql, params = []) => {
+    return new Promise((resolve, reject) => {
+        db.run(sql, params, function(err) {
+            if (err) reject(err);
+            else resolve(this);
+        });
+    });
+};
+
+// API: Insert
+app.post('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const doc = req.body;
+        
+        if (!doc._id) {
+            doc._id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+        if (!doc._created) {
+            doc._created = new Date().toISOString();
+        }
+        
+        await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [doc._id, collection, JSON.stringify(doc)]);
+        res.json(doc);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Find All / Find with query
+app.get('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const query = req.query;
+        
+        const rows = await runQuery('SELECT data FROM docs WHERE collection = ?', [collection]);
+        let docs = rows.map(r => JSON.parse(r.data));
+        
+        if (Object.keys(query).length > 0) {
+            docs = docs.filter(x => {
+                return Object.keys(query).every(k => String(x[k]) === String(query[k]));
+            });
+        }
+        
+        res.json(docs);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Update
+app.put('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const { query, update } = req.body;
+        
+        const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
+        let docs = rows.map(r => JSON.parse(r.data));
+        
+        let updatedCount = 0;
+        for (let doc of docs) {
+            if (Object.keys(query).every(k => String(doc[k]) === String(query[k]))) {
+                Object.assign(doc, update);
+                doc._updated = new Date().toISOString();
+                await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
+                updatedCount++;
+            }
+        }
+        
+        res.json({ success: true, updated: updatedCount });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Remove
+app.delete('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const query = req.body;
+        
+        const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
+        let docs = rows.map(r => JSON.parse(r.data));
+        
+        let deletedCount = 0;
+        for (let doc of docs) {
+            if (Object.keys(query).every(k => String(doc[k]) === String(query[k]))) {
+                await runExec('DELETE FROM docs WHERE id = ? AND collection = ?', [doc._id, collection]);
+                deletedCount++;
+            }
+        }
+        
+        res.json({ success: true, deleted: deletedCount });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Drop collection
+app.post('/api/drop/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        await runExec('DELETE FROM docs WHERE collection = ?', [collection]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Count
+app.get('/api/count/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const rows = await runQuery('SELECT COUNT(*) as cnt FROM docs WHERE collection = ?', [collection]);
+        res.json(rows[0].cnt);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Export/Import
+app.get('/api/admin/export', async (req, res) => {
+    try {
+        const rows = await runQuery('SELECT id, collection, data FROM docs');
+        const exportData = { _exported: new Date().toISOString() };
+        rows.forEach(r => {
+            if (!exportData[r.collection]) exportData[r.collection] = [];
+            exportData[r.collection].push(JSON.parse(r.data));
+        });
+        res.json(exportData);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.post('/api/admin/import', async (req, res) => {
+    try {
+        const data = req.body;
+        for (const col of Object.keys(data)) {
+            if (col === '_exported') continue;
+            if (data[col] && Array.isArray(data[col])) {
+                for (const doc of data[col]) {
+                    if (!doc._id) doc._id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+                    const existing = await runQuery('SELECT id FROM docs WHERE id = ? AND collection = ?', [doc._id, col]);
+                    if (existing.length > 0) {
+                        await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, col]);
+                    } else {
+                        await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [doc._id, col, JSON.stringify(doc)]);
+                    }
+                }
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// ─── Backup ───────────────────────────────────────────────────────────────────
+function performBackup(backupPath, cb) {
+    try {
+        if (!fs.existsSync(backupPath)) fs.mkdirSync(backupPath, { recursive: true });
+        const stamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const dest = path.join(backupPath, `backup_${stamp}.sqlite`);
+        fs.copyFileSync(path.join(dataPath, 'database.sqlite'), dest);
+        cb(null, dest);
+    } catch (e) { cb(e); }
+}
+
+function setupAutoBackup() {
+    if (global._backupTimer) clearInterval(global._backupTimer);
+    runQuery("SELECT data FROM docs WHERE id = 'backup' AND collection = 'settings'").then(rows => {
+        if (!rows.length) return;
+        const cfg = JSON.parse(rows[0].data);
+        if (!cfg.enabled || !cfg.path) return;
+        const ms = cfg.interval === 'hourly' ? 3600000 : cfg.interval === 'weekly' ? 604800000 : 86400000;
+        global._backupTimer = setInterval(() => performBackup(cfg.path, () => {}), ms);
+        console.log(`Auto-backup enabled every ${cfg.interval} to ${cfg.path}`);
+    }).catch(err => console.error("Backup check skipped on first run."));
+}
+// Initial call moved to DB init callback
+
+app.post('/api/admin/backup-now', (req, res) => {
+    const backupPath = req.body.path;
+    if (!backupPath) return res.status(400).json({ error: 'Backup path is required.' });
+    performBackup(backupPath, (err, dest) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, dest });
+    });
+});
+
+app.post('/api/admin/backup-config', async (req, res) => {
+    try {
+        const config = req.body;
+        const col = 'settings';
+        const docId = 'backup';
+        config._id = docId;
+        const existing = await runQuery('SELECT id FROM docs WHERE id = ? AND collection = ?', [docId, col]);
+        if (existing.length > 0) {
+            await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(config), docId, col]);
+        } else {
+            await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [docId, col, JSON.stringify(config)]);
+        }
+        setupAutoBackup();
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// ─── Update Management ────────────────────────────────────────────────────────
+
+// Helper: fetch URL via https (no external deps)
+function httpsGet(url, opts = {}) {
+    return new Promise((resolve, reject) => {
+        const options = { headers: { 'User-Agent': 'WokManeja-Updater', ...opts.headers } };
+        https.get(url, options, (res) => {
+            if (res.statusCode === 302 || res.statusCode === 301) {
+                return httpsGet(res.headers.location, opts).then(resolve).catch(reject);
+            }
+            let data = '';
+            res.on('data', c => data += c);
+            res.on('end', () => resolve({ status: res.statusCode, body: data, headers: res.headers }));
+        }).on('error', reject);
+    });
+}
+
+// Helper: download binary file
+function downloadFile(url, destPath) {
+    return new Promise((resolve, reject) => {
+        const file = fs.createWriteStream(destPath);
+        const get = (u) => {
+            https.get(u, { headers: { 'User-Agent': 'WokManeja-Updater' } }, (res) => {
+                if (res.statusCode === 302 || res.statusCode === 301) return get(res.headers.location);
+                res.pipe(file);
+                file.on('finish', () => { file.close(); resolve(); });
+            }).on('error', (err) => { fs.unlink(destPath, () => {}); reject(err); });
+        };
+        get(url);
+    });
+}
+
+// GET current version
+app.get('/api/admin/version', (req, res) => {
+    res.json({ version: APP_VERSION, repo: `${GITHUB_OWNER}/${GITHUB_REPO}` });
+});
+
+// GET list of releases from GitHub
+app.get('/api/admin/releases', async (req, res) => {
+    try {
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
+        const result = await httpsGet(url);
+        if (result.status !== 200) return res.status(502).json({ error: 'Could not reach GitHub. Check internet connection.' });
+        const releases = JSON.parse(result.body);
+        // Return simplified list
+        const list = releases.map(r => ({
+            id: r.id,
+            tag: r.tag_name,
+            name: r.name || r.tag_name,
+            body: r.body || '',
+            published: r.published_at,
+            prerelease: r.prerelease,
+            draft: r.draft,
+            zipball_url: r.zipball_url,
+            assets: (r.assets || []).map(a => ({ name: a.name, url: a.browser_download_url, size: a.size }))
+        }));
+        res.json({ current: APP_VERSION, releases: list });
+    } catch (err) {
+        console.error('Release check error:', err);
+        res.status(500).json({ error: 'Failed to fetch releases: ' + err.message });
+    }
+});
+
+// POST approve and apply an update
+app.post('/api/admin/apply-update', async (req, res) => {
+    const { tag, zipball_url } = req.body;
+    if (!tag || !zipball_url) return res.status(400).json({ error: 'Missing tag or zipball_url' });
+
+    // SECURITY FIX: Validate that the zipball URL belongs to the official GitHub repository
+    const validUrl1 = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/`;
+    const validUrl2 = `https://github.com/${GITHUB_OWNER}/${GITHUB_REPO}/`;
+    if (!zipball_url.startsWith(validUrl1) && !zipball_url.startsWith(validUrl2)) {
+        console.error('[Updater] Blocked attempt to download from untrusted URL:', zipball_url);
+        return res.status(403).json({ error: 'Forbidden: Invalid update source URL' });
+    }
+
+    const tmpDir  = path.join(__dirname, '_update_tmp');
+    const zipPath = path.join(__dirname, '_update.zip');
+
+    try {
+        // 1. Backup database first
+        const backupDir = path.join(__dirname, '_update_backups');
+        performBackup(backupDir, () => {});
+
+        res.json({ success: true, message: `Downloading update ${tag}...` });
+
+        // 2. Download the zipball
+        console.log(`[Updater] Downloading ${tag} from ${zipball_url}`);
+        await downloadFile(zipball_url, zipPath);
+
+        // 3. Extract zip using built-in (no adm-zip needed — use child_process on Windows)
+        const { execSync } = require('child_process');
+        if (fs.existsSync(tmpDir)) execSync(`rmdir /s /q "${tmpDir}"`, { shell: 'cmd.exe' });
+        fs.mkdirSync(tmpDir, { recursive: true });
+        execSync(`powershell -Command "Expand-Archive -Path '${zipPath}' -DestinationPath '${tmpDir}' -Force"`, { shell: 'cmd.exe' });
+
+        // 4. Find extracted root folder (GitHub zips create a subfolder)
+        const entries = fs.readdirSync(tmpDir);
+        const extractedRoot = path.join(tmpDir, entries[0]);
+
+        // 5. Copy public/ and server.js (preserve database.sqlite and node_modules)
+        const srcPublic = path.join(extractedRoot, 'public');
+        const dstPublic = path.join(__dirname, 'public');
+        const srcServer = path.join(extractedRoot, 'server.js');
+
+        if (fs.existsSync(srcPublic)) {
+            execSync(`xcopy /E /Y /I "${srcPublic}" "${dstPublic}"`, { shell: 'cmd.exe' });
+        }
+        if (fs.existsSync(srcServer)) {
+            fs.copyFileSync(srcServer, path.join(__dirname, 'server.js'));
+        }
+
+        // 6. Copy package.json and install new deps if needed
+        const srcPkg = path.join(extractedRoot, 'package.json');
+        if (fs.existsSync(srcPkg)) {
+            fs.copyFileSync(srcPkg, path.join(__dirname, 'package.json'));
+            execSync('npm install --omit=dev', { cwd: __dirname, shell: 'cmd.exe' });
+        }
+
+        // 7. Cleanup
+        execSync(`rmdir /s /q "${tmpDir}"`, { shell: 'cmd.exe' });
+        fs.unlinkSync(zipPath);
+
+        console.log(`[Updater] Update ${tag} applied. Restarting...`);
+        setTimeout(() => process.exit(0), 1500); // PM2 / restart will relaunch
+
+    } catch (err) {
+        console.error('[Updater] Error applying update:', err);
+        // Cleanup on failure
+        try { if (fs.existsSync(zipPath)) fs.unlinkSync(zipPath); } catch(_){}
+    }
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+
+app.listen(port, host, () => {
+    console.log(`WokManeja v${APP_VERSION} running at http://${host}:${port}`);
+    // Automatically open browser on start
+    try {
+        const url = `http://localhost:${port}`;
+        if (process.platform === 'win32') {
+            require('child_process').exec(`start ${url}`);
+        } else if (process.platform === 'darwin') {
+            require('child_process').exec(`open ${url}`);
+        } else {
+            require('child_process').exec(`xdg-open ${url}`);
+        }
+    } catch (e) {
+        // Ignore errors if browser can't be opened automatically
+    }
+});
+

@@ -1,0 +1,38 @@
+{
+  "name": "wokmaneja",
+  "version": "1.0.0",
+  "description": "An offline-first, enterprise-grade Payroll and Human Resource management system powered by a local NoSQL Database architecture.",
+  "main": "server.js",
+  "bin": "server.js",
+  "pkg": {
+    "assets": [
+      "public/**/*"
+    ]
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/chronniac/WokManeja.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/chronniac/WokManeja/issues"
+  },
+  "homepage": "https://github.com/chronniac/WokManeja#readme",
+  "dependencies": {
+    "adm-zip": "^0.5.10",
+    "cors": "^2.8.6",
+    "express": "^5.2.1",
+    "node-fetch": "^2.7.0",
+    "node-machine-id": "^1.1.12",
+    "node-windows": "^1.0.0-beta.8",
+    "nssm": "^0.1.1",
+    "sqlite3": "^6.0.1"
+  }
+}
