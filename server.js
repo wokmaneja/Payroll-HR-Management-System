@@ -183,6 +183,42 @@ app.post('/api/license/activate', async (req, res) => {
         res.status(500).json({ error: 'Internal Error' });
     }
 });
+
+app.post('/api/license/trial', async (req, res) => {
+    try {
+        const trialRows = await runQuery("SELECT data FROM docs WHERE id = 'app_trial' AND collection = 'settings'");
+        if (trialRows.length > 0) {
+            return res.status(403).json({ error: 'Trial Already Used', reason: 'You have already activated a trial on this server.' });
+        }
+        
+        const expires = new Date();
+        expires.setDate(expires.getDate() + 14); // 14 day trial
+        
+        const payload = {
+            key: 'TRIAL-14-DAYS',
+            plan: 'trial',
+            expires: expires.toISOString(),
+            machineId: MACHINE_ID
+        };
+        
+        const encrypted = encryptLicense(payload);
+        encrypted._id = 'app_license';
+        
+        const existing = await runQuery("SELECT id FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (existing.length > 0) {
+            await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
+        } else {
+            await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['app_license', 'settings', JSON.stringify(encrypted)]);
+        }
+        
+        // Record that trial was used so they can't do it again
+        await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['app_trial', 'settings', JSON.stringify({ _id: 'app_trial', used: true, activatedAt: new Date().toISOString() })]);
+        
+        res.json({ success: true, plan: 'trial', expires: payload.expires });
+    } catch (err) {
+        res.status(500).json({ error: 'Internal Error' });
+    }
+});
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Protect all /api/ routes (except login & license endpoints)
