@@ -47,8 +47,8 @@ const host = '0.0.0.0'; // Bind to 0.0.0.0 for local network access (protected b
 
 // ─── Version Info ────────────────────────────────────────────────────────────
 const APP_VERSION = '1.0.0';
-const GITHUB_OWNER = 'chronniac';
-const GITHUB_REPO  = 'WokManeja';
+const GITHUB_OWNER = 'wokmaneja';
+const GITHUB_REPO  = 'Payroll-HR-Management-System';
 // ─────────────────────────────────────────────────────────────────────────────
 
 // SECURITY FIX: Removed app.use(cors()) to prevent CSRF exploits from malicious sites. 

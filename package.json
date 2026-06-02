@@ -15,16 +15,16 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/chronniac/WokManeja.git"
+    "url": "git+https://github.com/wokmaneja/Payroll-HR-Management-System.git"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "type": "commonjs",
   "bugs": {
-    "url": "https://github.com/chronniac/WokManeja/issues"
+    "url": "https://github.com/wokmaneja/Payroll-HR-Management-System/issues"
   },
-  "homepage": "https://github.com/chronniac/WokManeja#readme",
+  "homepage": "https://github.com/wokmaneja/Payroll-HR-Management-System#readme",
   "dependencies": {
     "adm-zip": "^0.5.10",
     "cors": "^2.8.6",
@@ -34,5 +34,9 @@
     "node-windows": "^1.0.0-beta.8",
     "nssm": "^0.1.1",
     "sqlite3": "^6.0.1"
+  },
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "puppeteer": "^25.1.0"
   }
 }
