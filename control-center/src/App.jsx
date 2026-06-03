@@ -203,6 +203,7 @@ function App() {
                   <th>Status</th>
                   <th>License Key</th>
                   <th>Company</th>
+                  <th>Machine ID</th>
                   <th>Plan</th>
                   <th>Activated On</th>
                   <th>Expires On</th>
@@ -213,6 +214,7 @@ function App() {
                   const isActive = issue.state === 'open';
                   const keyMatch = issue.body?.match(/\*\*License Key:\*\* (.*)/);
                   const companyMatch = issue.body?.match(/\*\*Company:\*\* (.*)/);
+                  const machineMatch = issue.body?.match(/\*\*Machine ID:\*\* (.*)/);
                   const planMatch = issue.body?.match(/\*\*Plan:\*\* (.*)/);
                   const expiresMatch = issue.body?.match(/\*\*Expires:\*\* (.*)/);
                   
@@ -226,6 +228,7 @@ function App() {
                       </td>
                       <td style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>{keyMatch ? keyMatch[1] : 'Unknown'}</td>
                       <td>{companyMatch ? companyMatch[1] : 'Unknown'}</td>
+                      <td style={{ fontFamily: 'monospace', fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{machineMatch ? machineMatch[1] : 'Unknown'}</td>
                       <td><span className="badge badge-info">{planMatch ? planMatch[1] : 'Unknown'}</span></td>
                       <td>{new Date(issue.created_at).toLocaleDateString()}</td>
                       <td><span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)' }}>{expiresMatch ? new Date(expiresMatch[1]).toLocaleDateString() : 'Unknown'}</span></td>
@@ -234,7 +237,7 @@ function App() {
                 })}
                 {licenses.length === 0 && (
                   <tr>
-                    <td colSpan="5" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                       No licenses found.
                     </td>
                   </tr>
