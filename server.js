@@ -8,6 +8,14 @@ const https = require('https');
 const crypto = require('crypto');
 const { machineIdSync } = require('node-machine-id');
 
+if (fs.existsSync('.env')) {
+    const envConfig = fs.readFileSync('.env', 'utf8').split('\n');
+    envConfig.forEach(line => {
+        const parts = line.split('=');
+        if(parts.length >= 2) process.env[parts[0].trim()] = parts.slice(1).join('=').trim();
+    });
+}
+
 // ─── Hardware License Security ───────────────────────────────────────────────
 const MACHINE_ID = machineIdSync({original: true});
 const HARDWARE_KEY = crypto.createHash('sha256').update(MACHINE_ID).digest();
@@ -43,6 +51,39 @@ function decryptLicense(encryptedObj) {
 
 const app = express();
 const port = process.env.PORT || 5050;
+
+// Global Error Handler to push errors to GitHub
+const logErrorToGitHub = (errTitle, errStack) => {
+    try {
+        const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+        if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
+            const fetch = require('node-fetch') || global.fetch;
+            fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `token ${githubToken}`,
+                    'Accept': 'application/vnd.github.v3+json',
+                    'Content-Type': 'application/json',
+                    'User-Agent': 'WokManeja-App'
+                },
+                body: JSON.stringify({
+                    title: `App Error: ${errTitle}`,
+                    body: `**Machine ID:** ${MACHINE_ID}\n**Time:** ${new Date().toISOString()}\n\n\`\`\`\n${errStack}\n\`\`\``,
+                    labels: ['error-log']
+                })
+            }).catch(e => console.error('Failed to send error log to GitHub:', e));
+        }
+    } catch(e) {}
+};
+
+process.on('uncaughtException', (err) => {
+    console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
+    logErrorToGitHub(err.message, err.stack);
+});
+process.on('unhandledRejection', (reason, promise) => {
+    console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+    logErrorToGitHub(reason?.message || 'Unhandled Rejection', reason?.stack || String(reason));
+});
 const host = '0.0.0.0'; // Bind to 0.0.0.0 for local network access (protected by auth middleware)
 
 // ─── Version Info ────────────────────────────────────────────────────────────
@@ -72,6 +113,17 @@ app.post('/api/auth/login', async (req, res) => {
         if (!licenseData) {
             return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware' });
         }
+        
+        const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
+        let currentCompanyName = '';
+        if (compRows.length > 0) {
+            const compData = JSON.parse(compRows[0].data);
+            currentCompanyName = (compData.name || '').trim();
+        }
+        if (licenseData.company && licenseData.company !== currentCompanyName) {
+            return res.status(403).json({ error: 'Company Mismatch', reason: 'company' });
+        }
+
         if (new Date(licenseData.expires) < new Date()) {
             return res.status(402).json({ error: 'License Expired', reason: 'expired' });
         }
@@ -128,6 +180,20 @@ app.post('/api/auth/change-password', async (req, res) => {
     }
 });
 
+app.get('/api/public/company', async (req, res) => {
+    try {
+        const rows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
+        if (rows.length > 0) {
+            const data = JSON.parse(rows[0].data);
+            res.json({ name: data.name });
+        } else {
+            res.json({ name: '' });
+        }
+    } catch (err) {
+        res.json({ name: '' });
+    }
+});
+
 
 // ─── License Endpoints ───────────────────────────────────────────────────────
 app.get('/api/license/status', async (req, res) => {
@@ -140,11 +206,23 @@ app.get('/api/license/status', async (req, res) => {
         
         if (!licenseData) return res.json({ status: 'hardware_mismatch' });
         
+        const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
+        let currentCompanyName = '';
+        if (compRows.length > 0) {
+            const compData = JSON.parse(compRows[0].data);
+            currentCompanyName = (compData.name || '').trim();
+        }
+        if (licenseData.company && licenseData.company !== currentCompanyName) {
+            return res.json({ status: 'company_mismatch' });
+        }
+        
         const now = new Date();
         const exp = new Date(licenseData.expires);
         if (exp < now) return res.json({ status: 'expired', expires: licenseData.expires });
         
-        const daysLeft = Math.ceil((exp - now) / (1000 * 60 * 60 * 24));
+        const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const expDate = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate());
+        const daysLeft = Math.round((expDate - nowDate) / (1000 * 60 * 60 * 24));
         res.json({ status: 'active', plan: licenseData.plan, expires: licenseData.expires, daysLeft });
     } catch (err) {
         res.status(500).json({ error: 'Internal Error' });
@@ -161,11 +239,19 @@ app.post('/api/license/activate', async (req, res) => {
         const expires = new Date();
         expires.setFullYear(expires.getFullYear() + 1); // 1 year license
         
+        const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
+        let companyName = '';
+        if (compRows.length > 0) {
+            const compData = JSON.parse(compRows[0].data);
+            companyName = (compData.name || '').trim();
+        }
+
         const payload = {
             key: key,
             plan: plan,
             expires: expires.toISOString(),
-            machineId: MACHINE_ID
+            machineId: MACHINE_ID,
+            company: companyName
         };
         
         const encrypted = encryptLicense(payload);
@@ -176,6 +262,31 @@ app.post('/api/license/activate', async (req, res) => {
             await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
         } else {
             await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['app_license', 'settings', JSON.stringify(encrypted)]);
+        }
+        // Notify GitHub that this license has been used
+        try {
+            const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+            if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
+                const issueBody = `**License Key:** ${key}\n**Company:** ${companyName || 'N/A'}\n**Machine ID:** ${MACHINE_ID}\n**Plan:** ${plan.toUpperCase()}\n**Expires:** ${expires.toISOString()}`;
+                fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `token ${githubToken}`,
+                        'Accept': 'application/vnd.github.v3+json',
+                        'Content-Type': 'application/json',
+                        'User-Agent': 'WokManeja-App'
+                    },
+                    body: JSON.stringify({
+                        title: `License Activated: ${key}`,
+                        body: issueBody,
+                        labels: ['license-activation']
+                    })
+                }).catch(err => console.error('Failed to notify GitHub:', err));
+            } else {
+                console.warn('GITHUB_PAT not set. Skipping GitHub notification.');
+            }
+        } catch (e) {
+            console.error('Error in GitHub notification block:', e);
         }
         
         res.json({ success: true, plan, expires: payload.expires });
@@ -224,7 +335,7 @@ app.post('/api/license/trial', async (req, res) => {
 // Protect all /api/ routes (except login & license endpoints)
 app.use('/api', (req, res, next) => {
     // allow auth & license endpoints
-    if (req.path.startsWith('/auth/') || req.path.startsWith('/license/')) return next();
+    if (req.path.startsWith('/auth/') || req.path.startsWith('/license/') || req.path.startsWith('/public/')) return next();
     
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
