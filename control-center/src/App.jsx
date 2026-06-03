@@ -146,6 +146,63 @@ function App() {
     }
   };
 
+  const handleRenew = async (issue) => {
+    const choice = window.prompt("Renew this license? Enter '1' for 1-Month, or '2' for 1-Year:", "2");
+    if (choice !== '1' && choice !== '2') return;
+    
+    // Parse old issue body
+    const companyMatch = issue.body?.match(/\*\*Company:\*\* (.*)/);
+    const machineMatch = issue.body?.match(/\*\*Machine ID:\*\* (.*)/);
+    const planMatch = issue.body?.match(/\*\*Plan:\*\* (.*)/);
+    const expiresMatch = issue.body?.match(/\*\*Expires:\*\* (.*)/);
+
+    const oldCompany = companyMatch ? companyMatch[1] : 'Unknown';
+    const oldMachine = machineMatch ? machineMatch[1] : 'Unknown';
+    const oldPlanStr = planMatch ? planMatch[1] : 'Unknown';
+    
+    // Determine new plan and duration
+    let durStr = choice === '1' ? '1M' : '1Y';
+    let basePlan = oldPlanStr.split(' ')[0] || 'ENTERPRISE';
+    if (basePlan === 'Unknown') basePlan = 'ENTERPRISE';
+    
+    let newPlan = `${basePlan} ${choice === '1' ? '(1-Month)' : '(1-Year)'}`;
+    
+    const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
+    const newKey = `WM-${basePlan.substring(0,3).toUpperCase()}-${durStr}-${randomHex}`;
+
+    // Calculate new expiry
+    let oldExpiry = expiresMatch ? new Date(expiresMatch[1]) : new Date();
+    let baseDate = oldExpiry > new Date() ? oldExpiry : new Date();
+    let newExpiry = new Date(baseDate);
+    if (choice === '1') {
+        newExpiry.setMonth(newExpiry.getMonth() + 1);
+    } else {
+        newExpiry.setFullYear(newExpiry.getFullYear() + 1);
+    }
+
+    const newBody = `**License Key:** ${newKey}\n**Company:** ${oldCompany}\n**Machine ID:** ${oldMachine}\n**Plan:** ${newPlan}\n**Expires:** ${newExpiry.toISOString()}`;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issue.number}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ state: 'open', body: newBody })
+      });
+      if (res.ok) {
+        alert(`Successfully renewed! New key: ${newKey}`);
+        setLicenses(licenses.map(lic => lic.number === issue.number ? { ...lic, state: 'open', body: newBody } : lic));
+      } else {
+        alert('Failed to renew license.');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  };
+
   if (!isLogged) {
     return (
       <div className="login-overlay">
@@ -255,9 +312,12 @@ function App() {
                       <td><span className="badge badge-info">{planMatch ? planMatch[1] : 'Unknown'}</span></td>
                       <td>{new Date(issue.created_at).toLocaleDateString()}</td>
                       <td><span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)' }}>{expiresMatch ? new Date(expiresMatch[1]).toLocaleDateString() : 'Unknown'}</span></td>
-                      <td>
+                      <td style={{ display: 'flex', gap: '8px' }}>
+                        <button onClick={() => handleRenew(issue)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
+                          Renew
+                        </button>
                         {isActive && (
-                          <button onClick={() => handleDeactivate(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--danger)' }}>
+                          <button onClick={() => handleDeactivate(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--danger)', borderColor: 'var(--danger)' }}>
                             Deactivate
                           </button>
                         )}

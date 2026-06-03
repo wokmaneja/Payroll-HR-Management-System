@@ -118,7 +118,20 @@ app.post('/api/auth/login', async (req, res) => {
         }
 
         if (new Date(licenseData.expires) < new Date()) {
-            return res.status(402).json({ error: 'License Expired', reason: 'expired' });
+            console.log('[License] License expired locally. Attempting auto-renewal sync...');
+            await verifyRemoteLicense(licenseData);
+            
+            const updatedRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+            if (updatedRows.length > 0) {
+                 const newDbLicense = JSON.parse(updatedRows[0].data);
+                 const newLicenseData = decryptLicense(newDbLicense);
+                 if (!newLicenseData || new Date(newLicenseData.expires) < new Date()) {
+                     return res.status(402).json({ error: 'License Expired', reason: 'expired' });
+                 }
+                 licenseData = newLicenseData;
+            } else {
+                 return res.status(402).json({ error: 'License Required', reason: 'missing' });
+            }
         }
 
         const { username, password } = req.body;
@@ -140,7 +153,7 @@ app.post('/api/auth/login', async (req, res) => {
         activeSessions.set(token, safeUser);
 
         // Silently verify remote license status in the background
-        verifyRemoteLicense(licenseData.key).catch(e => console.error('[License Check]', e.message));
+        verifyRemoteLicense(licenseData).catch(e => console.error('[License Check]', e.message));
 
         res.json({ token, user: safeUser });
     } catch (err) {
@@ -149,17 +162,43 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-async function verifyRemoteLicense(licenseKey) {
+async function verifyRemoteLicense(licenseData) {
     try {
-        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?state=closed&labels=license-activation`;
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?state=all&labels=license-activation`;
         const result = await httpsGet(url);
         if (result.status === 200) {
             const issues = JSON.parse(result.body);
-            // Check if any closed issue has this exact license key
-            const isDeactivated = issues.some(issue => issue.body && issue.body.includes(`**License Key:** ${licenseKey}`));
-            if (isDeactivated) {
-                console.log(`[License] Remote deactivation detected for ${licenseKey}. Erasing local license.`);
+            const machineIssue = issues.find(issue => issue.body && issue.body.includes(`**Machine ID:** ${MACHINE_ID}`));
+            if (!machineIssue) return;
+
+            if (machineIssue.state === 'closed' && machineIssue.body.includes(`**License Key:** ${licenseData.key}`)) {
+                console.log(`[License] Remote deactivation detected for ${licenseData.key}. Erasing local license.`);
                 await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+                return;
+            }
+
+            if (machineIssue.state === 'open') {
+                const keyMatch = machineIssue.body.match(/\*\*License Key:\*\* (.*)/);
+                const expiresMatch = machineIssue.body.match(/\*\*Expires:\*\* (.*)/);
+                const planMatch = machineIssue.body.match(/\*\*Plan:\*\* (.*)/);
+                
+                if (keyMatch && expiresMatch) {
+                    const remoteKey = keyMatch[1].trim();
+                    const remoteExpires = new Date(expiresMatch[1].trim());
+                    const localExpires = new Date(licenseData.expires);
+
+                    if (remoteKey !== licenseData.key || remoteExpires > localExpires) {
+                        console.log(`[License] Auto-Renewal detected. Updating to new key: ${remoteKey}`);
+                        const newLicenseData = {
+                            key: remoteKey,
+                            company: licenseData.company,
+                            plan: planMatch ? planMatch[1].trim() : licenseData.plan,
+                            expires: remoteExpires.toISOString()
+                        };
+                        const encrypted = encryptLicense(newLicenseData);
+                        await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
+                    }
+                }
             }
         }
     } catch(err) {
