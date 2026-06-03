@@ -704,6 +704,15 @@ app.get('/api/admin/version', (req, res) => {
 // GET list of releases from GitHub
 app.get('/api/admin/releases', async (req, res) => {
     try {
+        // Enforce active license for updates
+        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (licRows.length === 0) return res.status(402).json({ error: 'Active License Required for Updates' });
+        const dbLicense = JSON.parse(licRows[0].data);
+        const licenseData = decryptLicense(dbLicense);
+        if (!licenseData || new Date(licenseData.expires) < new Date()) {
+            return res.status(402).json({ error: 'License Expired. Renew to receive updates.' });
+        }
+
         const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`;
         const result = await httpsGet(url);
         if (result.status !== 200) return res.status(502).json({ error: 'Could not reach GitHub. Check internet connection.' });
@@ -729,6 +738,19 @@ app.get('/api/admin/releases', async (req, res) => {
 
 // POST approve and apply an update
 app.post('/api/admin/apply-update', async (req, res) => {
+    // Enforce active license for updates
+    try {
+        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (licRows.length === 0) return res.status(402).json({ error: 'Active License Required for Updates' });
+        const dbLicense = JSON.parse(licRows[0].data);
+        const licenseData = decryptLicense(dbLicense);
+        if (!licenseData || new Date(licenseData.expires) < new Date()) {
+            return res.status(402).json({ error: 'License Expired. Renew to receive updates.' });
+        }
+    } catch(e) {
+        return res.status(500).json({ error: 'Internal Error checking license' });
+    }
+
     const { tag, zipball_url } = req.body;
     if (!tag || !zipball_url) return res.status(400).json({ error: 'Missing tag or zipball_url' });
 
