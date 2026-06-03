@@ -124,6 +124,28 @@ function App() {
     }
   };
 
+  const handleDeactivate = async (issueNumber) => {
+    if (!window.confirm('Are you sure you want to permanently deactivate this license?')) return;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNumber}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ state: 'closed' })
+      });
+      if (res.ok) {
+        setLicenses(licenses.map(lic => lic.number === issueNumber ? { ...lic, state: 'closed' } : lic));
+      } else {
+        alert('Failed to deactivate license.');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  };
+
   if (!isLogged) {
     return (
       <div className="login-overlay">
@@ -207,6 +229,7 @@ function App() {
                   <th>Plan</th>
                   <th>Activated On</th>
                   <th>Expires On</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
@@ -232,12 +255,19 @@ function App() {
                       <td><span className="badge badge-info">{planMatch ? planMatch[1] : 'Unknown'}</span></td>
                       <td>{new Date(issue.created_at).toLocaleDateString()}</td>
                       <td><span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)' }}>{expiresMatch ? new Date(expiresMatch[1]).toLocaleDateString() : 'Unknown'}</span></td>
+                      <td>
+                        {isActive && (
+                          <button onClick={() => handleDeactivate(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--danger)' }}>
+                            Deactivate
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   );
                 })}
                 {licenses.length === 0 && (
                   <tr>
-                    <td colSpan="7" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
+                    <td colSpan="8" style={{ textAlign: 'center', padding: '3rem', color: 'var(--text-secondary)' }}>
                       No licenses found.
                     </td>
                   </tr>

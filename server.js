@@ -145,12 +145,34 @@ app.post('/api/auth/login', async (req, res) => {
         delete safeUser.password;
         
         activeSessions.set(token, safeUser);
+
+        // Silently verify remote license status in the background
+        verifyRemoteLicense(licenseData.key).catch(e => console.error('[License Check]', e.message));
+
         res.json({ token, user: safeUser });
     } catch (err) {
-        console.error('Login error:', err);
+        console.error(err);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+
+async function verifyRemoteLicense(licenseKey) {
+    try {
+        const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?state=closed&labels=license-activation`;
+        const result = await httpsGet(url);
+        if (result.status === 200) {
+            const issues = JSON.parse(result.body);
+            // Check if any closed issue has this exact license key
+            const isDeactivated = issues.some(issue => issue.body && issue.body.includes(`**License Key:** ${licenseKey}`));
+            if (isDeactivated) {
+                console.log(`[License] Remote deactivation detected for ${licenseKey}. Erasing local license.`);
+                await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+            }
+        }
+    } catch(err) {
+        // Silently ignore network errors so offline users aren't locked out
+    }
+}
 
 app.post('/api/auth/change-password', async (req, res) => {
     try {
