@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, ShieldAlert, Activity, LogOut, CheckCircle, Clock, Download, PlusSquare, Copy } from 'lucide-react';
+import { KeyRound, ShieldAlert, Activity, LogOut, CheckCircle, Clock, Download, PlusSquare, Copy, UploadCloud } from 'lucide-react';
 import './index.css';
 
 const GITHUB_OWNER = 'wokmaneja';
@@ -19,6 +19,12 @@ function App() {
   const [genPlan, setGenPlan] = useState('PRO');
   const [genDur, setGenDur] = useState('1Y');
   const [generatedKey, setGeneratedKey] = useState('');
+
+  // Push Update State
+  const [updateVersion, setUpdateVersion] = useState('');
+  const [updateTitle, setUpdateTitle] = useState('');
+  const [updateBody, setUpdateBody] = useState('');
+  const [updateStatus, setUpdateStatus] = useState(null);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -82,6 +88,42 @@ function App() {
     alert('Key copied to clipboard!');
   };
 
+  const handlePushUpdate = async (e) => {
+    e.preventDefault();
+    if (!updateVersion || !updateTitle) return;
+    setUpdateStatus({ loading: true, message: 'Creating release...' });
+    
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/releases`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          tag_name: updateVersion,
+          name: updateTitle,
+          body: updateBody,
+          draft: false,
+          prerelease: false
+        })
+      });
+      
+      if (res.ok) {
+        setUpdateStatus({ loading: false, success: true, message: `Successfully pushed update ${updateVersion} to all clients!` });
+        setUpdateVersion('');
+        setUpdateTitle('');
+        setUpdateBody('');
+      } else {
+        const data = await res.json();
+        setUpdateStatus({ loading: false, success: false, message: `Failed: ${data.message}` });
+      }
+    } catch (err) {
+      setUpdateStatus({ loading: false, success: false, message: 'Network error occurred.' });
+    }
+  };
+
   if (!isLogged) {
     return (
       <div className="login-overlay">
@@ -140,7 +182,10 @@ function App() {
         <button className={`tab ${activeTab === 'errors' ? 'active' : ''}`} onClick={() => setActiveTab('errors')}>
           Error Logs
         </button>
-        <button className={`tab ${activeTab === 'generator' ? 'active' : ''}`} onClick={() => setActiveTab('generator')} style={{ marginLeft: 'auto', border: '1px solid var(--accent)' }}>
+        <button className={`tab ${activeTab === 'updates' ? 'active' : ''}`} onClick={() => setActiveTab('updates')} style={{ marginLeft: 'auto', border: '1px solid var(--accent)' }}>
+          <UploadCloud size={14} style={{ marginRight: '6px' }} /> Push Update
+        </button>
+        <button className={`tab ${activeTab === 'generator' ? 'active' : ''}`} onClick={() => setActiveTab('generator')} style={{ border: '1px solid var(--accent)' }}>
           <PlusSquare size={14} style={{ marginRight: '6px' }} /> Key Generator
         </button>
       </div>
@@ -276,6 +321,61 @@ function App() {
                 </button>
               </div>
             )}
+          </div>
+        ) : activeTab === 'updates' ? (
+          <div style={{ maxWidth: '600px', margin: '0 auto', padding: '2rem 0' }}>
+            <h2 style={{ marginBottom: '1.5rem', textAlign: 'center' }}>Push App Update</h2>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem', textAlign: 'center', fontSize: '0.9rem' }}>
+              Create a new official Release. This will package the latest code from your <code>main</code> branch and instantly notify all desktop apps to download it!
+            </p>
+            
+            <form onSubmit={handlePushUpdate}>
+              <div className="input-group">
+                <label>Version Tag (e.g. v1.0.1)</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={updateVersion}
+                  onChange={(e) => setUpdateVersion(e.target.value)}
+                  placeholder="vX.X.X"
+                  required
+                />
+              </div>
+              
+              <div className="input-group">
+                <label>Update Title</label>
+                <input 
+                  type="text" 
+                  className="input-field" 
+                  value={updateTitle}
+                  onChange={(e) => setUpdateTitle(e.target.value)}
+                  placeholder="e.g. Bug fixes and performance improvements"
+                  required
+                />
+              </div>
+
+              <div className="input-group">
+                <label>Release Notes</label>
+                <textarea 
+                  className="input-field" 
+                  style={{ minHeight: '120px', resize: 'vertical' }}
+                  value={updateBody}
+                  onChange={(e) => setUpdateBody(e.target.value)}
+                  placeholder="- Fixed login issue&#10;- Improved report generation speed"
+                ></textarea>
+              </div>
+              
+              {updateStatus && (
+                <div style={{ padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', background: updateStatus.success ? 'rgba(16, 185, 129, 0.1)' : updateStatus.loading ? 'rgba(255,255,255,0.05)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${updateStatus.success ? 'var(--success)' : updateStatus.loading ? 'var(--border-color)' : 'var(--danger)'}`, color: updateStatus.success ? 'var(--success)' : updateStatus.loading ? 'var(--text-primary)' : 'var(--danger)', fontSize: '0.9rem', textAlign: 'center' }}>
+                  {updateStatus.loading ? <span className="loader" style={{ display: 'inline-block', width: '16px', height: '16px', borderTopColor: 'currentColor', marginRight: '8px', verticalAlign: 'middle' }}></span> : null}
+                  {updateStatus.message}
+                </div>
+              )}
+              
+              <button type="submit" className="btn btn-primary" disabled={updateStatus?.loading}>
+                <UploadCloud size={18} /> Push Release to All Apps
+              </button>
+            </form>
           </div>
         ) : (
           <div className="grid">
