@@ -234,10 +234,26 @@ app.post('/api/license/activate', async (req, res) => {
         const { key } = req.body;
         if (!key || !key.startsWith('WM-')) return res.status(400).json({ error: 'Invalid license key format.' });
         
-        // Mock validation
+        // Mock validation with duration parsing
         const plan = key.includes('-PRO-') ? 'pro' : 'enterprise';
-        const expires = new Date();
-        expires.setFullYear(expires.getFullYear() + 1); // 1 year license
+        
+        let addMonths = 12; // default 1 year
+        if (key.includes('-1M-')) addMonths = 1;
+        else if (key.includes('-3M-')) addMonths = 3;
+        else if (key.includes('-6M-')) addMonths = 6;
+        else if (key.includes('-1Y-')) addMonths = 12;
+        else if (key.includes('-2Y-')) addMonths = 24;
+        else if (key.includes('-5Y-')) addMonths = 60;
+        
+        let expires = new Date();
+        const existingLic = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (existingLic.length > 0) {
+            const oldLic = decryptLicense(JSON.parse(existingLic[0].data));
+            if (oldLic && new Date(oldLic.expires) > new Date()) {
+                expires = new Date(oldLic.expires); // Extend from current expiry
+            }
+        }
+        expires.setMonth(expires.getMonth() + addMonths);
         
         const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
         let companyName = '';
@@ -369,6 +385,36 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
             PRIMARY KEY (id, collection)
         )`, () => {
             if (typeof setupAutoBackup === 'function') setupAutoBackup();
+            
+            // Install Telemetry
+            db.all("SELECT id FROM docs WHERE id = 'install_reported' AND collection = 'settings'", [], (err, rows) => {
+                if (!err && rows.length === 0) {
+                    try {
+                        const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+                        if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
+                            const fetch = require('node-fetch') || global.fetch;
+                            fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
+                                method: 'POST',
+                                headers: {
+                                    'Authorization': `token ${githubToken}`,
+                                    'Accept': 'application/vnd.github.v3+json',
+                                    'Content-Type': 'application/json',
+                                    'User-Agent': 'WokManeja-App'
+                                },
+                                body: JSON.stringify({
+                                    title: `App Installed: v${APP_VERSION}`,
+                                    body: `**Machine ID:** ${MACHINE_ID}\n**Version:** ${APP_VERSION}\n**Time:** ${new Date().toISOString()}`,
+                                    labels: ['app-install']
+                                })
+                            }).then(r => {
+                                if (r.ok) {
+                                    db.run("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['install_reported', 'settings', JSON.stringify({ reported: true })]);
+                                }
+                            }).catch(() => {});
+                        }
+                    } catch(e) {}
+                }
+            });
             
             // Seed default admin user if database is completely empty
             db.all("SELECT id FROM docs WHERE collection = 'users'", [], (err, rows) => {
