@@ -1134,7 +1134,7 @@ function resetIdleTimer(){if(!APP.currentUser)return;if(idleTimer)clearTimeout(i
 document.addEventListener('mousemove',resetIdleTimer);
 document.addEventListener('keydown',resetIdleTimer);
 document.addEventListener('click',resetIdleTimer);
-async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();}catch(e){document.getElementById('login-error').style.display='block';}}
+async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors();}catch(e){document.getElementById('login-error').style.display='block';}}
 function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
 function buildNav(role){var nav=document.getElementById('sidebar-nav');nav.innerHTML='';MENUS[role].forEach(function(item){if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}};nav.appendChild(a);});nav.querySelector('button').click();}
 var ALL_SECTIONS=['payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs'];
@@ -2214,8 +2214,24 @@ DB.init().then(function() {
       <button class="btn btn-outline" id="custom-confirm-cancel" style="flex:1;padding:0.75rem"><span data-i18n="btn_cancel">Cancel</span></button>
       <button class="btn btn-danger" id="custom-confirm-ok" style="flex:1;padding:0.75rem;background:#ef4444"><span data-i18n="btn_yes_proceed">Yes, Proceed</span></button>
     </div>
+    </div>
   </div>
 </div>
+
+<div id="crash-confirm" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;backdrop-filter:blur(5px)">
+  <div class="card" style="width:100%;max-width:420px;text-align:center;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.3);">
+    <div style="font-size:42px;color:#ef4444;margin-bottom:1rem;"><i class="ti ti-bug"></i></div>
+    <h3 style="margin-bottom:0.75rem;color:#1e293b;font-weight:800;font-size:20px">Unexpected Error</h3>
+    <p style="color:#64748b;margin-bottom:2rem;line-height:1.6;font-size:14px">
+      WokManeja encountered an unexpected error recently. Would you like to send the error log to the developers to help improve the software?
+    </p>
+    <div style="display:flex;gap:1rem;justify-content:center">
+      <button class="btn btn-outline" id="crash-confirm-cancel" style="flex:1;padding:0.75rem">Don't Send</button>
+      <button class="btn btn-primary" id="crash-confirm-ok" style="flex:1;padding:0.75rem;background:#ef4444;border-color:#ef4444">Send Report</button>
+    </div>
+  </div>
+</div>
+
 <style>
 @keyframes scaleIn {
   from { transform: scale(0.9); opacity: 0; }
@@ -2234,12 +2250,28 @@ document.addEventListener('keydown', function(e) {
 });
 </script>
 
+<script>
+async function checkForErrors() {
+  try {
+    const res = await fetch('/api/admin/pending-errors');
+    if (!res.ok) return;
+    const errors = await res.json();
+    if (errors.length > 0) {
+      document.getElementById('crash-confirm').style.display = 'flex';
+    }
+  } catch(e) {}
+}
 
-
-
-
-
-
-
+document.addEventListener('DOMContentLoaded', function() {
+  document.getElementById('crash-confirm-ok').addEventListener('click', async function() {
+    document.getElementById('crash-confirm').style.display = 'none';
+    await fetch('/api/admin/resolve-errors', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'send'}) });
+  });
+  document.getElementById('crash-confirm-cancel').addEventListener('click', async function() {
+    document.getElementById('crash-confirm').style.display = 'none';
+    await fetch('/api/admin/resolve-errors', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'discard'}) });
+  });
+});
+</script>
 
 </body></html>

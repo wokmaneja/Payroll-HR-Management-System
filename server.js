@@ -52,37 +52,30 @@ function decryptLicense(encryptedObj) {
 const app = express();
 const port = process.env.PORT || 5050;
 
-// Global Error Handler to push errors to GitHub
-const logErrorToGitHub = (errTitle, errStack) => {
+// Global Error Handler to queue errors locally
+const logErrorLocally = (errTitle, errStack) => {
     try {
-        const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
-        if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
-            const fetch = require('node-fetch') || global.fetch;
-            fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
-                method: 'POST',
-                headers: {
-                    'Authorization': `token ${githubToken}`,
-                    'Accept': 'application/vnd.github.v3+json',
-                    'Content-Type': 'application/json',
-                    'User-Agent': 'WokManeja-App'
-                },
-                body: JSON.stringify({
-                    title: `App Error: ${errTitle}`,
-                    body: `**Machine ID:** ${MACHINE_ID}\n**Time:** ${new Date().toISOString()}\n\n\`\`\`\n${errStack}\n\`\`\``,
-                    labels: ['error-log']
-                })
-            }).catch(e => console.error('Failed to send error log to GitHub:', e));
+        const errorDoc = {
+            _id: 'err-' + Date.now() + Math.floor(Math.random()*1000),
+            title: errTitle,
+            stack: errStack,
+            time: new Date().toISOString()
+        };
+        if (typeof db !== 'undefined') {
+            db.run("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", [errorDoc._id, 'pending_errors', JSON.stringify(errorDoc)], () => {});
+        } else {
+            console.error("DB not ready, lost error:", errTitle);
         }
     } catch(e) {}
 };
 
 process.on('uncaughtException', (err) => {
     console.error('CRITICAL UNCAUGHT EXCEPTION:', err);
-    logErrorToGitHub(err.message, err.stack);
+    logErrorLocally(err.message, err.stack);
 });
 process.on('unhandledRejection', (reason, promise) => {
     console.error('Unhandled Rejection at:', promise, 'reason:', reason);
-    logErrorToGitHub(reason?.message || 'Unhandled Rejection', reason?.stack || String(reason));
+    logErrorLocally(reason?.message || 'Unhandled Rejection', reason?.stack || String(reason));
 });
 const host = '0.0.0.0'; // Bind to 0.0.0.0 for local network access (protected by auth middleware)
 
@@ -721,6 +714,62 @@ function downloadFile(url, destPath) {
 // GET current version
 app.get('/api/admin/version', (req, res) => {
     res.json({ version: APP_VERSION, repo: `${GITHUB_OWNER}/${GITHUB_REPO}` });
+});
+
+// Telemetry/Errors endpoints
+app.get('/api/admin/pending-errors', async (req, res) => {
+    try {
+        const rows = await runQuery("SELECT data FROM docs WHERE collection = 'pending_errors'");
+        res.json(rows.map(r => JSON.parse(r.data)));
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+app.post('/api/admin/resolve-errors', async (req, res) => {
+    const { action } = req.body; // 'send' or 'discard'
+    try {
+        const rows = await runQuery("SELECT data FROM docs WHERE collection = 'pending_errors'");
+        const errors = rows.map(r => JSON.parse(r.data));
+        
+        if (action === 'send' && errors.length > 0) {
+            // Verify active license before sending
+            const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+            if (licRows.length === 0) return res.status(402).json({ error: 'Active License Required' });
+            const dbLicense = JSON.parse(licRows[0].data);
+            const licenseData = decryptLicense(dbLicense);
+            if (!licenseData || new Date(licenseData.expires) < new Date()) {
+                return res.status(402).json({ error: 'License Expired' });
+            }
+
+            const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+            if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
+                const fetch = require('node-fetch') || global.fetch;
+                for (const err of errors) {
+                    await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `token ${githubToken}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'WokManeja-App'
+                        },
+                        body: JSON.stringify({
+                            title: `App Error: ${err.title}`,
+                            body: `**Machine ID:** ${MACHINE_ID}\n**Time:** ${err.time}\n\n\`\`\`\n${err.stack}\n\`\`\``,
+                            labels: ['error-log']
+                        })
+                    }).catch(console.error);
+                }
+            }
+        }
+        
+        // Clear all pending errors locally regardless of send or discard
+        await runExec("DELETE FROM docs WHERE collection = 'pending_errors'");
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // GET list of releases from GitHub
