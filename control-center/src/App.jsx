@@ -25,6 +25,7 @@ function App() {
   const [updateTitle, setUpdateTitle] = useState('');
   const [updateBody, setUpdateBody] = useState('');
   const [updateStatus, setUpdateStatus] = useState(null);
+  const [syncStatus, setSyncStatus] = useState(null);
 
   const handleLogin = (e) => {
     e.preventDefault();
@@ -86,6 +87,40 @@ function App() {
   const copyToClipboard = () => {
     navigator.clipboard.writeText(generatedKey);
     alert('Key copied to clipboard!');
+  };
+
+  const handleSyncToken = async () => {
+    if (!token) return;
+    setSyncStatus({ loading: true, message: 'Syncing token to apps...' });
+    try {
+      const btoaSafe = (str) => btoa(encodeURIComponent(str).replace(/%([0-9A-F]{2})/g, (m, p1) => String.fromCharCode('0x' + p1)));
+      const obfuscated = btoaSafe(token.split('').map(char => String.fromCharCode(char.charCodeAt(0) ^ 42)).join(''));
+
+      const fileRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/server.js`, { headers: { 'Authorization': `token ${token}` } });
+      if (!fileRes.ok) throw new Error('Failed to fetch server.js');
+      const fileData = await fileRes.json();
+
+      const content = decodeURIComponent(escape(atob(fileData.content)));
+      const updatedContent = content.replace(/const OBFUSCATED_TOKEN_PLACEHOLDER = '.*';/, `const OBFUSCATED_TOKEN_PLACEHOLDER = '${obfuscated}';`);
+
+      const updateRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/contents/server.js`, {
+        method: 'PUT',
+        headers: { 'Authorization': `token ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: 'Sync updated token to apps from Control Center',
+          content: btoaSafe(updatedContent),
+          sha: fileData.sha
+        })
+      });
+
+      if (!updateRes.ok) {
+        const errData = await updateRes.json();
+        throw new Error(errData.message);
+      }
+      setSyncStatus({ loading: false, success: true, message: 'Token successfully synced to apps!' });
+    } catch (e) {
+      setSyncStatus({ loading: false, success: false, message: `Sync failed: ${e.message}` });
+    }
   };
 
   const handlePushUpdate = async (e) => {
@@ -572,6 +607,24 @@ function App() {
                 <UploadCloud size={18} /> Push Release to All Apps
               </button>
             </form>
+
+            <hr style={{ margin: '3rem 0', borderColor: 'var(--border-color)', opacity: 0.5 }} />
+
+            <h3 style={{ marginBottom: '1rem', textAlign: 'center' }}>Sync GitHub PAT to Apps</h3>
+            <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', textAlign: 'center', fontSize: '0.9rem' }}>
+              If you logged in with a new GitHub token, you must push it to the apps so they can continue communicating with the server.
+            </p>
+            
+            {syncStatus && (
+              <div style={{ padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem', background: syncStatus.success ? 'rgba(16, 185, 129, 0.1)' : syncStatus.loading ? 'rgba(255,255,255,0.05)' : 'rgba(239, 68, 68, 0.1)', border: `1px solid ${syncStatus.success ? 'var(--success)' : syncStatus.loading ? 'var(--border-color)' : 'var(--danger)'}`, color: syncStatus.success ? 'var(--success)' : syncStatus.loading ? 'var(--text-primary)' : 'var(--danger)', fontSize: '0.9rem', textAlign: 'center' }}>
+                {syncStatus.loading ? <span className="loader" style={{ display: 'inline-block', width: '16px', height: '16px', borderTopColor: 'currentColor', marginRight: '8px', verticalAlign: 'middle' }}></span> : null}
+                {syncStatus.message}
+              </div>
+            )}
+            
+            <button onClick={handleSyncToken} className="btn btn-primary" disabled={syncStatus?.loading} style={{ background: 'var(--accent)' }}>
+              <KeyRound size={18} /> Sync Token to Apps
+            </button>
           </div>
         ) : (
           <div className="grid">
