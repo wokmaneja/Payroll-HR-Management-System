@@ -1685,8 +1685,8 @@ function renderStaffDashboard(){
   var tN=mySlips.reduce(function(s,p){return s+p.net},0);
   var pendingHR=allHR.filter(function(r){return r.status==='Pending'}).length;
   var sData=APP.currentUser.linkedStaffId?DB.findOne('staff',{_id:APP.currentUser.linkedStaffId}):null;
-  var maxAnnual=sData?parseFloat(sData.annual||0):0;
-  var maxSick=sData?parseFloat(sData.sick||0):0;
+  var maxAnnual=sData?parseFloat(sData.annualLeave||21):0;
+  var maxSick=sData?parseFloat(sData.sickLeave||10):0;
   var usedAnnual=0;var usedSick=0;
   allHR.forEach(function(r){
     if(r.status!=='Approved')return;
