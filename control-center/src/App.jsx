@@ -146,6 +146,42 @@ function App() {
     }
   };
 
+  const handleUnlock = async (issue) => {
+    if (!window.confirm('Are you sure you want to unlock the machine ID for this license?')) return;
+    
+    const companyMatch = issue.body?.match(/\*\*Company:\*\* (.*)/);
+    const keyMatch = issue.body?.match(/\*\*License Key:\*\* (.*)/);
+    const planMatch = issue.body?.match(/\*\*Plan:\*\* (.*)/);
+    const expiresMatch = issue.body?.match(/\*\*Expires:\*\* (.*)/);
+
+    const oldCompany = companyMatch ? companyMatch[1] : 'Unknown';
+    const oldKey = keyMatch ? keyMatch[1] : 'Unknown';
+    const oldPlan = planMatch ? planMatch[1] : 'Unknown';
+    const oldExpiry = expiresMatch ? expiresMatch[1] : new Date().toISOString();
+
+    const newBody = `**License Key:** ${oldKey}\n**Company:** ${oldCompany}\n**Machine ID:** UNLOCKED\n**Plan:** ${oldPlan}\n**Expires:** ${oldExpiry}`;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issue.number}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ body: newBody })
+      });
+      if (res.ok) {
+        alert('Successfully unlocked machine ID!');
+        setLicenses(licenses.map(lic => lic.number === issue.number ? { ...lic, body: newBody } : lic));
+      } else {
+        alert('Failed to unlock machine ID.');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  };
+
   const handleRenew = async (issue) => {
     const choice = window.prompt("Renew this license? Enter '1' for 1-Month, or '2' for 1-Year:", "2");
     if (choice !== '1' && choice !== '2') return;
@@ -317,9 +353,14 @@ function App() {
                           Renew
                         </button>
                         {isActive && (
-                          <button onClick={() => handleDeactivate(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--danger)', borderColor: 'var(--danger)' }}>
-                            Deactivate
-                          </button>
+                          <>
+                            <button onClick={() => handleUnlock(issue)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--accent)', borderColor: 'var(--accent)' }}>
+                              Unlock
+                            </button>
+                            <button onClick={() => handleDeactivate(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--danger)', borderColor: 'var(--danger)' }}>
+                              Deactivate
+                            </button>
+                          </>
                         )}
                       </td>
                     </tr>

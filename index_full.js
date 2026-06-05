@@ -1,6 +1,21 @@
 
+
 var I18N_DICT = {
   "language": { en: "Language", fr: "Langue", zh: "语言" },
+  "opt_annual_leave": { en: "Annual Leave", fr: "Congés Annuels", zh: "年假" },
+  "opt_sick_leave": { en: "Sick Leave", fr: "Congés Maladie", zh: "病假" },
+  "opt_leave_without_pay": { en: "Leave Without Pay", fr: "Congé Sans Solde", zh: "无薪休假" },
+  "opt_payment_advance": { en: "Payment Advance", fr: "Avance sur salaire", zh: "预支工资" },
+  "opt_pending": { en: "Pending", fr: "En attente", zh: "待处理" },
+  "opt_approved": { en: "Approved", fr: "Approuvé", zh: "已批准" },
+  "opt_rejected": { en: "Rejected", fr: "Rejeté", zh: "已拒绝" },
+
+  "opt_select_staff": { en: "-- Select Staff --", fr: "-- Sélectionner l'employé --", zh: "-- 选择员工 --" },
+  "opt_select_dept": { en: "-- Select Department --", fr: "-- Sélectionner le département --", zh: "-- 选择部门 --" },
+  "opt_all_status": { en: "All Status", fr: "Tous les statuts", zh: "所有状态" },
+  "opt_all_types": { en: "All Types", fr: "Tous les types", zh: "所有类型" },
+  "opt_all_colls": { en: "All Collections", fr: "Toutes les collections", zh: "所有集合" },
+
   "txt_0": { en: "0", fr: "0", zh: "0" },
   "lbl_username": { en: "Username", fr: "Nom d'utilisateur", zh: "用户名" },
   "ph_enter_username": { en: "Enter username", fr: "Entrez le nom d'utilisateur", zh: "输入用户名" },
@@ -579,7 +594,7 @@ function updatePaidDays(){var mIdx=MONTHS.indexOf(document.getElementById('ps-mo
 function refreshStaffDropdown(){
   var sel=document.getElementById('ps-staff');
   var val=sel.value;
-  sel.innerHTML='<option value="">-- Select Staff --</option>';
+  sel.innerHTML='<option value="" data-i18n="opt_select_staff">-- Select Staff --</option>';
   
   var allowed = DB.findAll('staff',{status:'Active'});
   if (APP.currentUser && APP.currentUser.role === 'staff' && APP.currentUser.linkedStaffId) {
@@ -635,7 +650,7 @@ function deleteStaff(dbId){var s=DB.findOne('staff',{_id:dbId});customConfirm('D
 function refreshHRStaffDropdown(){
   var sel=document.getElementById('hr-staff');
   var val=sel.value;
-  sel.innerHTML='<option value="">-- Select Staff --</option>';
+  sel.innerHTML='<option value="" data-i18n="opt_select_staff">-- Select Staff --</option>';
   
   var allowed = DB.findAll('staff',{status:'Active'});
   if (APP.currentUser && APP.currentUser.role === 'staff' && APP.currentUser.linkedStaffId) {
@@ -1549,4 +1564,53 @@ document.getElementById('login-pass').addEventListener('keydown',function(e){if(
 DB.init().then(function() {
   seedDB();
   updateDBIndicator();
+});
+
+
+
+    function openDeptModal(){document.getElementById('dept-modal').style.display='flex';renderDeptList();}
+    function closeDeptModal(){document.getElementById('dept-modal').style.display='none';}
+    function renderDeptList(){var wrap=document.getElementById('dept-list-wrap');var all=DB.findAll('departments').sort(function(a,b){return a.name.localeCompare(b.name)});if(!all.length){wrap.innerHTML='<div style="padding:1rem;color:#888;font-size:12px;text-align:center">No departments</div>';return}var html='';all.forEach(function(d){html+='<div style="display:flex;justify-content:space-between;align-items:center;padding:8px 12px;border-bottom:1px solid #eee;font-size:13px"><span>'+d.name+'</span><i class="ti ti-trash" style="color:#dc2626;cursor:pointer" onclick="deleteDept(\''+d._id+'\')"></i></div>'});wrap.innerHTML=html;}
+    function addDept(){var val=document.getElementById('dept-new-name').value.trim();if(!val)return;DB.insert('departments',{name:val});document.getElementById('dept-new-name').value='';renderDeptList();refreshDeptDropdown();}
+    function deleteDept(id){customConfirm('Delete this department?', function(){ DB.remove('departments',{_id:id});renderDeptList();refreshDeptDropdown(); });}
+    function refreshDeptDropdown(){var sel=document.getElementById('sf-department');if(!sel)return;var cur=sel.value;var html='<option value="" data-i18n="opt_select_dept">-- Select Department --</option>';var all=DB.findAll('departments').sort(function(a,b){return a.name.localeCompare(b.name)});all.forEach(function(d){html+='<option value="'+d.name+'">'+d.name+'</option>'});sel.innerHTML=html;if(cur)sel.value=cur;}
+    window.addEventListener('DOMContentLoaded', function() { setTimeout(refreshDeptDropdown, 500); });
+
+    async function changePassword() {
+      const cur = document.getElementById('cpw-current').value;
+      const new1 = document.getElementById('cpw-new').value;
+      const new2 = document.getElementById('cpw-confirm').value;
+      const msg = document.getElementById('cpw-msg');
+      if (!cur || !new1 || !new2) { msg.style.display='block'; msg.style.color='red'; msg.textContent='All fields required.'; return; }
+      if (new1 !== new2) { msg.style.display='block'; msg.style.color='red'; msg.textContent='New passwords do not match.'; return; }
+      
+      const res = await fetch('/api/auth/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') },
+        body: JSON.stringify({ currentPassword: cur, newPassword: new1 })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        msg.style.display='block'; msg.style.color='red'; msg.textContent=data.error || 'Failed to change password.';
+      } else {
+        msg.style.display='block'; msg.style.color='green'; msg.textContent='Password changed successfully!';
+        setTimeout(() => {
+          document.getElementById('modal-changepw').style.display='none';
+          document.getElementById('cpw-current').value='';
+          document.getElementById('cpw-new').value='';
+          document.getElementById('cpw-confirm').value='';
+          msg.style.display='none';
+        }, 1500);
+      }
+    }
+  
+
+// Anti-inspection security scripts
+document.addEventListener('contextmenu', function(e) { e.preventDefault(); });
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'F12' || e.keyCode === 123) { e.preventDefault(); }
+  if (e.ctrlKey && e.shiftKey && (e.key === 'I' || e.key === 'i' || e.keyCode === 73)) { e.preventDefault(); }
+  if (e.ctrlKey && e.shiftKey && (e.key === 'J' || e.key === 'j' || e.keyCode === 74)) { e.preventDefault(); }
+  if (e.ctrlKey && e.shiftKey && (e.key === 'C' || e.key === 'c' || e.keyCode === 67)) { e.preventDefault(); }
+  if (e.ctrlKey && (e.key === 'U' || e.key === 'u' || e.keyCode === 85)) { e.preventDefault(); }
 });

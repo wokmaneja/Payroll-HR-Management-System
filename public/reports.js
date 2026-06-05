@@ -498,6 +498,7 @@ tr:hover td{background:#fafafa}
 
 <script>
 var I18N_DICT = {
+  "language": { en: "Language", fr: "Langue", zh: "语言" },
   "txt_0": { en: "0", fr: "0", zh: "0" },
   "lbl_username": { en: "Username", fr: "Nom d'utilisateur", zh: "用户名" },
   "ph_enter_username": { en: "Enter username", fr: "Entrez le nom d'utilisateur", zh: "输入用户名" },
@@ -884,6 +885,10 @@ function changeLang() {
   // Remember setting if desired
   localStorage.setItem('wokmaneja_lang', lang);
 }
+
+window.translateUI = function() {
+  if (typeof changeLang === 'function') changeLang();
+};
 
 // Automatically load saved language on start
 document.addEventListener('DOMContentLoaded', function() {

@@ -27,6 +27,7 @@
   "homepage": "https://github.com/wokmaneja/Payroll-HR-Management-System#readme",
   "dependencies": {
     "adm-zip": "^0.5.10",
+    "cheerio": "^1.2.0",
     "cors": "^2.8.6",
     "express": "^5.2.1",
     "node-fetch": "^2.7.0",
