@@ -168,35 +168,37 @@ async function verifyRemoteLicense(licenseData) {
         const result = await httpsGet(url);
         if (result.status === 200) {
             const issues = JSON.parse(result.body);
-            const machineIssue = issues.find(issue => issue.body && issue.body.includes(`**Machine ID:** ${MACHINE_ID}`));
-            if (!machineIssue) return;
-
-            if (machineIssue.state === 'closed' && machineIssue.body.includes(`**License Key:** ${licenseData.key}`)) {
-                console.log(`[License] Remote deactivation detected for ${licenseData.key}. Erasing local license.`);
-                await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
-                return;
-            }
-
-            if (machineIssue.state === 'open') {
-                const keyMatch = machineIssue.body.match(/\*\*License Key:\*\* (.*)/);
-                const expiresMatch = machineIssue.body.match(/\*\*Expires:\*\* (.*)/);
-                const planMatch = machineIssue.body.match(/\*\*Plan:\*\* (.*)/);
+            
+            // Find all issues related to our license key
+            const keyIssues = issues.filter(issue => issue.body && issue.body.includes(`**License Key:** ${licenseData.key}`));
+            
+            if (keyIssues.length > 0) {
+                // Find if any of these issues is active AND belongs to our machine
+                const ourActiveIssue = keyIssues.find(issue => issue.state === 'open' && issue.body.includes(`**Machine ID:** ${MACHINE_ID}`));
                 
-                if (keyMatch && expiresMatch) {
-                    const remoteKey = keyMatch[1].trim();
-                    const remoteExpires = new Date(expiresMatch[1].trim());
-                    const localExpires = new Date(licenseData.expires);
-
-                    if (remoteKey !== licenseData.key || remoteExpires > localExpires) {
-                        console.log(`[License] Auto-Renewal detected. Updating to new key: ${remoteKey}`);
-                        const newLicenseData = {
-                            key: remoteKey,
-                            company: licenseData.company,
-                            plan: planMatch ? planMatch[1].trim() : licenseData.plan,
-                            expires: remoteExpires.toISOString()
-                        };
-                        const encrypted = encryptLicense(newLicenseData);
-                        await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
+                if (!ourActiveIssue) {
+                    // The license was closed, unlocked, or transferred to another machine
+                    console.log(`[License] Remote license deactivated or transferred for ${licenseData.key}. Erasing local license.`);
+                    await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+                    return false;
+                } else {
+                    // We have an active issue. Check if it was renewed.
+                    const expiresMatch = ourActiveIssue.body.match(/\*\*Expires:\*\* (.*)/);
+                    const planMatch = ourActiveIssue.body.match(/\*\*Plan:\*\* (.*)/);
+                    if (expiresMatch) {
+                        const remoteExpires = new Date(expiresMatch[1].trim());
+                        const localExpires = new Date(licenseData.expires);
+                        if (remoteExpires > localExpires) {
+                            console.log(`[License] Auto-Renewal detected. Updating expiry.`);
+                            const newLicenseData = {
+                                key: licenseData.key,
+                                company: licenseData.company,
+                                plan: planMatch ? planMatch[1].trim() : licenseData.plan,
+                                expires: remoteExpires.toISOString()
+                            };
+                            const encrypted = encryptLicense(newLicenseData);
+                            await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
+                        }
                     }
                 }
             }

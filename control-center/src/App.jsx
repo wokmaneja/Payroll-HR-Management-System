@@ -154,10 +154,10 @@ function App() {
     const planMatch = issue.body?.match(/\*\*Plan:\*\* (.*)/);
     const expiresMatch = issue.body?.match(/\*\*Expires:\*\* (.*)/);
 
-    const oldCompany = companyMatch ? companyMatch[1] : 'Unknown';
-    const oldKey = keyMatch ? keyMatch[1] : 'Unknown';
-    const oldPlan = planMatch ? planMatch[1] : 'Unknown';
-    const oldExpiry = expiresMatch ? expiresMatch[1] : new Date().toISOString();
+    const oldCompany = companyMatch ? companyMatch[1].trim() : 'Unknown';
+    const oldKey = keyMatch ? keyMatch[1].trim() : 'Unknown';
+    const oldPlan = planMatch ? planMatch[1].trim() : 'Unknown';
+    const oldExpiry = expiresMatch ? expiresMatch[1].trim() : new Date().toISOString();
 
     const newBody = `**License Key:** ${oldKey}\n**Company:** ${oldCompany}\n**Machine ID:** UNLOCKED\n**Plan:** ${oldPlan}\n**Expires:** ${oldExpiry}`;
 
@@ -192,9 +192,9 @@ function App() {
     const planMatch = issue.body?.match(/\*\*Plan:\*\* (.*)/);
     const expiresMatch = issue.body?.match(/\*\*Expires:\*\* (.*)/);
 
-    const oldCompany = companyMatch ? companyMatch[1] : 'Unknown';
-    const oldMachine = machineMatch ? machineMatch[1] : 'Unknown';
-    const oldPlanStr = planMatch ? planMatch[1] : 'Unknown';
+    const oldCompany = companyMatch ? companyMatch[1].trim() : 'Unknown';
+    const oldMachine = machineMatch ? machineMatch[1].trim() : 'Unknown';
+    const oldPlanStr = planMatch ? planMatch[1].trim() : 'Unknown';
     
     // Determine new plan and duration
     let durStr = choice === '1' ? '1M' : '1Y';
