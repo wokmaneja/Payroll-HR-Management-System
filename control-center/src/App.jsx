@@ -146,6 +146,43 @@ function App() {
     }
   };
 
+  const handleLock = async (issue) => {
+    const newMachineId = window.prompt('Enter the specific Machine ID you want to lock this license to:');
+    if (!newMachineId || newMachineId.trim() === '') return;
+    
+    const companyMatch = issue.body?.match(/\*\*Company:\*\* (.*)/);
+    const keyMatch = issue.body?.match(/\*\*License Key:\*\* (.*)/);
+    const planMatch = issue.body?.match(/\*\*Plan:\*\* (.*)/);
+    const expiresMatch = issue.body?.match(/\*\*Expires:\*\* (.*)/);
+
+    const oldCompany = companyMatch ? companyMatch[1].trim() : 'Unknown';
+    const oldKey = keyMatch ? keyMatch[1].trim() : 'Unknown';
+    const oldPlan = planMatch ? planMatch[1].trim() : 'Unknown';
+    const oldExpiry = expiresMatch ? expiresMatch[1].trim() : new Date().toISOString();
+
+    const newBody = `**License Key:** ${oldKey}\n**Company:** ${oldCompany}\n**Machine ID:** ${newMachineId.trim()}\n**Plan:** ${oldPlan}\n**Expires:** ${oldExpiry}`;
+
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issue.number}`, {
+        method: 'PATCH',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ body: newBody })
+      });
+      if (res.ok) {
+        alert(`Successfully locked license to Machine ID: ${newMachineId.trim()}`);
+        fetchIssues('license-activation');
+      } else {
+        alert('Failed to lock license.');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  };
+
   const handleUnlock = async (issue) => {
     if (!window.confirm('Are you sure you want to unlock the machine ID for this license?')) return;
     
@@ -354,9 +391,15 @@ function App() {
                         </button>
                         {isActive && (
                           <>
-                            <button onClick={() => handleUnlock(issue)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--accent)', borderColor: 'var(--accent)' }}>
-                              Unlock
-                            </button>
+                            {machineMatch && machineMatch[1].trim() === 'UNLOCKED' ? (
+                              <button onClick={() => handleLock(issue)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--accent)', borderColor: 'var(--accent)' }}>
+                                Lock
+                              </button>
+                            ) : (
+                              <button onClick={() => handleUnlock(issue)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--accent)', borderColor: 'var(--accent)' }}>
+                                Unlock
+                              </button>
+                            )}
                             <button onClick={() => handleDeactivate(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--danger)', borderColor: 'var(--danger)' }}>
                               Deactivate
                             </button>
