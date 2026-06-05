@@ -311,38 +311,41 @@ function App() {
   }
 
   return (
-    <div className="container">
-      <header className="header">
-        <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-            <Activity color="var(--accent)" /> WokManeja Control
-          </h1>
-          <p style={{ color: 'var(--text-secondary)' }}>Centralized license and telemetry management.</p>
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+      <header style={{ height: '60px', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
+        <div style={{ fontWeight: '800', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <Activity color="var(--accent)" size={20} />
+          <span>Wok<span style={{ color: 'var(--accent)' }}>Maneja</span></span> 
+          <span style={{ fontWeight: 400, opacity: 0.7, fontSize: '13px', marginLeft: '4px' }}>Control Center</span>
         </div>
-        <button onClick={handleLogout} className="btn" style={{ background: 'rgba(255,255,255,0.1)', border: '1px solid rgba(255,255,255,0.2)', width: 'auto' }}>
-          <LogOut size={16} /> Logout
+        <button onClick={handleLogout} className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', fontSize: '12px', width: 'auto' }}>
+          <LogOut size={14} /> Logout
         </button>
       </header>
 
-      <div className="nav-tabs">
-        <button className={`tab ${activeTab === 'licenses' ? 'active' : ''}`} onClick={() => setActiveTab('licenses')}>
-          Active Licenses
-        </button>
-        <button className={`tab ${activeTab === 'installs' ? 'active' : ''}`} onClick={() => setActiveTab('installs')}>
-          App Installs
-        </button>
-        <button className={`tab ${activeTab === 'errors' ? 'active' : ''}`} onClick={() => setActiveTab('errors')}>
-          Error Logs
-        </button>
-        <button className={`tab ${activeTab === 'updates' ? 'active' : ''}`} onClick={() => setActiveTab('updates')} style={{ marginLeft: 'auto', border: '1px solid var(--accent)' }}>
-          <UploadCloud size={14} style={{ marginRight: '6px' }} /> Push Update
-        </button>
-        <button className={`tab ${activeTab === 'generator' ? 'active' : ''}`} onClick={() => setActiveTab('generator')} style={{ border: '1px solid var(--accent)' }}>
-          <PlusSquare size={14} style={{ marginRight: '6px' }} /> Key Generator
-        </button>
-      </div>
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+        <div style={{ width: '250px', background: 'var(--bg)', borderRight: '1px solid var(--border-color)', padding: '20px 10px', display: 'flex', flexDirection: 'column', gap: '4px', overflowY: 'auto' }}>
+          <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', padding: '0 12px', marginBottom: '8px', letterSpacing: '0.05em' }}>MAIN MENU</div>
+          <button className={`sidebar-item ${activeTab === 'licenses' ? 'active' : ''}`} onClick={() => setActiveTab('licenses')}>
+            <KeyRound size={18} /> Active Licenses
+          </button>
+          <button className={`sidebar-item ${activeTab === 'installs' ? 'active' : ''}`} onClick={() => setActiveTab('installs')}>
+            <Download size={18} /> App Installs
+          </button>
+          <div style={{ fontSize: '11px', fontWeight: '700', color: 'var(--text-secondary)', padding: '0 12px', marginTop: '16px', marginBottom: '8px', letterSpacing: '0.05em' }}>TOOLS</div>
+          <button className={`sidebar-item ${activeTab === 'generator' ? 'active' : ''}`} onClick={() => setActiveTab('generator')}>
+            <PlusSquare size={18} /> Key Generator
+          </button>
+          <button className={`sidebar-item ${activeTab === 'updates' ? 'active' : ''}`} onClick={() => setActiveTab('updates')}>
+            <UploadCloud size={18} /> Push Update
+          </button>
+          <button className={`sidebar-item ${activeTab === 'errors' ? 'active' : ''}`} onClick={() => setActiveTab('errors')}>
+            <ShieldAlert size={18} /> Error Logs
+          </button>
+        </div>
 
-      <div className="glass-card" style={{ minHeight: '400px' }}>
+        <div style={{ flex: 1, padding: '30px', overflowY: 'auto', background: 'var(--bg-main)' }}>
+          <div className="glass-card" style={{ minHeight: 'calc(100vh - 120px)' }}>
         {loading ? (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '200px' }}>
             <div className="loader"></div>
@@ -591,13 +594,11 @@ function App() {
             )}
           </div>
         )}
+          </div>
+        </div>
       </div>
     </div>
   );
 }
 
 export default App;
-
-// Force GH actions update
-\ n  
- 
