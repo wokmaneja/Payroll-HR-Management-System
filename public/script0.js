@@ -1171,14 +1171,14 @@ async function renderLicenseStatus(){
       var badge=data.plan==='pro'?'<span class="badge badge-manager" style="margin-left:8px">PRO</span>':'<span class="badge badge-admin" style="margin-left:8px">ENTERPRISE</span>';
       card.style.background='#ddf0dd';card.style.color='#27500a';
       card.innerHTML='<i class="ti ti-circle-check" style="font-size:16px"></i> Hardware-Locked License'+badge+'<br><span style="font-size:11px;font-weight:400;opacity:.8">Expires: '+new Date(data.expires).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+' ('+data.daysLeft+' days left)</span>' +
-                     '<br><div style="font-family:monospace;font-size:11px;margin-top:4px;padding:4px;background:rgba(255,255,255,0.5);border-radius:4px">Key: ' + (data.key || 'Unknown') + '</div>' +
+                     '<br><div style="font-family:monospace;font-size:11px;margin-top:4px;padding:4px;background:rgba(255,255,255,0.5);border-radius:4px">Key: ' + (data.key || 'Unknown') + ' | Machine ID: ' + (data.machineId || 'Unknown') + '</div>' +
                      '<button onclick="transferLicense()" style="margin-top:8px;font-size:10px;padding:2px 6px;border-radius:4px;border:1px solid #27500a;background:transparent;color:#27500a;cursor:pointer">Transfer License</button>';
     }else if(data.status==='expired'){
       card.style.background='#fff0f0';card.style.color='#a32d2d';
-      card.innerHTML='<i class="ti ti-alert-circle" style="font-size:16px"></i> License Expired<br><span style="font-size:11px;font-weight:400">Please enter a new license key to continue.</span>';
+      card.innerHTML='<i class="ti ti-alert-circle" style="font-size:16px"></i> License Expired<br><span style="font-size:11px;font-weight:400">Please enter a new license key to continue.</span><br><div style="font-family:monospace;font-size:11px;margin-top:4px;padding:4px;background:rgba(255,255,255,0.5);border-radius:4px">Machine ID: ' + (data.machineId || 'Unknown') + '</div>';
     }else{
       card.style.background='#fff0f0';card.style.color='#a32d2d';
-      card.innerHTML='<i class="ti ti-lock" style="font-size:16px"></i> License Missing or Hardware Mismatch<br><span style="font-size:11px;font-weight:400">Enter a valid license key bound to this machine.</span>';
+      card.innerHTML='<i class="ti ti-lock" style="font-size:16px"></i> License Missing or Hardware Mismatch<br><span style="font-size:11px;font-weight:400">Enter a valid license key bound to this machine.</span><br><div style="font-family:monospace;font-size:11px;margin-top:4px;padding:4px;background:rgba(255,255,255,0.5);border-radius:4px">Machine ID: ' + (data.machineId || 'Unknown') + '</div>';
     }
   } catch (e) {
       card.style.background='#fff0f0';card.style.color='#a32d2d';

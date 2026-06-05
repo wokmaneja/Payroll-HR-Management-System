@@ -98,13 +98,13 @@ app.post('/api/auth/login', async (req, res) => {
         // Hardware License Lock Check
         const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         if (licRows.length === 0) {
-            return res.status(402).json({ error: 'License Required', reason: 'missing' });
+            return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
         }
         const dbLicense = JSON.parse(licRows[0].data);
         const licenseData = decryptLicense(dbLicense);
         
         if (!licenseData) {
-            return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware' });
+            return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware', machineId: MACHINE_ID });
         }
         
         const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
@@ -114,7 +114,7 @@ app.post('/api/auth/login', async (req, res) => {
             currentCompanyName = (compData.name || '').trim();
         }
         if (licenseData.company && licenseData.company !== currentCompanyName) {
-            return res.status(403).json({ error: 'Company Mismatch', reason: 'company' });
+            return res.status(403).json({ error: 'Company Mismatch', reason: 'company', machineId: MACHINE_ID });
         }
 
         if (new Date(licenseData.expires) < new Date()) {
@@ -126,11 +126,11 @@ app.post('/api/auth/login', async (req, res) => {
                  const newDbLicense = JSON.parse(updatedRows[0].data);
                  const newLicenseData = decryptLicense(newDbLicense);
                  if (!newLicenseData || new Date(newLicenseData.expires) < new Date()) {
-                     return res.status(402).json({ error: 'License Expired', reason: 'expired' });
+                     return res.status(402).json({ error: 'License Expired', reason: 'expired', machineId: MACHINE_ID });
                  }
                  licenseData = newLicenseData;
             } else {
-                 return res.status(402).json({ error: 'License Required', reason: 'missing' });
+                 return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
             }
         }
 
@@ -255,12 +255,12 @@ app.get('/api/public/company', async (req, res) => {
 app.get('/api/license/status', async (req, res) => {
     try {
         const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
-        if (licRows.length === 0) return res.json({ status: 'missing' });
+        if (licRows.length === 0) return res.json({ status: 'missing', machineId: MACHINE_ID });
         
         const dbLicense = JSON.parse(licRows[0].data);
         const licenseData = decryptLicense(dbLicense);
         
-        if (!licenseData) return res.json({ status: 'hardware_mismatch' });
+        if (!licenseData) return res.json({ status: 'hardware_mismatch', machineId: MACHINE_ID });
         
         const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
         let currentCompanyName = '';
@@ -269,17 +269,17 @@ app.get('/api/license/status', async (req, res) => {
             currentCompanyName = (compData.name || '').trim();
         }
         if (licenseData.company && licenseData.company !== currentCompanyName) {
-            return res.json({ status: 'company_mismatch' });
+            return res.json({ status: 'company_mismatch', machineId: MACHINE_ID });
         }
         
         const now = new Date();
         const exp = new Date(licenseData.expires);
-        if (exp < now) return res.json({ status: 'expired', expires: licenseData.expires });
+        if (exp < now) return res.json({ status: 'expired', expires: licenseData.expires, machineId: MACHINE_ID });
         
         const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const expDate = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate());
         const daysLeft = Math.round((expDate - nowDate) / (1000 * 60 * 60 * 24));
-        res.json({ status: 'active', key: licenseData.key, plan: licenseData.plan, expires: licenseData.expires, daysLeft });
+        res.json({ status: 'active', key: licenseData.key, plan: licenseData.plan, expires: licenseData.expires, daysLeft, machineId: MACHINE_ID });
     } catch (err) {
         res.status(500).json({ error: 'Internal Error' });
     }
