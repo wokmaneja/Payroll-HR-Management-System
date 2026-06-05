@@ -391,17 +391,33 @@ function App() {
                 {installs.map(issue => {
                   const versionMatch = issue.body?.match(/\*\*Version:\*\* (.*)/);
                   const machineMatch = issue.body?.match(/\*\*Machine ID:\*\* (.*)/);
+                  const lastOnlineMatch = issue.body?.match(/\*\*Last Online:\*\* (.*)/);
+                  
+                  let isOnline = false;
+                  if (lastOnlineMatch) {
+                      const lastOnline = new Date(lastOnlineMatch[1].trim());
+                      const diffMinutes = (new Date() - lastOnline) / 1000 / 60;
+                      if (diffMinutes <= 10) isOnline = true;
+                  }
                   
                   return (
                     <tr key={issue.id}>
                       <td>
-                        <span className="badge badge-success">
-                          <Download size={12} /> Installed
-                        </span>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem', alignItems: 'flex-start' }}>
+                          <span className="badge badge-success">
+                            <Download size={12} /> Installed
+                          </span>
+                          <span style={{ fontSize: '0.65rem', padding: '0.2rem 0.5rem', borderRadius: '4px', background: isOnline ? 'var(--success)' : 'var(--text-secondary)', color: '#fff', fontWeight: 'bold' }}>
+                            {isOnline ? 'ONLINE' : 'OFFLINE'}
+                          </span>
+                        </div>
                       </td>
                       <td><span className="badge badge-info">{versionMatch ? versionMatch[1] : 'v1.0.0'}</span></td>
                       <td style={{ fontFamily: 'monospace', fontSize: '0.85rem' }}>{machineMatch ? machineMatch[1] : 'Unknown'}</td>
-                      <td>{new Date(issue.created_at).toLocaleString()}</td>
+                      <td>
+                        {new Date(issue.created_at).toLocaleString()}
+                        {lastOnlineMatch && <div style={{ fontSize: '0.7rem', color: 'var(--text-secondary)', marginTop: '0.2rem' }}>Last ping: {new Date(lastOnlineMatch[1].trim()).toLocaleTimeString()}</div>}
+                      </td>
                     </tr>
                   );
                 })}

@@ -469,7 +469,79 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
                     } catch(e) {}
                 }
             });
-            
+
+            // Telemetry Heartbeat
+            const githubTokenForHeartbeat = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+            if (githubTokenForHeartbeat !== 'YOUR_GITHUB_PAT_HERE') {
+                const fetch = require('node-fetch') || global.fetch;
+                
+                const pingOnline = async () => {
+                    try {
+                        let issueNum = null;
+                        
+                        // Check if we already saved the issue number
+                        const issueDoc = await new Promise(res => db.get("SELECT data FROM docs WHERE id = 'install_issue' AND collection = 'settings'", [], (err, row) => res(row)));
+                        if (issueDoc && issueDoc.data) {
+                            issueNum = JSON.parse(issueDoc.data).issueNumber;
+                        }
+
+                        if (!issueNum) {
+                            // Find it via API
+                            const searchRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?labels=app-install&state=all`, {
+                                headers: {
+                                    'Authorization': `token ${githubTokenForHeartbeat}`,
+                                    'User-Agent': 'WokManeja-App'
+                                }
+                            });
+                            if (searchRes.ok) {
+                                const issues = await searchRes.json();
+                                const myIssue = issues.find(i => i.body && i.body.includes(MACHINE_ID));
+                                if (myIssue) {
+                                    issueNum = myIssue.number;
+                                    db.run("INSERT OR REPLACE INTO docs (id, collection, data) VALUES (?, ?, ?)", ['install_issue', 'settings', JSON.stringify({ issueNumber: issueNum })]);
+                                }
+                            }
+                        }
+
+                        if (issueNum) {
+                            // Fetch existing body to preserve it
+                            const issueRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNum}`, {
+                                headers: {
+                                    'Authorization': `token ${githubTokenForHeartbeat}`,
+                                    'User-Agent': 'WokManeja-App'
+                                }
+                            });
+                            if (issueRes.ok) {
+                                const issue = await issueRes.json();
+                                let body = issue.body || '';
+                                if (body.includes('**Last Online:**')) {
+                                    body = body.replace(/\*\*Last Online:\*\* .*/, `**Last Online:** ${new Date().toISOString()}`);
+                                } else {
+                                    body += `\n**Last Online:** ${new Date().toISOString()}`;
+                                }
+                                
+                                await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNum}`, {
+                                    method: 'PATCH',
+                                    headers: {
+                                        'Authorization': `token ${githubTokenForHeartbeat}`,
+                                        'Accept': 'application/vnd.github.v3+json',
+                                        'Content-Type': 'application/json',
+                                        'User-Agent': 'WokManeja-App'
+                                    },
+                                    body: JSON.stringify({ body })
+                                });
+                            }
+                        }
+                    } catch (e) {
+                        console.error("Heartbeat error", e);
+                    }
+                };
+                
+                // Ping immediately, then every 5 minutes
+                setTimeout(pingOnline, 5000);
+                setInterval(pingOnline, 5 * 60 * 1000);
+            }
+
             // Seed default admin user if database is completely empty
             db.all("SELECT id FROM docs WHERE collection = 'users'", [], (err, rows) => {
                 if (!err && rows.length === 0) {
@@ -920,7 +992,15 @@ app.post('/api/admin/apply-update', async (req, res) => {
         fs.unlinkSync(zipPath);
 
         console.log(`[Updater] Update ${tag} applied. Restarting...`);
-        setTimeout(() => process.exit(0), 1500); // PM2 / restart will relaunch
+        setTimeout(() => {
+            const { spawn } = require('child_process');
+            const child = spawn(process.argv[0], process.argv.slice(1), {
+                detached: true,
+                stdio: 'ignore'
+            });
+            child.unref();
+            process.exit(0);
+        }, 1500);
 
     } catch (err) {
         console.error('[Updater] Error applying update:', err);
