@@ -16,6 +16,15 @@ if (fs.existsSync('.env')) {
     });
 }
 
+const OBFUSCATED_TOKEN_PLACEHOLDER = \'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE\';
+function getAppToken() {
+    if (process.env.GITHUB_PAT && process.env.GITHUB_PAT !== \'YOUR_GITHUB_PAT_HERE\') return process.env.GITHUB_PAT;
+    if (OBFUSCATED_TOKEN_PLACEHOLDER !== \'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE\') {
+        try { return Buffer.from(OBFUSCATED_TOKEN_PLACEHOLDER, \'base64\').toString(\'utf8\').split(\'\').map(c => String.fromCharCode(c.charCodeAt(0) ^ 42)).join(\'\'); } catch(e){}
+    }
+    return \'YOUR_GITHUB_PAT_HERE\';
+}
+
 // ─── Hardware License Security ───────────────────────────────────────────────
 const MACHINE_ID = machineIdSync({original: true});
 const HARDWARE_KEY = crypto.createHash('sha256').update(MACHINE_ID).digest();
@@ -337,7 +346,7 @@ app.post('/api/license/activate', async (req, res) => {
         }
         // Notify GitHub that this license has been used
         try {
-            const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+            const githubToken = getAppToken();
             if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
                 const issueBody = `**License Key:** ${key}\n**Company:** ${companyName || 'N/A'}\n**Machine ID:** ${MACHINE_ID}\n**Plan:** ${plan.toUpperCase()}\n**Expires:** ${expires.toISOString()}`;
                 fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
@@ -375,7 +384,7 @@ app.post('/api/license/unlock', async (req, res) => {
         const licenseData = decryptLicense(JSON.parse(licRows[0].data));
         if (!licenseData) return res.status(400).json({ error: 'Invalid license.' });
         
-        const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+        const githubToken = getAppToken();
         if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
             const fetch = require('node-fetch') || global.fetch;
             const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?state=all&labels=license-activation`;
@@ -486,7 +495,7 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
             db.all("SELECT id FROM docs WHERE id = 'install_reported' AND collection = 'settings'", [], (err, rows) => {
                 if (!err && rows.length === 0) {
                     try {
-                        const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+                        const githubToken = getAppToken();
                         if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
                             const fetch = require('node-fetch') || global.fetch;
                             fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
@@ -513,7 +522,7 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
             });
 
             // Telemetry Heartbeat
-            const githubTokenForHeartbeat = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+            const githubTokenForHeartbeat = getAppToken();
             if (githubTokenForHeartbeat !== 'YOUR_GITHUB_PAT_HERE') {
                 const fetch = require('node-fetch') || global.fetch;
                 
@@ -895,7 +904,7 @@ app.post('/api/admin/resolve-errors', async (req, res) => {
                 return res.status(402).json({ error: 'License Expired' });
             }
 
-            const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+            const githubToken = getAppToken();
             if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
                 const fetch = require('node-fetch') || global.fetch;
                 for (const err of errors) {
