@@ -1691,12 +1691,12 @@ function renderStaffDashboard(){
   allHR.forEach(function(r){
     if(r.status!=='Approved')return;
     if(r.type==='Annual Leave'){
-      var d1=new Date(r.start);var d2=new Date(r.end);
+      var d1=new Date(r.startDate);var d2=new Date(r.endDate);
       var days=(d2-d1)/(1000*3600*24)+1;
       usedAnnual+=Math.max(0,days);
     }
     if(r.type==='Sick Leave'){
-      var d1=new Date(r.start);var d2=new Date(r.end);
+      var d1=new Date(r.startDate);var d2=new Date(r.endDate);
       var days=(d2-d1)/(1000*3600*24)+1;
       usedSick+=Math.max(0,days);
     }
@@ -1716,7 +1716,7 @@ function renderStaffDashboard(){
   if(!mySlips.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_payslips">No payslips yet.</span></p>'}else{var recent=mySlips.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_period">Period</span></th><th style="text-align:right"><span data-i18n="tbl_net_pay">Net Pay</span></th></tr></thead><tbody>';recent.forEach(function(p){var pr=getPeriodRange(p);var periodStr=pr.start&&pr.end?fmtDate(pr.start)+' &ndash; '+fmtDate(pr.end):p.month+' '+p.year;html+='<tr><td style="font-size:12px">'+periodStr+'</td><td style="text-align:right;font-weight:700;color:#000000">'+vuvFmt(p.net)+'</td></tr>';});html+='</tbody></table>';}
   html+='</div>';
   html+='<div class="card"><p style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #f0f0f0"><i class="fa-solid fa-calendar-check" style="color:var(--gold)"></i> <span data-i18n="lbl_my_recent_leave">My Recent Leave Requests</span></p>';
-  if(!allHR.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_leave_req">No leave requests yet.</span></p>'}else{var recentHR=allHR.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_type">Type</span></th><th><span data-i18n="tbl_period">Dates</span></th><th><span data-i18n="tbl_status">Status</span></th></tr></thead><tbody>';recentHR.forEach(function(r){html+='<tr><td style="font-size:12px">'+r.type+'</td><td style="font-size:12px">'+r.start+' to '+r.end+'</td><td><span class="status-pill '+pillClass(r.status)+'">'+r.status+'</span></td></tr>';});html+='</tbody></table>';}
+  if(!allHR.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_leave_req">No leave requests yet.</span></p>'}else{var recentHR=allHR.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_type">Type</span></th><th><span data-i18n="tbl_period">Dates</span></th><th><span data-i18n="tbl_status">Status</span></th></tr></thead><tbody>';recentHR.forEach(function(r){html+='<tr><td style="font-size:12px">'+r.type+'</td><td style="font-size:12px">'+fmtDate(r.startDate)+' to '+fmtDate(r.endDate)+'</td><td><span class="status-pill '+pillClass(r.status)+'">'+r.status+'</span></td></tr>';});html+='</tbody></table>';}
   html+='</div></div>';
   document.getElementById('dashboard-content').innerHTML=html;
 }
