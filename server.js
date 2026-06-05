@@ -279,7 +279,7 @@ app.get('/api/license/status', async (req, res) => {
         const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const expDate = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate());
         const daysLeft = Math.round((expDate - nowDate) / (1000 * 60 * 60 * 24));
-        res.json({ status: 'active', plan: licenseData.plan, expires: licenseData.expires, daysLeft });
+        res.json({ status: 'active', key: licenseData.key, plan: licenseData.plan, expires: licenseData.expires, daysLeft });
     } catch (err) {
         res.status(500).json({ error: 'Internal Error' });
     }
@@ -363,6 +363,46 @@ app.post('/api/license/activate', async (req, res) => {
         
         res.json({ success: true, plan, expires: payload.expires });
     } catch (err) {
+        res.status(500).json({ error: 'Internal Error' });
+    }
+});
+
+app.post('/api/license/unlock', async (req, res) => {
+    try {
+        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (licRows.length === 0) return res.status(400).json({ error: 'No license to unlock.' });
+        
+        const licenseData = decryptLicense(JSON.parse(licRows[0].data));
+        if (!licenseData) return res.status(400).json({ error: 'Invalid license.' });
+        
+        const githubToken = process.env.GITHUB_PAT || 'YOUR_GITHUB_PAT_HERE';
+        if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
+            const fetch = require('node-fetch') || global.fetch;
+            const url = `https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?state=all&labels=license-activation`;
+            const result = await fetch(url, { headers: { 'Authorization': `token ${githubToken}` } });
+            if (result.ok) {
+                const issues = await result.json();
+                const ourActiveIssue = issues.find(issue => issue.state === 'open' && issue.body && issue.body.includes(`**Machine ID:** ${MACHINE_ID}`));
+                if (ourActiveIssue) {
+                    const newBody = ourActiveIssue.body.replace(`**Machine ID:** ${MACHINE_ID}`, `**Machine ID:** UNLOCKED`);
+                    await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${ourActiveIssue.number}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `token ${githubToken}`,
+                            'Accept': 'application/vnd.github.v3+json',
+                            'Content-Type': 'application/json',
+                            'User-Agent': 'WokManeja-App'
+                        },
+                        body: JSON.stringify({ body: newBody })
+                    });
+                }
+            }
+        }
+        
+        await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        res.json({ success: true });
+    } catch (err) {
+        console.error('Failed to unlock:', err);
         res.status(500).json({ error: 'Internal Error' });
     }
 });
