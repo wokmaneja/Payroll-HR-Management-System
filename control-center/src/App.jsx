@@ -311,6 +311,30 @@ function App() {
     }
   };
 
+  const handleDelete = async (issueNumber) => {
+    if (!window.confirm('Are you sure you want to permanently delete this item from the list?')) return;
+    try {
+      const res = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNumber}/labels`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `token ${token}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ labels: ['deleted'] })
+      });
+      if (res.ok) {
+        setLicenses(licenses.filter(lic => lic.number !== issueNumber));
+        setErrors(errors.filter(err => err.number !== issueNumber));
+        setInstalls(installs.filter(inst => inst.number !== issueNumber));
+      } else {
+        alert('Failed to delete item.');
+      }
+    } catch (err) {
+      alert('Network error.');
+    }
+  };
+
   if (!isLogged) {
     return (
       <div className="login-overlay">
@@ -423,7 +447,7 @@ function App() {
                       <td><span className="badge badge-info">{planMatch ? planMatch[1] : 'Unknown'}</span></td>
                       <td>{new Date(issue.created_at).toLocaleDateString()}</td>
                       <td><span className="badge badge-warning" style={{ background: 'rgba(245, 158, 11, 0.1)', color: 'var(--warning)', border: '1px solid var(--warning)' }}>{expiresMatch ? new Date(expiresMatch[1]).toLocaleDateString() : 'Unknown'}</span></td>
-                      <td style={{ display: 'flex', gap: '8px' }}>
+                      <td style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                         <button onClick={() => handleRenew(issue)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: 'var(--success)', borderColor: 'var(--success)' }}>
                           Renew
                         </button>
@@ -443,6 +467,9 @@ function App() {
                             </button>
                           </>
                         )}
+                        <button onClick={() => handleDelete(issue.number)} className="btn btn-primary" style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', background: '#555', borderColor: '#555' }}>
+                          Delete
+                        </button>
                       </td>
                     </tr>
                   );
