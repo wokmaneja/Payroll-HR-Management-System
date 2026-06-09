@@ -16,13 +16,13 @@ if (fs.existsSync('.env')) {
     });
 }
 
-const OBFUSCATED_TOKEN_PLACEHOLDER = \'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE\';
+const OBFUSCATED_TOKEN_PLACEHOLDER = 'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE';
 function getAppToken() {
-    if (process.env.GITHUB_PAT && process.env.GITHUB_PAT !== \'YOUR_GITHUB_PAT_HERE\') return process.env.GITHUB_PAT;
-    if (OBFUSCATED_TOKEN_PLACEHOLDER !== \'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE\') {
-        try { return Buffer.from(OBFUSCATED_TOKEN_PLACEHOLDER, \'base64\').toString(\'utf8\').split(\'\').map(c => String.fromCharCode(c.charCodeAt(0) ^ 42)).join(\'\'); } catch(e){}
+    if (process.env.GITHUB_PAT && process.env.GITHUB_PAT !== 'YOUR_GITHUB_PAT_HERE') return process.env.GITHUB_PAT;
+    if (OBFUSCATED_TOKEN_PLACEHOLDER !== 'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE') {
+        try { return Buffer.from(OBFUSCATED_TOKEN_PLACEHOLDER, 'base64').toString('utf8').split('').map(c => String.fromCharCode(c.charCodeAt(0) ^ 42)).join(''); } catch(e){}
     }
-    return \'YOUR_GITHUB_PAT_HERE\';
+    return 'YOUR_GITHUB_PAT_HERE';
 }
 
 // ─── Hardware License Security ───────────────────────────────────────────────
@@ -309,6 +309,7 @@ app.post('/api/license/activate', async (req, res) => {
         else if (key.includes('-1Y-')) addMonths = 12;
         else if (key.includes('-2Y-')) addMonths = 24;
         else if (key.includes('-5Y-')) addMonths = 60;
+        else if (key.includes('-LIFETIME-')) addMonths = 1200;
         
         let expires = new Date();
         const existingLic = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
