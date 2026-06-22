@@ -563,6 +563,7 @@ function App() {
                 <option value="1Y">1 Year</option>
                 <option value="2Y">2 Years</option>
                 <option value="5Y">5 Years</option>
+                <option value="LIFETIME">Lifetime</option>
               </select>
             </div>
             

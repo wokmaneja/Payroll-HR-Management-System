@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 780 220" width="100%" height="100%">
+  <defs>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700&amp;display=swap');
+      .main-title {
+        font-family: 'Quicksand', system-ui, sans-serif;
+        font-weight: 700;
+        font-size: 60px;
+        fill: #23272A;
+      }
+      .green-text {
+        fill: #10B981;
+      }
+      .sub-tagline {
+        font-family: 'Quicksand', system-ui, sans-serif;
+        font-weight: 500;
+        font-size: 25px;
+        fill: #555E6B;
+      }
+    </style>
+  </defs>
+  <g>
+    <g transform="translate(25, 25)">
+      <rect width="170" height="170" rx="42" fill="#111214" />
+      <path d="M 42 118 L 68 92 L 94 112 L 132 68 M 112 68 L 132 68 L 132 88" fill="none" stroke="#10B981" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+    <text x="225" y="112" class="main-title">Wok<tspan class="green-text">Maneja</tspan></text>
+    <text x="227" y="156" class="sub-tagline">Mekem wok blong yu i isi</text>
+  </g>
+</svg>
