@@ -110,7 +110,7 @@ app.post('/api/auth/login', async (req, res) => {
             return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
         }
         const dbLicense = JSON.parse(licRows[0].data);
-        const licenseData = decryptLicense(dbLicense);
+        let licenseData = decryptLicense(dbLicense);
         
         if (!licenseData) {
             return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware', machineId: MACHINE_ID });
@@ -300,7 +300,10 @@ app.post('/api/license/activate', async (req, res) => {
         if (!key || !key.startsWith('WM-')) return res.status(400).json({ error: 'Invalid license key format.' });
         
         // Mock validation with duration parsing
-        const plan = key.includes('-PRO-') ? 'pro' : 'enterprise';
+        let plan = 'enterprise'; // default fallback
+        if (key.includes('-STD-')) plan = 'standard';
+        else if (key.includes('-PRO-')) plan = 'professional';
+        else if (key.includes('-ENT-')) plan = 'enterprise';
         
         let addMonths = 12; // default 1 year
         if (key.includes('-1M-')) addMonths = 1;
@@ -477,6 +480,36 @@ app.use('/api', (req, res, next) => {
 // Determine data directory (outside executable if packaged)
 const isPkg = typeof process.pkg !== 'undefined';
 const dataPath = isPkg ? path.dirname(process.execPath) : __dirname;
+
+const uploadsPath = path.join(dataPath, 'uploads');
+if (!fs.existsSync(uploadsPath)) fs.mkdirSync(uploadsPath, { recursive: true });
+app.use('/uploads', express.static(uploadsPath));
+
+app.post('/api/upload', (req, res) => {
+    try {
+        const { filename, base64, staffName } = req.body;
+        if (!filename || !base64) return res.status(400).json({ error: 'Missing file data' });
+        
+        const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+        let buffer;
+        if (matches && matches.length === 3) {
+            buffer = Buffer.from(matches[2], 'base64');
+        } else {
+            buffer = Buffer.from(base64, 'base64');
+        }
+        
+        const safeStaffName = (staffName || 'Unassigned').replace(/[^a-zA-Z0-9.\-_ ]/g, '').trim();
+        const staffFolder = path.join(uploadsPath, safeStaffName);
+        if (!fs.existsSync(staffFolder)) fs.mkdirSync(staffFolder, { recursive: true });
+        
+        const safeName = Date.now() + '_' + filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
+        fs.writeFileSync(path.join(staffFolder, safeName), buffer);
+        res.json({ url: '/uploads/' + encodeURIComponent(safeStaffName) + '/' + safeName });
+    } catch (err) {
+        console.error('Upload Error:', err);
+        res.status(500).json({ error: 'Upload failed' });
+    }
+});
 
 // Initialize SQLite database
 const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) => {

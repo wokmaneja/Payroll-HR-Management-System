@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Business Proposal: WokManeja</title>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Montserrat', sans-serif;
+            color: #1a1a1a;
+            margin: 0;
+            padding: 50px;
+            line-height: 1.7;
+            background-color: #ffffff;
+            font-size: 15px;
+        }
+        .page-break { page-break-before: always; padding-top: 30px; }
+        h1, h2, h3, h4 { color: #0a0a0a; }
+        h1 {
+            border-bottom: 5px solid #10b981;
+            padding-bottom: 15px;
+            font-size: 3em;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+        h2 {
+            color: #10b981;
+            margin-top: 40px;
+            border-bottom: 2px solid #d8d8d8;
+            padding-bottom: 10px;
+            font-size: 1.8em;
+            font-weight: 700;
+        }
+        h3 { font-size: 1.4em; margin-top: 30px; color: #0a0a0a; }
+        p { margin-bottom: 15px; }
+        .highlight {
+            background-color: #f7f7f7;
+            border-left: 5px solid #10b981;
+            padding: 25px;
+            margin: 30px 0;
+            border-radius: 0 10px 10px 0;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+        }
+        .highlight h3 { margin-top: 0; color: #0a0a0a; font-size: 1.5em; }
+        .footer {
+            margin-top: 60px;
+            text-align: center;
+            font-size: 0.85em;
+            color: #888;
+            border-top: 1px solid #d8d8d8;
+            padding-top: 20px;
+        }
+        ul { list-style-type: none; padding-left: 0; margin-bottom: 25px; }
+        li { margin-bottom: 15px; position: relative; padding-left: 25px; }
+        li::before {
+            content: "•";
+            color: #10b981;
+            font-weight: bold;
+            display: inline-block;
+            width: 1em;
+            margin-left: -1em;
+            position: absolute;
+            left: 0;
+            font-size: 1.2em;
+        }
+        .meta-info { font-size: 1.1em; color: #555; margin-bottom: 40px; }
+        .title-page { height: 80vh; display: flex; flex-direction: column; justify-content: center; }
+        .table-of-contents {
+            background-color: #f0f0f0;
+            padding: 30px;
+            border-radius: 12px;
+            margin-top: 40px;
+        }
+        .table-of-contents h3 { margin-top: 0; color: #10b981; }
+        .table-of-contents ul { margin-bottom: 0; }
+        .table-of-contents li { margin-bottom: 10px; }
+        .table-of-contents li::before { display: none; }
+        .table-of-contents li { padding-left: 0; }
+        .pricing-table { width: 100%; border-collapse: collapse; margin-top: 20px; margin-bottom: 40px; }
+        .pricing-table th, .pricing-table td { border: 1px solid #d8d8d8; padding: 15px; text-align: left; }
+        .pricing-table th { background-color: #0a0a0a; color: #fff; font-weight: 600; }
+        .pricing-table tr:nth-child(even) { background-color: #f7f7f7; }
+        .callout {
+            background-color: #e8f5e9;
+            border: 1px solid #a5d6a7;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            color: #1b5e20;
+            font-weight: 500;
+        }
+        .feature-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin: 20px 0 30px;
+        }
+        .feature-card {
+            background: #f7f7f7;
+            border-radius: 10px;
+            padding: 20px;
+            border-top: 4px solid #10b981;
+        }
+        .feature-card h4 { margin: 0 0 8px; font-size: 1em; color: #0a0a0a; }
+        .feature-card p { margin: 0; font-size: 0.9em; color: #555; }
+        .badge {
+            display: inline-block;
+            background: #10b981;
+            color: #fff;
+            font-size: 0.75em;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            margin-left: 8px;
+            vertical-align: middle;
+        }
+        .badge-new { background: #10b981; }
+        .badge-enterprise { background: #0a0a0a; }
+    </style>
+</head>
+<body>
+
+    <div class="title-page">
+        <h1>WokManeja</h1>
+        <div class="meta-info">
+            <p><strong>Comprehensive Business Proposal</strong></p>
+            <p><strong>Version:</strong> 2.0 — June 2026</p>
+            <p><strong>Prepared for:</strong> Prospective Enterprise Clients &amp; Investors</p>
+            <p><strong>Subject:</strong> Next-Generation Local-First Payroll &amp; Full-Suite HR Management System</p>
+            <br><br>
+            <p><em>Empowering Modern Workforces with Secure, Data-Driven Human Resource Management.</em></p>
+            <p><em>Now with full HRMS — Recruitment, Document Center, Staff Discipline, and KPI Tracking.</em></p>
+        </div>
+
+        <div class="table-of-contents">
+            <h3>Table of Contents</h3>
+            <ul>
+                <li>1. Executive Summary</li>
+                <li>2. Market Challenges &amp; The Problem</li>
+                <li>3. The WokManeja Solution</li>
+                <li>4. Core Features &amp; Capabilities</li>
+                <li>5. New in v2.0 — Full HRMS Modules</li>
+                <li>6. Technical Architecture &amp; Database Scalability</li>
+                <li>7. Return on Investment (ROI) &amp; Value Proposition</li>
+                <li>8. Implementation, Onboarding &amp; Timeline</li>
+                <li>9. Proposed Pricing Structure</li>
+                <li>10. Conclusion &amp; Next Steps</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="page-break"></div>
+
+    <div class="highlight">
+        <h3>1. Executive Summary</h3>
+        <p>WokManeja is a lightweight, robust, and highly scalable Payroll and Human Resource management application meticulously tailored for modern businesses. Operating primarily as an offline-first local server, WokManeja circumvents the limitations of expensive, connectivity-dependent cloud platforms.</p>
+        <p>With Version 2.0, WokManeja evolves from a Payroll &amp; Leave tool into a <strong>full Human Resources Management System (HRMS)</strong>, adding Staff Discipline management, Work Recruitment, Document Center, Performance KPI Tracking, and a dedicated Staff Portal — all tightly integrated into one seamless platform.</p>
+        <p>It provides a seamless, modern web interface without the burden of complex cloud infrastructure or escalating recurring subscriptions. By focusing on data sovereignty, rigorous regulatory compliance (such as Vanuatu's VNPF requirements), and comprehensive analytics, WokManeja delivers an enterprise-grade solution that empowers HR departments to operate with unprecedented efficiency and security.</p>
+    </div>
+
+    <h2>2. Market Challenges &amp; The Problem</h2>
+    <p>Organizations operating in regions with unique internet infrastructure limitations and specific regulatory frameworks frequently face critical operational bottlenecks:</p>
+    <ul>
+        <li><strong>Infrastructure Dependency:</strong> Over-reliance on expensive, cloud-based HR solutions that require persistent, high-speed internet connectivity, leading to operational halts during outages.</li>
+        <li><strong>Compliance &amp; Accuracy:</strong> Complex, manual payroll disbursements leading to frequent statutory calculation errors, risking regulatory fines and employee dissatisfaction.</li>
+        <li><strong>System Fragmentation:</strong> Disjointed systems for managing staff directories, leave auditing, discipline tracking, recruitment pipelines, and performance reviews that force administrative staff to duplicate data entry.</li>
+        <li><strong>Data Privacy &amp; Security:</strong> Valid concerns associated with storing sensitive employee financial records, health data, disciplinary documentation, and identifying documents off-shore in multi-tenant cloud environments.</li>
+        <li><strong>Prohibitive Licensing:</strong> Cloud solutions often charge escalating per-user monthly fees, penalizing companies as they grow and expand their workforce.</li>
+    </ul>
+
+    <h2>3. The WokManeja Solution</h2>
+    <p>WokManeja eliminates these friction points by offering a powerful, locally-hosted platform that guarantees absolute data privacy while providing top-tier enterprise capabilities.</p>
+    <p>We believe that core business functions like payroll, disciplinary processes, and recruitment should never be hostage to internet connectivity. Our solution brings the sophisticated UX and automation of modern SaaS applications directly to your internal network, ensuring complete control over your critical business data.</p>
+
+    <div class="page-break"></div>
+
+    <h2>4. Core Features &amp; Capabilities</h2>
+    <p>WokManeja is packed with comprehensive features designed to automate and simplify every aspect of human resource management.</p>
+
+    <h3>Comprehensive Payroll Engine</h3>
+    <ul>
+        <li><strong>Automated Disbursements:</strong> Overtime, tiered severance packages, shift differentials, and custom deductions are handled seamlessly and accurately.</li>
+        <li><strong>Statutory Compliance:</strong> A single, reliable source of truth for mandatory tax tracking, national provident funds (e.g., VNPF), and banking disbursement details.</li>
+        <li><strong>Payslip Generation:</strong> Automated creation and distribution of detailed, branded PDF payslips for all staff members.</li>
+        <li><strong>Bulk Payroll Processing:</strong> Process all staff in one click with configurable weekly, fortnightly, or monthly cycles.</li>
+    </ul>
+
+    <h3>Intelligent HR Management</h3>
+    <ul>
+        <li><strong>Leave Auditing &amp; Tracking:</strong> Comprehensive state-machine management for Annual Leave, Sick Leave, Medical Claims, and Payment Advances with automated approval workflows.</li>
+        <li><strong>Staff Directory &amp; Profiles:</strong> Centralized management of employee profiles, VNPF numbers, pay cycles, banking details, and leave balances.</li>
+        <li><strong>Role-Based Access Control (RBAC):</strong> Granular security permissions for Admin, Manager, IT, and Staff roles ensuring each user only sees and acts on what they are authorized for.</li>
+        <li><strong>Notification System:</strong> Real-time in-app notifications for HR requests, vacancy postings, and disciplinary actions — with a dedicated Staff Portal notification centre.</li>
+    </ul>
+
+    <h3>Advanced Analytics &amp; Reporting</h3>
+    <ul>
+        <li><strong>Compliance Reports:</strong> Generate payroll compliance and VNPF/bank disbursement reports in seconds, with one-click PDF export.</li>
+        <li><strong>Executive Dashboard:</strong> Real-time summary of active staff, payslips issued, total net payroll, leave and advance statistics.</li>
+        <li><strong>Audit Logs:</strong> Full system activity audit trail for accountability and governance.</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2>5. New in v2.0 — Full HRMS Modules <span class="badge badge-new">NEW</span></h2>
+    <p>Version 2.0 delivers the four pillars of a complete Human Resources Management System, transforming WokManeja from a payroll tool into a comprehensive people-management platform.</p>
+
+    <div class="feature-grid">
+        <div class="feature-card">
+            <h4>📁 Document Center</h4>
+            <p>HR can securely request, upload, and manage staff documents (IDs, Driver's Licenses, Contracts, Certificates). Staff are notified and can upload their own files directly via the Staff Portal. Only the owning staff member can see their own documents.</p>
+        </div>
+        <div class="feature-card">
+            <h4>💼 Work Recruitment Management</h4>
+            <p>End-to-end recruitment pipeline management. Post internal vacancies (visible to all staff via the Staff Portal), track external candidates, manage application statuses (New → Interviewing → Hired), and attach CVs/applications. Staff can apply for vacancies internally directly from the portal.</p>
+        </div>
+        <div class="feature-card">
+            <h4>⚖️ Staff Discipline</h4>
+            <p>Enforce consistent company policies and transparent documentation. HR can log incidents with severity levels, request staff explanations digitally, track disciplinary status (Pending Explanation → Under Review → Finalized), and record final corrective actions — all in a fully auditable workflow.</p>
+        </div>
+        <div class="feature-card">
+            <h4>🎯 Performance KPI Tracking</h4>
+            <p>Assign and monitor Key Performance Indicators per staff member. Set targets, track scores, and attach supporting documents. Staff can view their own KPI appraisals via the Staff Portal, fostering transparency and motivation.</p>
+        </div>
+    </div>
+
+    <h3>Staff Self-Service Portal</h3>
+    <p>All new HRMS modules are fully integrated into the <strong>Staff Portal</strong> — a dedicated, role-restricted view where individual staff members can:</p>
+    <ul>
+        <li>View and download their own payslips</li>
+        <li>Submit and track their own leave &amp; advance requests</li>
+        <li>Upload requested documents from the Document Center</li>
+        <li>Browse and apply for internal job vacancies</li>
+        <li>View their own KPI appraisals and performance scores</li>
+        <li>Submit explanations for disciplinary incidents</li>
+        <li>Receive and act on real-time in-app notifications</li>
+    </ul>
+
+    <div class="callout">
+        <strong>Key Differentiator:</strong> Unlike siloed HR tools, WokManeja's Staff Portal provides a single, secure point of self-service for employees — reducing HR administrative overhead and increasing staff engagement through transparency.
+    </div>
+
+    <div class="page-break"></div>
+
+    <h2>6. Technical Architecture &amp; Database Scalability</h2>
+    <p>WokManeja is built on a modern, high-performance Node.js technology stack, ensuring rapid response times and a fluid user experience.</p>
+
+    <h3>Flexible Database Options</h3>
+    <p>We understand that different businesses have different scaling needs. WokManeja's data layer is designed to be fully agnostic and highly scalable:</p>
+    <ul>
+        <li><strong>Embedded SQLite (Default):</strong> For immediate deployment, rapid setup, and small to medium enterprises (SMEs). The embedded SQLite engine requires zero configuration and provides incredibly fast local performance.</li>
+        <li><strong>Microsoft SQL Server (MSSQL):</strong> For enterprise clients fully invested in the Microsoft ecosystem, WokManeja seamlessly integrates with MSSQL for advanced replication, clustering, and handling massive organizational datasets.</li>
+        <li><strong>MySQL / MariaDB:</strong> For clients requiring a robust, open-source centralized database server. WokManeja can easily point its data engine to an internal MySQL cluster to support hundreds of concurrent administrative users.</li>
+    </ul>
+
+    <div class="callout">
+        <strong>Architecture Advantage:</strong> This database flexibility allows organizations to start small with zero infrastructure using SQLite, and instantly migrate to MSSQL or MySQL as their workforce and internal IT infrastructure mature — without any loss of data or functionality.
+    </div>
+
+    <h2>7. Return on Investment (ROI) &amp; Value Proposition</h2>
+    <p>Deploying the WokManeja ecosystem yields measurable operational and financial benefits within the first quarter of adoption:</p>
+    <ul>
+        <li><strong>Radical Cost Reduction:</strong> Complete elimination of recurring cloud subscriptions. You own the software and the data, resulting in up to 70% savings over 3 years compared to traditional SaaS HR platforms.</li>
+        <li><strong>Uncompromising Security &amp; Sovereignty:</strong> By keeping all sensitive HR, payroll, and disciplinary data entirely on local premises, you drastically mitigate external breach risks and comply effortlessly with local data residency laws.</li>
+        <li><strong>Administrative Efficiency:</strong> Automation of statutory calculations, leave management, document requests, and disciplinary workflows reduces administrative workload by an estimated 20-30 hours per payroll cycle.</li>
+        <li><strong>Employee Self-Service:</strong> The Staff Portal reduces routine HR enquiries by enabling staff to access payslips, check leave balances, upload documents, and view KPIs without HR intervention.</li>
+        <li><strong>Strategic Future-Proofing:</strong> Advanced reporting tools provide executive leadership with actionable insights, turning raw payroll and HR data into strategic forecasts for proactive workforce management.</li>
+    </ul>
+
+    <div class="page-break"></div>
+
+    <h2>8. Implementation, Onboarding &amp; Timeline</h2>
+    <p>Our implementation methodology is designed to minimize disruption to your ongoing operations. The entire onboarding process typically spans 2 to 4 weeks, depending on the volume of legacy data migration.</p>
+
+    <ul>
+        <li><strong>Week 1 — Discovery &amp; Setup:</strong> Infrastructure assessment, database selection (SQLite, MSSQL, or MySQL), and installation of the local WokManeja server.</li>
+        <li><strong>Week 2 — Data Migration:</strong> Secure importing of historical payroll data, employee profiles, active leave balances, and existing disciplinary/document records from legacy systems or spreadsheets.</li>
+        <li><strong>Week 3 — Configuration &amp; Customization:</strong> Setting up custom company policies, overtime rules, statutory deduction formulas, KPI categories, document types, and user role assignments.</li>
+        <li><strong>Week 4 — Training &amp; Go-Live:</strong> Dedicated on-site or remote training sessions for administrators, HR personnel, and department managers, culminating in the first parallel payroll run and full HRMS activation.</li>
+    </ul>
+
+    <h2>9. Proposed Pricing Structure</h2>
+    <p>WokManeja abandons the punitive per-user monthly subscription model. We offer transparent, straightforward licensing tiers tailored to organizational size and module requirements.</p>
+
+    <table class="pricing-table">
+        <thead>
+            <tr>
+                <th>Tier</th>
+                <th>Target Audience</th>
+                <th>Database Support</th>
+                <th>Included Features</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Standard Local</strong></td>
+                <td>Small to Medium Enterprises (Up to 100 Employees)</td>
+                <td>Embedded SQLite</td>
+                <td>Core Payroll Engine, Bulk Processing, Leave &amp; Advance Auditing, Staff Directory, Local Server Setup, Standard Compliance Reporting, Staff Portal (Payslips &amp; Leave).</td>
+            </tr>
+            <tr>
+                <td><strong>Professional</strong></td>
+                <td>Mid-Market Organizations (100–500 Employees)</td>
+                <td>SQLite or MySQL</td>
+                <td>All Standard features, plus <strong>Document Center</strong>, <strong>Recruitment Management</strong>, Advanced Analytics, Custom Exporting, Staff Portal (all self-service modules), and Priority Support.</td>
+            </tr>
+            <tr>
+                <td><strong>Enterprise</strong></td>
+                <td>Large Corporations &amp; Government (&gt;500 Employees)</td>
+                <td>MSSQL, MySQL, Custom Clusters</td>
+                <td>All Pro features, plus <strong>Staff KPI Tracking</strong>, <strong>Staff Discipline Management</strong>, On-Premises or Cloud/Online Hosting, Custom API Access, Microsoft 365 (M365) Integration, Active Directory Sync, and Dedicated Account Manager.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <p><em>*Note: Initial setup and data migration are typically billed as a one-time professional services engagement based on organizational complexity. Annual maintenance and support contracts are available at 20% of the initial license cost.</em></p>
+
+    <h2>10. Conclusion &amp; Next Steps</h2>
+    <p>WokManeja v2.0 represents a paradigm shift in how local and regional organizations manage their most valuable asset: their people. By combining the speed and security of a local-first architecture with a comprehensive full-suite HRMS — covering payroll, leave, recruitment, document management, staff discipline, and KPI tracking — WokManeja is the definitive choice for forward-thinking businesses.</p>
+    <p>The addition of the Staff Self-Service Portal ensures that employees are active, empowered participants in their own HR journey, while giving HR departments the tools to enforce consistent, auditable, and fair policy management.</p>
+    <p>We invite you to schedule a comprehensive technical demonstration where we can utilize your anonymized data to showcase the immediate impact WokManeja will have on your operational efficiency.</p>
+
+    <div class="footer">
+        WokManeja &copy; 2026. Empowering your workforce with secure, modern, and scalable HR management. | <a href="https://github.com/wokmaneja/Payroll-HR-Management-System" style="color:#10b981;text-decoration:none;">GitHub</a>
+    </div>
+
+</body>
+</html>
