@@ -662,6 +662,7 @@ function renderKPI() {
             
             html += '<td>';
             if (role === 'admin' || role === 'manager') {
+                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')" style="margin-right:8px">Feedback</button>';
                 html += '<button class="btn btn-danger btn-sm" onclick="deleteKPI(\''+k._id+'\')"><span data-i18n="btn_delete"><span data-i18n="btn_delete">Delete</span></span></button>';
             } else if (role === 'staff') {
                 html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')">Submit Feedback</button>';
@@ -734,7 +735,8 @@ function saveKPIFeedback() {
     var k = DB.findOne('kpi', { _id: id });
     if(k) {
         var existing = k.feedback || '';
-        k.feedback = existing + '<br><br><b>[Staff Feedback]:</b> ' + feedback;
+        var roleStr = (APP.currentUser && APP.currentUser.role === 'staff') ? 'Staff Feedback' : 'Manager Feedback';
+        k.feedback = existing + '<br><br><b>[' + roleStr + ']:</b> ' + feedback;
         DB.update('kpi', { _id: id }, k);
     }
     renderKPI();
@@ -936,7 +938,7 @@ function renderDiscipline() {
             if (d.status === 'Pending Explanation' && role === 'staff') {
                 html += '<button class="btn btn-primary btn-sm" onclick="showExplanationForm(\''+d._id+'\')">Add Explanation</button>';
             } else if (d.status === 'Under Review' && (role === 'admin' || role === 'manager')) {
-                html += '<button class="btn btn-gold btn-sm" onclick="showFinalizeForm(\''+d._id+'\')">Finalize</button>';
+                html += '<button class="btn btn-gold btn-sm" onclick="showFinalizeForm(\''+d._id+'\')">Feedback / Finalize</button>';
             } else if (d.status === 'Finalized') {
                 html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')">View Record</button>';
             } else if (role === 'admin' || role === 'manager') {
@@ -979,10 +981,10 @@ function renderDiscipline() {
 
     // Finalize Modal
     html += '<div id="disc-finalize-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px">';
-    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Finalize Disciplinary Action</h4>';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Manager Feedback & Finalize</h4>';
     html += '<div id="disc-finalize-details" style="background:#f9f9f9;padding:1rem;border-radius:8px;margin-bottom:1rem;font-size:13px;max-height:150px;overflow-y:auto"></div>';
     html += '<div style="margin-bottom:1rem"><label>Final Outcome</label><select id="disc-final-outcome"><option>Verbal Warning Recorded</option><option>Written Warning Issued</option><option>Final Warning Issued</option><option>Suspension Executed</option><option><span data-i18n="opt_termination"><span data-i18n="opt_termination">Termination</span></span></option><option>Cleared/No Action</option></select></div>';
-    html += '<div style="margin-bottom:1rem"><label>Outcome Notes</label><textarea id="disc-final-notes" rows="3" placeholder="Additional HR notes..."></textarea></div>';
+    html += '<div style="margin-bottom:1rem"><label>Manager Feedback / Notes</label><textarea id="disc-final-notes" rows="3" placeholder="Provide feedback and additional notes..."></textarea></div>';
     html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveFinalize()">Finalize Record</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-finalize-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
     html += '</div>';
     
