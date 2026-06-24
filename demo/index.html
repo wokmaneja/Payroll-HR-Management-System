@@ -3074,15 +3074,15 @@ function renderKPI() {
 
     var staffList = DB.findAll('staff');
     var html = '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
-    html += '<h3 style="color:var(--navy);font-size:18px">'+(role === 'staff' ? 'My KPIs & Appraisals' : 'Staff KPI Tracking')+'</h3>';
+    html += '<h3 style="color:var(--navy);font-size:18px">'+(role === 'staff' ? '<span data-i18n="lbl_my_kpi">My KPIs & Appraisals</span>' : '<span data-i18n="lbl_kpi_track">Staff KPI Tracking</span>')+'</h3>';
     if(role === 'admin' || role === 'manager') {
-        html += '<button class="btn btn-primary" onclick="showKPIForm()"><i class="ti ti-plus"></i> Add KPI Goal</button>';
+        html += '<button class="btn btn-primary" onclick="showKPIForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_add_kpi">Add KPI Goal</span></button>';
     }
     html += '</div>';
 
-    html += '<table><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th>Goal / Objective</th><th style="width:250px">Score</th><th>Review Period</th><th><span data-i18n="th_attached_file">Attached File</span></th><th>Feedback</th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="lbl_kpi_name">Goal / Objective</span></th><th style="width:250px"><span data-i18n="th_score">Score</span></th><th><span data-i18n="lbl_period">Review Period</span></th><th><span data-i18n="th_attached_file">Attached File</span></th><th><span data-i18n="lbl_feedback">Feedback</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(kpis.length === 0) {
-        html += '<tr><td colspan="6" style="text-align:center;color:#888">No KPIs assigned yet.</td></tr>';
+        html += '<tr><td colspan="7" style="text-align:center;color:#888"><span data-i18n="msg_no_kpi">No KPIs assigned yet.</span></td></tr>';
     } else {
         kpis.forEach(function(k) {
             var s = parseInt(k.score) || 0;
@@ -3119,10 +3119,10 @@ function renderKPI() {
             
             html += '<td>';
             if (role === 'admin' || role === 'manager') {
-                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')" style="margin-right:8px">Feedback</button>';
+                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')" style="margin-right:8px"><span data-i18n="lbl_feedback">Feedback</span></button>';
                 html += '<button class="btn btn-danger btn-sm" onclick="deleteKPI(\''+k._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
             } else if (role === 'staff') {
-                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')">Submit Feedback</button>';
+                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')"><span data-i18n="btn_submit_feedback">Submit Feedback</span></button>';
             }
             html += '</td>';
             html += '</tr>';
