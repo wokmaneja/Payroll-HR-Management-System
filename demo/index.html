@@ -1119,29 +1119,31 @@ document.addEventListener('DOMContentLoaded', function() {
     })
     .catch(e => console.log('Could not load company name', e));
 });
-// --- Fetch Interceptor for Authentication ---
-var originalFetch = window.fetch;
-window.fetch = async function(url, options) {
-  if (typeof url === 'string' && url.startsWith('/api/')) {
-    var token = sessionStorage.getItem('api_token');
-    if (token) {
-      options = options || {};
-      options.headers = options.headers || {};
-      if (typeof options.headers.set === 'function') {
-        options.headers.set('Authorization', 'Bearer ' + token);
-      } else {
-        options.headers['Authorization'] = 'Bearer ' + token;
+// --- MOCK FETCH FOR DEMO MODE ---
+    window.fetch = async function(url, options) {
+      if (typeof url === 'string') {
+        if (url.startsWith('https://api.anthropic.com')) {
+          return new Response(JSON.stringify({ content: [{ text: '{"executive_summary":"Demo data loaded successfully.","vnpf_observation":"Compliant.","deduction_observation":"Standard.","accuracy_observation":"Accurate.","recommendations":["No issues."],"conclusion":"All good."}' }] }), {status: 200});
+        }
+        if (url === '/api/license/status') {
+          return new Response(JSON.stringify({ status: 'valid', type: 'lifetime', plan: 'Lifetime' }), {status: 200});
+        }
+        if (url === '/api/admin/version') {
+          return new Response(JSON.stringify({ version: '1.0.0 (Demo Mode)' }), {status: 200});
+        }
+        if (url === '/api/admin/releases') {
+          return new Response(JSON.stringify([]), {status: 200});
+        }
+        if (url === '/api/admin/pending-errors') {
+          return new Response(JSON.stringify({ count: 0 }), {status: 200});
+        }
+        if (url.startsWith('/api/')) {
+          return new Response(JSON.stringify({ success: true, ok: true }), {status: 200});
+        }
       }
-    }
-  }
-  var res = await originalFetch.call(window, url, options);
-  if (res && res.status === 401 && typeof url === 'string' && !url.startsWith('/api/auth/')) {
-    if (typeof doLogout === 'function') doLogout();
-    throw new Error('Unauthorized');
-  }
-  return res;
-};
-// --------------------------------------------
+      return new Response(JSON.stringify({ success: true }), {status: 200});
+    };
+    // --------------------------------------------
 
 window.customConfirm = function(msg, onConfirm) {
   var overlay = document.getElementById('custom-confirm');
@@ -1284,7 +1286,7 @@ var DB=(function(){
   if(DB.count('staff')===0){DB.insert('staff',{name:'Alice Bule',empid:'EMP001',designation:'Accountant',department:'Finance',email:'alice@tripleK.vu',phone:'+678 123456',annualLeave:21,sickLeave:10,status:'Active'});DB.insert('staff',{name:'Bob Tarileo',empid:'EMP002',designation:'Sales Manager',department:'Operations',email:'bob@tripleK.vu',phone:'+678 234567',annualLeave:21,sickLeave:10,status:'Active'});DB.insert('staff',{name:'Carol Vira',empid:'EMP003',designation:'HR Officer',department:'Administration',email:'carol@tripleK.vu',phone:'+678 345678',annualLeave:21,sickLeave:10,status:'Active'});}
   if(DB.count('departments')===0){['Finance','Operations','Administration','Executive','Support & Consultant'].forEach(function(d){DB.insert('departments',{name:d})});}
 }
-function updateDBIndicator(){}
+function updateDBIndicator(){var d=document.getElementById('db-status');if(d){d.innerHTML='<i class="ti ti-server"></i> Offline Demo Mode';d.style.color='#22c55e'}}
 var APP={currentUser:null,editingStaffIdx:-1,editingHRId:null,editingUserId:null};
 var STAFF_ID_MAP={};var HR_ID_MAP={};var REC_ID_MAP={};var USER_ID_MAP={};var NOTIF_ID_MAP={};
 var MENUS={
@@ -1299,8 +1301,7 @@ function resetIdleTimer(){if(!APP.currentUser)return;if(idleTimer)clearTimeout(i
 document.addEventListener('mousemove',resetIdleTimer);
 document.addEventListener('keydown',resetIdleTimer);
 document.addEventListener('click',resetIdleTimer);
-async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors();if(data.user.mustChangePassword){setTimeout(function(){var pw=document.getElementById('modal-changepw');if(pw){pw.style.display='flex';var warn=document.createElement('p');warn.style.cssText='color:#e24b4a;font-size:12px;margin-bottom:12px;padding:8px 12px;background:#fff0f0;border-radius:6px;border:1px solid #f5c0c0;text-align:center';warn.innerHTML='<i class="ti ti-lock" style="margin-right:4px"></i>Please set a new password before continuing.';var inner=pw.querySelector('[style*="background:#fff"]')||pw;inner.insertBefore(warn,inner.firstChild);}},200);}}catch(e){document.getElementById('login-error').style.display='block';}}
-function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
+async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{await DB.init();var user=DB.findOne('users',{username:u,password:p});if(!user){document.getElementById('login-error').style.display='block';return}document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token','demo_token');sessionStorage.setItem('api_user',JSON.stringify(user));APP.currentUser=user;seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=user.name;document.getElementById('nav-badge').textContent=user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+user.role;buildNav(user.role);changeLang();if(typeof renderNotifBadge==='function')renderNotifBadge();if(typeof startNotifPolling==='function')startNotifPolling();if(typeof refreshDeptDropdown==='function')refreshDeptDropdown();resetIdleTimer();if(typeof checkForErrors==='function')checkForErrors();}catch(e){console.error(e);document.getElementById('login-error').style.display='block';}}\nfunction doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
 function buildNav(role){var nav=document.getElementById('sidebar-nav');nav.innerHTML='';MENUS[role].forEach(function(item){if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}if(item.id==='documents'&&typeof renderDocuments==='function')renderDocuments();if(item.id==='kpi'&&typeof renderKPI==='function')renderKPI();if(item.id==='recruitment'&&typeof renderRecruitment==='function')renderRecruitment();if(item.id==='discipline'&&typeof renderDiscipline==='function')renderDiscipline();};nav.appendChild(a);});nav.querySelector('button').click();}
 var ALL_SECTIONS=['payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs','documents','kpi','recruitment','discipline'];
 function showSection(id){ALL_SECTIONS.forEach(function(s){var el=document.getElementById('section-'+s);if(el)el.classList.add('hidden')});var target=document.getElementById('section-'+id);if(target)target.classList.remove('hidden');if(id==='payslip'){refreshStaffDropdown();setTodayPayDate()}if(id==='bulk'){setTodayBulkPayDate();renderBulkTemplates();}}
