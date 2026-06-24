@@ -1637,78 +1637,6 @@ function downloadCompliancePDF(){
   var reportHTML=buildReportHTML(freshData,narrative,true);
   var win=window.open('','_blank');
   win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Compliance Report - WokManeja</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:\'Montserrat\', sans-serif}body{background:#fff;color:#1a1a1a;padding:0}.rpt-page{max-width:100%;padding:2rem;color:#1a1a1a}.rpt-header{border-bottom:3px solid #0a0a0a;padding-bottom:1.25rem;margin-bottom:1.5rem}.rpt-logo-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.rpt-title{font-size:22px;font-weight:800;color:#0a0a0a;margin-bottom:2px}.rpt-subtitle{font-size:13px;color:#555}.rpt-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:12px}.rpt-meta-item p{color:#888;margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.rpt-meta-item span{font-weight:700;color:#0a0a0a;font-size:13px}.rpt-section{margin-bottom:1.75rem;page-break-inside:avoid}.rpt-section-title{font-size:14px;font-weight:700;color:#0a0a0a;border-left:4px solid #10b981;padding-left:.75rem;margin-bottom:1rem}.rpt-section-num{color:#10b981;margin-right:.35rem}.rpt-summary-table{width:100%;border-collapse:collapse;margin-bottom:.5rem}.rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}.rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}.rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}.rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}.rpt-detail-table tr:nth-child(even) td{background:#fafafa}.rpt-obs-block{background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:.75rem;border-left:3px solid #0a0a0a}.rpt-obs-title{font-size:12px;font-weight:700;color:#0a0a0a;margin-bottom:.4rem}.rpt-obs-text{font-size:12.5px;color:#444;line-height:1.7}.rpt-obs-text ul{padding-left:1.2rem;margin-top:.35rem}.rpt-obs-text li{margin-bottom:.2rem}.rpt-rec-list{list-style:none;padding:0}.rpt-rec-list li{font-size:12.5px;color:#444;padding:8px 0;border-bottom:1px solid #eee;display:flex;gap:.6rem;align-items:flex-start;line-height:1.6}.rpt-rec-list li::before{content:"\\2192";color:#10b981;font-weight:800;flex-shrink:0}.rpt-footer{border-top:2px solid #0a0a0a;padding-top:1rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#666}.rpt-highlight-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#7c5000;margin-top:.5rem}.rpt-highlight-ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#1b5e20;margin-top:.5rem}@media print{body{padding:0}@page{margin:1.5cm}}</style></head><body>' + reportHTML + '
-  <div id="modal-custom-alert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
-    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
-        <i class="ti ti-info-circle" style="color:var(--gold);font-size:24px"></i>
-        <h3 style="font-size:16px;color:var(--navy);margin:0">Notification</h3>
-      </div>
-      <p id="custom-alert-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
-      <div style="display:flex;justify-content:flex-end">
-        <button class="btn btn-primary" onclick="uiAlertClose()">OK</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="modal-custom-confirm" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
-    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
-      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
-        <i class="ti ti-help" style="color:var(--gold);font-size:24px"></i>
-        <h3 style="font-size:16px;color:var(--navy);margin:0">Confirm Action</h3>
-      </div>
-      <p id="custom-confirm-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
-      <div style="display:flex;justify-content:flex-end;gap:10px">
-        <button class="btn btn-outline" onclick="uiConfirmClose(false)">Cancel</button>
-        <button class="btn btn-primary" onclick="uiConfirmClose(true)">Confirm</button>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    window._uiAlertResolve = null;
-    window.uiAlert = function(msg) {
-      return new Promise(function(resolve) {
-        document.getElementById('custom-alert-msg').textContent = msg;
-        document.getElementById('modal-custom-alert').style.display = 'flex';
-        window._uiAlertResolve = resolve;
-      });
-    };
-    window.uiAlertClose = function() {
-      document.getElementById('modal-custom-alert').style.display = 'none';
-      if(window._uiAlertResolve) {
-        var fn = window._uiAlertResolve;
-        window._uiAlertResolve = null;
-        fn();
-      }
-    };
-
-    window._uiConfirmResolve = null;
-    window.uiConfirm = function(msg) {
-      return new Promise(function(resolve) {
-        document.getElementById('custom-confirm-msg').textContent = msg;
-        document.getElementById('modal-custom-confirm').style.display = 'flex';
-        window._uiConfirmResolve = resolve;
-      });
-    };
-    window.uiConfirmClose = function(res) {
-      document.getElementById('modal-custom-confirm').style.display = 'none';
-      if(window._uiConfirmResolve) {
-        var fn = window._uiConfirmResolve;
-        window._uiConfirmResolve = null;
-        fn(res);
-      }
-    };
-
-    window.alert = function(msg) {
-      console.warn("Native alert intercepted. Please use uiAlert().");
-      return window.uiAlert(msg);
-    };
-    window.confirm = function(msg) {
-      console.error("Native confirm used synchronously! Returning false.");
-      window.uiConfirm(msg);
-      return false;
-    };
-  </script>
 </body></html>');
   win.document.close();
   setTimeout(function(){win.focus();win.print();},600);
@@ -2528,6 +2456,78 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script src="features.js"></script>
+  <div id="modal-custom-alert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
+        <i class="ti ti-info-circle" style="color:var(--gold);font-size:24px"></i>
+        <h3 style="font-size:16px;color:var(--navy);margin:0">Notification</h3>
+      </div>
+      <p id="custom-alert-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" onclick="uiAlertClose()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-custom-confirm" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
+        <i class="ti ti-help" style="color:var(--gold);font-size:24px"></i>
+        <h3 style="font-size:16px;color:var(--navy);margin:0">Confirm Action</h3>
+      </div>
+      <p id="custom-confirm-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-outline" onclick="uiConfirmClose(false)">Cancel</button>
+        <button class="btn btn-primary" onclick="uiConfirmClose(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window._uiAlertResolve = null;
+    window.uiAlert = function(msg) {
+      return new Promise(function(resolve) {
+        document.getElementById('custom-alert-msg').textContent = msg;
+        document.getElementById('modal-custom-alert').style.display = 'flex';
+        window._uiAlertResolve = resolve;
+      });
+    };
+    window.uiAlertClose = function() {
+      document.getElementById('modal-custom-alert').style.display = 'none';
+      if(window._uiAlertResolve) {
+        var fn = window._uiAlertResolve;
+        window._uiAlertResolve = null;
+        fn();
+      }
+    };
+
+    window._uiConfirmResolve = null;
+    window.uiConfirm = function(msg) {
+      return new Promise(function(resolve) {
+        document.getElementById('custom-confirm-msg').textContent = msg;
+        document.getElementById('modal-custom-confirm').style.display = 'flex';
+        window._uiConfirmResolve = resolve;
+      });
+    };
+    window.uiConfirmClose = function(res) {
+      document.getElementById('modal-custom-confirm').style.display = 'none';
+      if(window._uiConfirmResolve) {
+        var fn = window._uiConfirmResolve;
+        window._uiConfirmResolve = null;
+        fn(res);
+      }
+    };
+
+    window.alert = function(msg) {
+      console.warn("Native alert intercepted. Please use uiAlert().");
+      return window.uiAlert(msg);
+    };
+    window.confirm = function(msg) {
+      console.error("Native confirm used synchronously! Returning false.");
+      window.uiConfirm(msg);
+      return false;
+    };
+  </script>
 </body></html>
 <script>
 function resetStaffPassword(userId) {
