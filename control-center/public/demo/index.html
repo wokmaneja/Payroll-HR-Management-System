@@ -4,9 +4,9 @@
 <title>WokManeja — Payroll &amp; HR System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700;800&display=swap" rel="stylesheet">
+
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -175,7 +175,7 @@ tr:hover td{background:#fafafa}
   </div>
   <!-- MeleTech Footer -->
   <div style="width:100%;max-width:320px;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(0,0,0,.12)">
-    <p style="text-align:center;font-size:12px;color:#666;margin-bottom:.85rem"><span data-i18n="txt_copyright">© 2026 WokManeja. All rights reserved.</span><br><span data-i18n="txt_support">Support: </span><a href="mailto:wokmaneja@gmail.com" style="color:var(--navy);font-weight:600;text-decoration:none">wokmaneja@gmail.com</a></p>
+    <p style="text-align:center;font-size:12px;color:#666;margin-bottom:.85rem"><span data-i18n="txt_copyright">© 2026 WokManeja. All rights reserved.</span><br><span data-i18n="txt_support">Support: </span><a href="mailto:help@wokmaneja.vu" style="color:var(--navy);font-weight:600;text-decoration:none">help@wokmaneja.vu</a></p>
     
     
   </div>
@@ -404,49 +404,28 @@ tr:hover td{background:#fafafa}
           </div>
         </div>
       </div>
+      <!-- DOCUMENTS -->
+      <div id="section-documents" class="hidden"></div>
+      <!-- RECRUITMENT -->
+      <div id="section-recruitment" class="hidden"></div>
+      <!-- KPI -->
+      <div id="section-kpi" class="hidden"></div>
+      <!-- DISCIPLINE -->
+      <div id="section-discipline" class="hidden"></div>
+      
       <!-- RECORDS -->
       <div id="section-records" class="hidden"><p class="section-title"><i class="ti ti-files" style="color:var(--gold)"></i> <span data-i18n="menu_records">Payslip Records</span></p><div id="records-list"></div></div>
       <!-- STAFF -->
-      <div id="section-staff" class="hidden"><p class="section-title"><i class="ti ti-users" style="color:var(--gold)"></i> <span data-i18n="menu_staff">Staff Management</span></p><div style="display:grid;grid-template-columns:350px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="staff-form-title"><span data-i18n="lbl_add_staff">Add New Staff</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="sf-name" type="text" placeholder="e.g. John Smith" data-i18n-placeholder="ph_john_smith"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_emp_id">Employee ID </span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa"><span data-i18n="lbl_auto_gen">(auto-generated)</span></span></label><input id="sf-id" type="text" readonly=""><p class="hint"><span data-i18n="txt_next_id">Next available ID auto-filled</span></p></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_job_title">Designation / Job Title</span></label><input id="sf-designation" type="text" placeholder="e.g. Accountant" data-i18n-placeholder="ph_accountant"></div><div style="margin-bottom:.85rem"><label style="display:flex;justify-content:space-between;align-items:center"><span><span data-i18n="lbl_department">Department</span></span><button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:#e2e8f0;color:#333;border:none" onclick="openDeptModal()"><i class="ti ti-settings"></i><span data-i18n="btn_manage"> Manage</span></button></label><select id="sf-department"><option value="" data-i18n="opt_select_dept">-- Select Department --</option></select></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_email">Email Address</span></label><input id="sf-email" type="email" placeholder="staff@email.com" data-i18n-placeholder="ph_email"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_phone">Phone Number</span></label><input id="sf-phone" type="text" placeholder="+678 000000" data-i18n-placeholder="ph_phone"></div><div><label>VNPF Number</label><input id="sf-vnpfno" type="text" placeholder="e.g. 123456"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label>Pay Type</label><select id="sf-paytype" onchange="togglePayType()"><option value="Salary">Fixed Salary</option><option value="Hourly">Hourly Rate</option></select></div><div id="sf-salary-wrap"><label>Fixed Salary (VUV)</label><input id="sf-fixedsalary" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div><div id="sf-hourly-wrap" style="display:none"><label><span data-i18n="lbl_hourly_rate">Hourly Rate (VUV)</span></label><input id="sf-hourly" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_bank_name">Bank Name</span></label><input id="sf-bank" type="text" placeholder="e.g. BSP" data-i18n-placeholder="ph_bsp"></div><div><label><span data-i18n="lbl_account_num">Account Number</span></label><input id="sf-account" type="text" placeholder="e.g. 12345678" data-i18n-placeholder="ph_account"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_annual_leave">Annual Leave (days)</span></label><input id="sf-annual" type="number" value="21"></div><div><label><span data-i18n="lbl_sick_leave">Sick Leave (days)</span></label><input id="sf-sick" type="number" value="10"></div><div><label><span data-i18n="lbl_medical_ins">Medical Ins (VT)</span></label><input id="sf-medical" type="number" value="50000"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem"><div style="margin-bottom:0"><label><span data-i18n="lbl_pay_cycle">Pay Cycle</span></label><select id="sf-paycycle"><option value="Weekly" data-i18n="opt_weekly">Weekly</option><option value="Fortnightly" data-i18n="opt_fortnightly">Fortnightly</option><option value="Monthly" selected="" data-i18n="opt_monthly">Monthly</option></select></div><div style="margin-bottom:0"><label><span data-i18n="lbl_status">Status</span></label><select id="sf-status"><option data-i18n="opt_active">Active</option><option data-i18n="opt_inactive">Inactive</option></select></div></div><div style="margin-bottom:1rem; border:1px solid var(--border); padding:1rem; border-radius:6px; background:#f8f9fa;"><div style="margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem"><input type="checkbox" id="sf-create-user" style="width:auto;margin:0" onchange="document.getElementById('sf-user-fields').style.display=this.checked?'block':'none'"><label for="sf-create-user" style="margin-bottom:0;font-weight:700;color:var(--navy)"><span data-i18n="lbl_enable_portal">Enable Staff Portal Access</span></label></div><div id="sf-user-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem"><div><label><span data-i18n="lbl_username">Username</span></label><input id="sf-username" type="text" placeholder="e.g. jsmith" data-i18n-placeholder="ph_jsmith"></div><div><label><span data-i18n="lbl_password">Password</span></label><input id="sf-password" type="password" placeholder="Leave blank to keep same" data-i18n-placeholder="ph_leave_blank"></div></div><p class="hint" style="margin-top:5px;font-size:10px"><span data-i18n="txt_create_user">Creates/Updates a user account with the 'Staff' role.</span></p></div></div><div style="display:flex;gap:.5rem"><button class="btn btn-primary" onclick="saveStaff()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_staff"> Save Staff</span></button><button class="btn btn-outline" onclick="clearStaffForm()"><i class="ti ti-x"></i><span data-i18n="btn_clear"> Clear</span></button></div><div id="sf-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_staff_dir">Staff Directory</span></p><input type="text" id="staff-search" placeholder="Search staff..." oninput="renderStaffTable()" style="max-width:280px;margin-bottom:1rem" data-i18n-placeholder="ph_search_staff"><div id="staff-table-wrap" style="overflow:auto"></div></div></div></div>
+      <div id="section-staff" class="hidden"><p class="section-title"><i class="ti ti-users" style="color:var(--gold)"></i> <span data-i18n="menu_staff">Staff Management</span></p><div style="display:grid;grid-template-columns:450px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="staff-form-title"><span data-i18n="lbl_add_staff">Add New Staff</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="sf-name" type="text" placeholder="e.g. John Smith" data-i18n-placeholder="ph_john_smith"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_emp_id">Employee ID </span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa"><span data-i18n="lbl_auto_gen">(auto-generated)</span></span></label><input id="sf-id" type="text" readonly=""><p class="hint"><span data-i18n="txt_next_id">Next available ID auto-filled</span></p></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_job_title">Designation / Job Title</span></label><input id="sf-designation" type="text" placeholder="e.g. Accountant" data-i18n-placeholder="ph_accountant"></div><div style="margin-bottom:.85rem"><label style="display:flex;justify-content:space-between;align-items:center"><span><span data-i18n="lbl_department">Department</span></span><button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:#e2e8f0;color:#333;border:none" onclick="openDeptModal()"><i class="ti ti-settings"></i><span data-i18n="btn_manage"> Manage</span></button></label><select id="sf-department"><option value="" data-i18n="opt_select_dept">-- Select Department --</option></select></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_email">Email Address</span></label><input id="sf-email" type="email" placeholder="staff@email.com" data-i18n-placeholder="ph_email"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_phone">Phone Number</span></label><input id="sf-phone" type="text" placeholder="+678 000000" data-i18n-placeholder="ph_phone"></div><div><label>VNPF Number</label><input id="sf-vnpfno" type="text" placeholder="e.g. 123456"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label>Pay Type</label><select id="sf-paytype" onchange="togglePayType()"><option value="Salary">Fixed Salary</option><option value="Hourly">Hourly Rate</option></select></div><div id="sf-salary-wrap"><label>Fixed Salary (VUV)</label><input id="sf-fixedsalary" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div><div id="sf-hourly-wrap" style="display:none"><label><span data-i18n="lbl_hourly_rate">Hourly Rate (VUV)</span></label><input id="sf-hourly" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_bank_name">Bank Name</span></label><input id="sf-bank" type="text" placeholder="e.g. BSP" data-i18n-placeholder="ph_bsp"></div><div><label><span data-i18n="lbl_account_num">Account Number</span></label><input id="sf-account" type="text" placeholder="e.g. 12345678" data-i18n-placeholder="ph_account"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_annual_leave">Annual Leave (days)</span></label><input id="sf-annual" type="number" value="21"></div><div><label><span data-i18n="lbl_sick_leave">Sick Leave (days)</span></label><input id="sf-sick" type="number" value="10"></div><div><label><span data-i18n="lbl_medical_ins">Medical Ins (VT)</span></label><input id="sf-medical" type="number" value="50000"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem"><div style="margin-bottom:0"><label><span data-i18n="lbl_pay_cycle">Pay Cycle</span></label><select id="sf-paycycle"><option value="Weekly" data-i18n="opt_weekly">Weekly</option><option value="Fortnightly" data-i18n="opt_fortnightly">Fortnightly</option><option value="Monthly" selected="" data-i18n="opt_monthly">Monthly</option></select></div><div style="margin-bottom:0"><label><span data-i18n="lbl_status">Status</span></label><select id="sf-status"><option data-i18n="opt_active">Active</option><option data-i18n="opt_inactive">Inactive</option></select></div></div><div style="margin-bottom:1rem; border:1px solid var(--border); padding:1rem; border-radius:6px; background:#f8f9fa;"><div style="margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem"><input type="checkbox" id="sf-create-user" style="width:auto;margin:0" onchange="document.getElementById('sf-user-fields').style.display=this.checked?'block':'none'"><label for="sf-create-user" style="margin-bottom:0;font-weight:700;color:var(--navy)"><span data-i18n="lbl_enable_portal">Enable Staff Portal Access</span></label></div><div id="sf-user-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem"><div><label><span data-i18n="lbl_username">Username</span></label><input id="sf-username" type="text" placeholder="e.g. jsmith" data-i18n-placeholder="ph_jsmith"></div><div><label><span data-i18n="lbl_password">Password</span></label><input id="sf-password" type="password" placeholder="Leave blank to keep same" data-i18n-placeholder="ph_leave_blank"></div></div><p class="hint" style="margin-top:5px;font-size:10px"><span data-i18n="txt_create_user">Creates/Updates a user account with the 'Staff' role.</span></p></div></div><div style="display:flex;gap:.5rem"><button class="btn btn-primary" onclick="saveStaff()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_staff"> Save Staff</span></button><button class="btn btn-outline" onclick="clearStaffForm()"><i class="ti ti-x"></i><span data-i18n="btn_clear"> Clear</span></button></div><div id="sf-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_staff_dir">Staff Directory</span></p><input type="text" id="staff-search" placeholder="Search staff..." oninput="renderStaffTable()" style="max-width:280px;margin-bottom:1rem" data-i18n-placeholder="ph_search_staff"><div id="staff-table-wrap" style="overflow:auto"></div></div></div></div>
       <!-- HR -->
       <div id="section-hr" class="hidden"><p class="section-title"><i class="fa-solid fa-plane-departure" style="color:var(--gold)"></i> <span data-i18n="menu_hr">HR Leave &amp; Advance</span></p><div class="hr-summary-grid"><div class="hr-summary-card"><div class="hr-icon annual"><i class="fa-solid fa-plane-departure"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_annual_l">Annual Leave</span></p><h3 id="hr-count-annual"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon sick"><i class="fa-solid fa-notes-medical"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_sick_l">Sick Leave</span></p><h3 id="hr-count-sick"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon unpaid"><i class="fa-solid fa-calendar-xmark"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_lwp">Leave Without Pay</span></p><h3 id="hr-count-unpaid"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon advance"><i class="fa-solid fa-money-bill-wave"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_advances">Advances Issued</span></p><h3 id="hr-total-advance"><span data-i18n="txt_vuv_0">VUV 0</span></h3></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem"><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="hr-form-title"><i class="fa-solid fa-paper-plane" style="color:var(--gold)"></i><span data-i18n="lbl_submit_req"> Submit Leave / Advance Request</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_employee">Employee</span></label><select id="hr-staff"><option value="" data-i18n="opt_select_staff">-- Select Staff --</option></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_req_type">Request Type</span></label><select id="hr-type" onchange="toggleAdvanceAmount()"><option value="Annual Leave" data-i18n="opt_annual_leave">Annual Leave</option><option value="Sick Leave" data-i18n="opt_sick_leave">Sick Leave</option><option value="Leave Without Pay" data-i18n="opt_leave_without_pay">Leave Without Pay</option><option value="Payment Advance" data-i18n="opt_payment_advance">Payment Advance</option><option value="Medical Claim" data-i18n="opt_medical_claim">Medical Claim</option></select></div><div id="hr-advance-wrap" style="visibility:hidden"><label><span data-i18n="lbl_adv_amount">Advance Amount (VUV)</span></label><input id="hr-amount" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div id="hr-medical-wrap" style="display:none;margin-bottom:.85rem;background:#f8f9fa;padding:10px;border-radius:6px;border:1px solid var(--border)"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;"><div><label><span data-i18n="lbl_supplier">Supplier</span></label><select id="hr-supplier"><option>Clinic</option><option>Hospital</option><option>Private Hospital</option><option>Pharmacy</option></select></div><div><label><span data-i18n="lbl_claim_amount">Claim Amount (VUV)</span></label><input id="hr-medical-amount" type="number" placeholder="0"></div><div><label><span data-i18n="lbl_receipt">Medical Receipt</span></label><input id="hr-receipt" type="file" accept="image/*,.pdf" style="padding:4px;font-size:12px;width:100%"></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_start_date">Start Date</span></label><input id="hr-start" type="date"></div><div><label><span data-i18n="lbl_end_date">End Date</span></label><input id="hr-end" type="date"></div></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_reason">Reason / Notes</span></label><textarea id="hr-notes" placeholder="Enter reason here..." style="min-height:80px;resize:none" data-i18n-placeholder="ph_reason"></textarea></div><div style="display:flex;gap:.5rem;align-items:center"><button class="btn btn-primary" onclick="saveHRRequest()"><i class="fa-solid fa-paper-plane"></i><span data-i18n="btn_submit_req"> Submit Request</span></button><button class="btn btn-outline" onclick="clearHRForm()"><i class="ti ti-refresh"></i><span data-i18n="btn_clear"> Clear</span></button><span id="hr-save-msg" style="font-size:12px;color:#27500a;background:#ddf0dd;padding:6px 12px;border-radius:6px;display:none"><i class="ti ti-check"></i><span data-i18n="msg_saved"> Saved.</span></span></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold)"></i><span data-i18n="lbl_recent_req"> Recent Requests</span></p><select id="hr-filter-status" onchange="renderHRTable()" style="width:auto;font-size:12px;padding:5px 8px"><option value="" data-i18n="opt_all_status">All Status</option><option value="Pending" data-i18n="opt_pending">Pending</option><option value="Approved" data-i18n="opt_approved">Approved</option><option value="Rejected" data-i18n="opt_rejected">Rejected</option></select></div><div id="hr-recent-wrap" style="overflow:auto;max-height:380px"></div></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><i class="ti ti-table" style="color:var(--gold)"></i><span data-i18n="lbl_all_records"> All Leave &amp; Advance Records</span></p><select id="hr-filter-type" onchange="renderHRTable()" style="width:auto;font-size:12px;padding:5px 8px"><option value="" data-i18n="opt_all_types">All Types</option><option value="Annual Leave" data-i18n="opt_annual_leave">Annual Leave</option><option value="Sick Leave" data-i18n="opt_sick_leave">Sick Leave</option><option value="Leave Without Pay" data-i18n="opt_leave_without_pay">Leave Without Pay</option><option value="Payment Advance" data-i18n="opt_payment_advance">Payment Advance</option></select></div><div id="hr-table-wrap" style="overflow:auto"></div></div></div>
       <!-- USERS -->
-      <!-- SUMMARY REPORTS -->
-<div id="section-summary" class="hidden" style="max-width:1200px;margin:0 auto">
-  <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:10px">
-    <div style="display:flex;align-items:center;gap:10px">
-      <div style="width:40px;height:40px;border-radius:10px;background:var(--navy);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px"><i class="ti ti-file-analytics"></i></div>
-      <h2 style="margin:0;font-size:22px;color:var(--navy)">Summary Reports</h2>
-    </div>
-    <div style="display:flex;gap:10px" class="no-print">
-      <input type="text" id="summary-search" placeholder="Search staff..." style="width:200px" onkeyup="renderSummaryReport()">
-      <button class="btn btn-primary" onclick="window.print()"><i class="ti ti-printer"></i> Print Report</button>
-    </div>
-  </div>
-
-  <div class="card" style="padding:0;overflow-x:auto">
-    <table class="table" id="summary-table">
-      <thead>
-        <tr>
-          <th>Staff Details</th>
-          <th>Total Payroll Earnings</th>
-          <th>Annual Leave Balance</th>
-          <th>Sick Leave Balance</th>
-          <th>Medical Insurance Balance</th>
-        </tr>
-      </thead>
-      <tbody id="summary-tbody"></tbody>
-    </table>
-  </div>
-</div>
-
-<div id="section-users" class="hidden"><p class="section-title"><i class="ti ti-user-shield" style="color:var(--gold)"></i> <span data-i18n="menu_users">User Management</span></p><div style="display:grid;grid-template-columns:350px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="uf-form-title"><span data-i18n="lbl_add_user">Add New User</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="uf-name" type="text" placeholder="Full name" data-i18n-placeholder="ph_full_name"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_username">Username</span></label><input id="uf-username" type="text" placeholder="Username" data-i18n-placeholder="lbl_username"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_password">Password</span></label><input id="uf-password" type="password" placeholder="Password" data-i18n-placeholder="lbl_password"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_assign_role">Assign Role</span></label><select id="uf-role"><option value="admin" data-i18n="opt_admin">Admin</option><option value="manager" data-i18n="opt_manager">Manager</option><option value="it" data-i18n="opt_it">IT</option><option value="staff" selected="" data-i18n="opt_staff">Staff</option></select></div>
+      <div id="section-users" class="hidden"><p class="section-title"><i class="ti ti-user-shield" style="color:var(--gold)"></i> <span data-i18n="menu_users">User Management</span></p><div style="display:grid;grid-template-columns:350px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="uf-form-title"><span data-i18n="lbl_add_user">Add New User</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="uf-name" type="text" placeholder="Full name" data-i18n-placeholder="ph_full_name"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_username">Username</span></label><input id="uf-username" type="text" placeholder="Username" data-i18n-placeholder="lbl_username"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_password">Password</span></label><input id="uf-password" type="password" placeholder="Password" data-i18n-placeholder="lbl_password"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_assign_role">Assign Role</span></label><select id="uf-role"><option value="admin" data-i18n="opt_admin">Admin</option><option value="manager" data-i18n="opt_manager">Manager</option><option value="it" data-i18n="opt_it">IT</option><option value="staff" selected="" data-i18n="opt_staff">Staff</option></select></div>
 <div style="margin-bottom:1rem"><label><span data-i18n="lbl_link_staff">Link to Staff Record </span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa;font-size:11px"><span data-i18n="txt_opt_hr">(optional — for HR leave tracking)</span></span></label><select id="uf-staff-link"><option value="" data-i18n="opt_not_linked">-- Not linked --</option></select><p class="hint"><i class="ti ti-link"></i><span data-i18n="txt_link_desc"> Links this user to a staff record so they can view their own HR leave records</span></p></div><button class="btn btn-primary" id="uf-save-btn" onclick="saveUser()"><i class="ti ti-user-plus"></i><span data-i18n="btn_add_user"> Add User</span></button> <button class="btn btn-outline" id="uf-cancel-btn" onclick="cancelEditUser()" style="display:none"><i class="ti ti-x"></i><span data-i18n="btn_cancel"> Cancel</span></button><div id="uf-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"><span data-i18n="msg_user_added">User added successfully.</span></div></div><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_users_roles">Users &amp; Roles</span></p><div id="users-table-wrap"></div></div></div></div>
       <!-- ROLES -->
-      <div id="section-roles" class="hidden"><p class="section-title"><i class="ti ti-shield" style="color:var(--gold)"></i> <span data-i18n="menu_roles">Roles &amp; Permissions</span></p><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem"><div class="card" style="border-top:4px solid #185fa5"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield-check" style="font-size:22px;color:#185fa5"></i><span style="font-size:15px;font-weight:700;color:#000000"><span data-i18n="lbl_admin">Admin</span></span><span class="badge badge-admin"><span data-i18n="lbl_admin">Admin</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>Full system access</li><li>Create &amp; manage users</li><li>Assign roles</li><li>All payslip rights</li><li>Manage staff directory</li><li>All reports &amp; compliance</li><li>HR leave &amp; advance management</li><li>Delete any record</li></ul></div><div class="card" style="border-top:4px solid #5b21b6"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield-star" style="font-size:22px;color:#5b21b6"></i><span style="font-size:15px;font-weight:700;color:#5b21b6"><span data-i18n="lbl_manager">Manager</span></span><span class="badge badge-manager"><span data-i18n="lbl_manager">Manager</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>Create &amp; manage users</li><li>Assign roles</li><li>All payslip rights</li><li>Manage staff directory</li><li>All reports &amp; compliance</li><li>HR leave &amp; advance management</li><li>Delete any record</li></ul></div><div class="card" style="border-top:4px solid #3b6d11"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield-half" style="font-size:22px;color:#3b6d11"></i><span style="font-size:15px;font-weight:700;color:#27500a"><span data-i18n="lbl_it">IT</span></span><span class="badge badge-it"><span data-i18n="lbl_it">IT</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>All payslip rights</li><li>Compliance report access</li><li>Manage staff directory</li><li>HR leave &amp; advance access</li><li>Approve/reject leave requests</li><li>Cannot create/delete users</li><li>Cannot delete records</li></ul></div><div class="card" style="border-top:4px solid #854f0b"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield" style="font-size:22px;color:#854f0b"></i><span style="font-size:15px;font-weight:700;color:#633806"><span data-i18n="lbl_staff">Staff</span></span><span class="badge badge-staff"><span data-i18n="lbl_staff">Staff</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>Access to Staff Portal Dashboard</li><li>View own leave balances</li><li>View own payslips</li><li>Submit own leave/advance requests</li><li>No user/staff management</li><li>Cannot approve/delete records</li></ul></div></div></div>
+      <div id="section-roles" class="hidden"><p class="section-title"><i class="ti ti-shield" style="color:var(--gold)"></i> <span data-i18n="menu_roles">Roles & Permissions</span></p><div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:1rem"><div class="card" style="border-top:4px solid #185fa5"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield-check" style="font-size:22px;color:#185fa5"></i><span style="font-size:15px;font-weight:700;color:#000000"><span data-i18n="lbl_admin">Admin</span></span><span class="badge badge-admin"><span data-i18n="lbl_admin">Admin</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>Full system access</li><li>Create & manage users</li><li>Assign roles</li><li>All payslip rights</li><li>Manage staff directory</li><li>All reports & compliance</li><li>HR leave & advance management</li><li>Delete any record</li></ul></div><div class="card" style="border-top:4px solid #5b21b6"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield-star" style="font-size:22px;color:#5b21b6"></i><span style="font-size:15px;font-weight:700;color:#5b21b6"><span data-i18n="lbl_manager">Manager</span></span><span class="badge badge-manager"><span data-i18n="lbl_manager">Manager</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>Create & manage users</li><li>Assign roles</li><li>All payslip rights</li><li>Manage staff directory</li><li>All reports & compliance</li><li>HR leave & advance management</li><li>Delete any record</li></ul></div><div class="card" style="border-top:4px solid #3b6d11"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield-half" style="font-size:22px;color:#3b6d11"></i><span style="font-size:15px;font-weight:700;color:#27500a"><span data-i18n="lbl_it">IT</span></span><span class="badge badge-it"><span data-i18n="lbl_it">IT</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>All payslip rights</li><li>Compliance report access</li><li>Manage staff directory</li><li>HR leave & advance access</li><li>Approve/reject leave requests</li><li>Cannot create/delete users</li><li>Cannot delete records</li></ul></div><div class="card" style="border-top:4px solid #854f0b"><div style="display:flex;align-items:center;gap:8px;margin-bottom:1rem"><i class="ti ti-shield" style="font-size:22px;color:#854f0b"></i><span style="font-size:15px;font-weight:700;color:#633806"><span data-i18n="lbl_staff">Staff</span></span><span class="badge badge-staff"><span data-i18n="lbl_staff">Staff</span></span></div><ul style="font-size:13px;color:var(--text2);line-height:2.2;padding-left:1.1rem"><li>Access to Staff Portal Dashboard</li><li>View own leave balances</li><li>View own payslips</li><li>Submit own leave/advance requests</li><li>No user/staff management</li><li>Cannot approve/delete records</li></ul></div></div></div>
       <!-- COMPLIANCE -->
-      <div id="section-compliance" class="hidden"><p class="section-title"><i class="ti ti-report-analytics" style="color:var(--gold)"></i> <span data-i18n="menu_compliance">Compliance Report</span></p><div class="card" style="margin-bottom:1rem"><div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:140px"><label><span data-i18n="lbl_month">Month</span></label><select id="cr-month"><option value="" data-i18n="opt_all_months">All Months</option><option data-i18n="opt_jan">January</option><option data-i18n="opt_feb">February</option><option data-i18n="opt_mar">March</option><option data-i18n="opt_apr">April</option><option data-i18n="opt_may">May</option><option data-i18n="opt_jun">June</option><option data-i18n="opt_jul">July</option><option data-i18n="opt_aug">August</option><option data-i18n="opt_sep">September</option><option data-i18n="opt_oct">October</option><option data-i18n="opt_nov">November</option><option data-i18n="opt_dec">December</option></select></div><div style="flex:1;min-width:100px"><label><span data-i18n="lbl_year">Year</span></label><input id="cr-year" type="number" value="2026"></div><button class="btn btn-primary" onclick="renderCompliance()"><i class="ti ti-search"></i><span data-i18n="btn_gen_payroll"> Gen. Payroll Report</span></button><button class="btn btn-gold" id="cr-pdf-btn" onclick="downloadCompliancePDF()" style="display:none"><i class="ti ti-file-download"></i><span data-i18n="btn_pdf"> PDF</span></button><button class="btn btn-primary" style="background:#185fa5" onclick="renderVNPF()"><i class="ti ti-search"></i><span data-i18n="btn_gen_vnpf"> Gen. VNPF &amp; Bank</span></button><button class="btn btn-gold" id="cr-vnpf-btn" onclick="downloadVNPFPDF()" style="display:none"><i class="ti ti-file-download"></i><span data-i18n="btn_pdf"> PDF</span></button></div></div><div id="cr-loading" style="display:none;text-align:center;padding:2rem;color:#888"><i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite;display:block;margin-bottom:.5rem"></i><span data-i18n="msg_gen_report">Generating report...</span></div><div id="compliance-output"></div></div>
-      <!-- DATABASE -->
+      <div id="section-compliance" class="hidden"><p class="section-title"><i class="ti ti-report-analytics" style="color:var(--gold)"></i> <span data-i18n="menu_compliance">Compliance Report</span></p><div class="card" style="margin-bottom:1rem"><div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:140px"><label><span data-i18n="lbl_month">Month</span></label><select id="cr-month"><option value="" data-i18n="opt_all_months">All Months</option><option data-i18n="opt_jan">January</option><option data-i18n="opt_feb">February</option><option data-i18n="opt_mar">March</option><option data-i18n="opt_apr">April</option><option data-i18n="opt_may">May</option><option data-i18n="opt_jun">June</option><option data-i18n="opt_jul">July</option><option data-i18n="opt_aug">August</option><option data-i18n="opt_sep">September</option><option data-i18n="opt_oct">October</option><option data-i18n="opt_nov">November</option><option data-i18n="opt_dec">December</option></select></div><div style="flex:1;min-width:100px"><label><span data-i18n="lbl_year">Year</span></label><input id="cr-year" type="number" value="2026"></div><button class="btn btn-primary" onclick="renderCompliance()"><i class="ti ti-search"></i><span data-i18n="btn_gen_payroll"> Gen. Payroll Report</span></button><button class="btn btn-gold" id="cr-pdf-btn" onclick="downloadCompliancePDF()" style="display:none"><i class="ti ti-file-download"></i><span data-i18n="btn_pdf"> PDF</span></button><button class="btn btn-primary" style="background:#185fa5" onclick="renderVNPF()"><i class="ti ti-search"></i><span data-i18n="btn_gen_vnpf"> Gen. VNPF & Bank</span></button><button class="btn btn-gold" id="cr-vnpf-btn" onclick="downloadVNPFPDF()" style="display:none"><i class="ti ti-file-download"></i><span data-i18n="btn_pdf"> PDF</span></button></div></div><div id="cr-loading" style="display:none;text-align:center;padding:2rem;color:#888"><i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite;display:block;margin-bottom:.5rem"></i><span data-i18n="msg_gen_report">Generating report...</span></div><div id="compliance-output"></div></div>
       <!-- UPDATES -->
       <div id="section-updates" class="hidden"><p class="section-title"><i class="ti ti-cloud-download" style="color:var(--gold)"></i> <span data-i18n="menu_updates">App Updates</span></p><div style="display:grid;grid-template-columns:320px 1fr;gap:1rem;align-items:start"><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:none;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-brand-github" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_wokmaneja">WokManeja</span></p><p style="font-size:11px;color:#888;margin:0" id="upd-repo"><span data-i18n="lbl_repo">wokmaneja/Payroll-HR-Management-System</span></p></div></div><div style="background:#f8f9fb;border-radius:8px;padding:12px;margin-bottom:1rem"><p style="font-size:11px;color:#888;margin-bottom:4px;font-weight:600;text-transform:uppercase"><span data-i18n="lbl_installed_ver">Installed Version</span></p><p style="font-size:22px;font-weight:800;color:#0a0a0a;margin:0" id="upd-current"><span data-i18n="lbl_v100">v1.0.0</span></p></div><button class="btn btn-primary" onclick="loadReleases()" style="width:100%;justify-content:center"><i class="ti ti-refresh"></i><span data-i18n="btn_check_upd"> Check for Updates</span></button><div id="upd-check-msg" style="margin-top:.75rem;font-size:12px;display:none"></div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy);margin:0"><span data-i18n="lbl_avail_releases">Available Releases</span></p><span id="upd-badge" style="font-size:11px;font-weight:600;color:#888"><span data-i18n="txt_click_check">Click "Check for Updates" to load</span></span></div><div id="upd-releases-wrap"><div style="padding:2rem;text-align:center;color:#aaa;font-size:13px"><i class="ti ti-cloud-off" style="font-size:36px;display:block;margin-bottom:.75rem"></i><span data-i18n="txt_not_checked">Not checked yet</span></div></div></div></div></div>
       <!-- DATABASE -->
@@ -454,10 +433,10 @@ tr:hover td{background:#fafafa}
       <!-- AUDIT LOGS -->
       <div id="section-audit" class="hidden"><p class="section-title"><i class="ti ti-history" style="color:var(--gold)"></i> <span data-i18n="menu_audit">Audit Logs</span></p><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><span data-i18n="lbl_sys_activity">System Activity</span></p><button class="btn btn-sm btn-outline" onclick="renderAuditLogs()"><i class="ti ti-refresh"></i><span data-i18n="btn_refresh"> Refresh</span></button></div><div id="audit-table-wrap" style="overflow:auto;max-height:600px"></div></div></div>
       <!-- COMPANY SETTINGS -->
-      <div id="section-company" class="hidden"><p class="section-title"><i class="ti ti-building" style="color:var(--gold)"></i> <span data-i18n="menu_company">Company Settings</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start"><div class="card"><div style="margin-bottom:1rem"><label><span data-i18n="lbl_company_name">Company Name</span></label><input type="text" id="cs-name" placeholder="Triple K Company" data-i18n-placeholder="ph_triple_k"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_address">Address</span></label><input type="text" id="cs-address" placeholder="Port Vila, Vanuatu" data-i18n-placeholder="ph_port_vila"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_phone">Phone Number</span></label><input type="text" id="cs-phone" placeholder="+678 12345" data-i18n-placeholder="ph_phone_12345"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_email">Email Address</span></label><input type="email" id="cs-email" placeholder="info@triplek.vu" data-i18n-placeholder="ph_email_info"></div><div style="margin-bottom:1.5rem"><label><span data-i18n="lbl_bus_license">Business License</span></label><input type="text" id="cs-license" placeholder="e.g. BL-123456" data-i18n-placeholder="ph_bl_123456"></div><button class="btn btn-primary" onclick="saveCompanySettings()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_settings"> Save Settings</span></button><div id="cs-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-license" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_soft_license">Software License</span></p><p style="font-size:12px;color:#888;margin:0"><span data-i18n="lbl_wm_sys">WokManeja Payroll System</span></p></div></div><div id="lic-status-card" style="padding:10px 14px;border-radius:8px;margin-bottom:1.25rem;font-size:13px;font-weight:600"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_license_key">License Key</span></label><input type="text" id="cs-appkey" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:14px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()" data-i18n-placeholder="ph_wm_key"><p class="hint" style="margin-top:4px"><i class="ti ti-info-circle"></i><span data-i18n="txt_enter_key"> Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key</span></p></div><button onclick="document.getElementById('cs-appkey').value='WM-PRO-LIFETIME-' + Math.random().toString(36).substring(2,6).toUpperCase() + '-' + Math.random().toString(36).substring(2,6).toUpperCase()" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:8px;border:1px solid #10b981;color:#10b981"><i class="ti ti-wand"></i> Generate Lifetime Key</button><button class="btn btn-primary" onclick="activateLicense()" style="width:100%;justify-content:center"><i class="ti ti-key"></i><span data-i18n="btn_activate_lic"> Activate License</span></button><div id="lic-msg" style="margin-top:.75rem;font-size:12px;padding:7px 12px;border-radius:6px;display:none"></div><hr style="margin:1.25rem 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><span data-i18n="txt_need_lic">Need a license? Contact </span><a href="mailto:wokmaneja@gmail.com" style="color:#0a0a0a;font-weight:700">wokmaneja@gmail.com</a></p></div></div></div>
+      <div id="section-company" class="hidden"><p class="section-title"><i class="ti ti-building" style="color:var(--gold)"></i> <span data-i18n="menu_company">Company Settings</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start"><div class="card"><div style="margin-bottom:1rem"><label><span data-i18n="lbl_company_name">Company Name</span></label><input type="text" id="cs-name" placeholder="Triple K Company" data-i18n-placeholder="ph_triple_k"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_address">Address</span></label><input type="text" id="cs-address" placeholder="Port Vila, Vanuatu" data-i18n-placeholder="ph_port_vila"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_phone">Phone Number</span></label><input type="text" id="cs-phone" placeholder="+678 12345" data-i18n-placeholder="ph_phone_12345"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_email">Email Address</span></label><input type="email" id="cs-email" placeholder="info@triplek.vu" data-i18n-placeholder="ph_email_info"></div><div style="margin-bottom:1.5rem"><label><span data-i18n="lbl_bus_license">Business License</span></label><input type="text" id="cs-license" placeholder="e.g. BL-123456" data-i18n-placeholder="ph_bl_123456"></div><button class="btn btn-primary" onclick="saveCompanySettings()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_settings"> Save Settings</span></button><div id="cs-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-license" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_soft_license">Software License</span></p><p style="font-size:12px;color:#888;margin:0"><span data-i18n="lbl_wm_sys">WokManeja Payroll System</span></p></div></div><div id="lic-status-card" style="padding:10px 14px;border-radius:8px;margin-bottom:1.25rem;font-size:13px;font-weight:600"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_license_key">License Key</span></label><input type="text" id="cs-appkey" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:14px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()" data-i18n-placeholder="ph_wm_key"><p class="hint" style="margin-top:4px"><i class="ti ti-info-circle"></i><span data-i18n="txt_enter_key"> Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key</span></p></div><button onclick="document.getElementById('cs-appkey').value='WM-PRO-LIFETIME-' + Math.random().toString(36).substring(2,6).toUpperCase() + '-' + Math.random().toString(36).substring(2,6).toUpperCase()" class="btn btn-outline" style="width:100%;justify-content:center;margin-bottom:8px;border:1px solid #10b981;color:#10b981"><i class="ti ti-wand"></i> Generate Lifetime Key</button><button class="btn btn-primary" onclick="activateLicense()" style="width:100%;justify-content:center"><i class="ti ti-key"></i><span data-i18n="btn_activate_lic"> Activate License</span></button><div id="lic-msg" style="margin-top:.75rem;font-size:12px;padding:7px 12px;border-radius:6px;display:none"></div><hr style="margin:1.25rem 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><span data-i18n="txt_need_lic">Need a license? Contact </span><a href="mailto:help@wokmaneja.vu" style="color:#0a0a0a;font-weight:700">help@wokmaneja.vu</a></p></div></div></div>
       <!-- ARCHIVE -->
       <div id="section-docs" class="hidden">
-        <p class="section-title"><i class="ti ti-book" style="color:var(--gold)"></i> <span data-i18n="menu_guides">User Guides &amp; Documentation</span></p>
+        <p class="section-title"><i class="ti ti-book" style="color:var(--gold)"></i> <span data-i18n="menu_guides">User Guides & Documentation</span></p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
           <div class="card">
             <div style="display:flex;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:2px solid #f0f0f0">
@@ -487,9 +466,9 @@ tr:hover td{background:#fafafa}
       </div>
       <!-- App Footer -->
       <div style="position:sticky;bottom:0;z-index:10;background:#fff;border-top:1px solid #e0e0e0;padding:10px 1.75rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem">
-        <p style="font-size:11px;color:#aaa;margin:0"><span data-i18n="txt_copyright">© 2026 WokManeja. All rights reserved.</span><br><span data-i18n="txt_support">Support: </span><a href="mailto:wokmaneja@gmail.com" style="color:#aaa;text-decoration:underline">wokmaneja@gmail.com</a></p>
+        <p style="font-size:11px;color:#aaa;margin:0"><span data-i18n="txt_copyright">© 2026 WokManeja. All rights reserved.</span><br><span data-i18n="txt_support">Support: </span><a href="mailto:help@wokmaneja.vu" style="color:#aaa;text-decoration:underline">help@wokmaneja.vu</a></p>
         <div style="display:flex;align-items:center;gap:.5rem">
-          <span style="font-size:10px;color:#999;white-space:nowrap"><span data-i18n="txt_designed_by">Designed &amp; Developed by WokManeja</span></span>
+          <span style="font-size:10px;color:#999;white-space:nowrap"><span data-i18n="txt_designed_by">Designed & Developed by WokManeja</span></span>
         </div>
       </div>
     </div>
@@ -555,6 +534,89 @@ tr:hover td{background:#fafafa}
 <script>
 
 var I18N_DICT = {
+  "lbl_doc_center": { en: "Document Center", fr: "Centre de documents", zh: "文件中心" },
+  "btn_req_add_doc": { en: "Request / Add Document", fr: "Demander / Ajouter un document", zh: "请求/添加文件" },
+  "th_staff_name": { en: "Staff Name", fr: "Nom du personnel", zh: "员工姓名" },
+  "th_doc_type": { en: "Doc Type", fr: "Type de doc", zh: "文件类型" },
+  "th_file": { en: "File", fr: "Fichier", zh: "文件" },
+  "th_date": { en: "Date", fr: "Date", zh: "日期" },
+  "th_action": { en: "Action", fr: "Action", zh: "操作" },
+  "msg_no_docs": { en: "No documents filed yet.", fr: "Aucun document déposé pour le moment.", zh: "暂无文件。" },
+  "btn_dl_file": { en: "Download File", fr: "Télécharger le fichier", zh: "下载文件" },
+  "btn_ext_link": { en: "External Link", fr: "Lien externe", zh: "外部链接" },
+  "lbl_requested": { en: "Requested", fr: "Demandé", zh: "已请求" },
+  "btn_upload": { en: "Upload", fr: "Télécharger", zh: "上传" },
+  "btn_delete": { en: "Delete", fr: "Supprimer", zh: "删除" },
+  "lbl_add_staff_doc": { en: "Add Staff Document", fr: "Ajouter un document au personnel", zh: "添加员工文件" },
+  "lbl_staff_member": { en: "Staff Member", fr: "Membre du personnel", zh: "员工" },
+  "opt_sel_staff": { en: "-- Select Staff --", fr: "-- Sélectionner --", zh: "-- 选择员工 --" },
+  "lbl_doc_type": { en: "Document Type", fr: "Type de document", zh: "文件类型" },
+  "btn_manage_types": { en: "Manage Types", fr: "Gérer les types", zh: "管理类型" },
+  "lbl_upload_file": { en: "Upload File", fr: "Télécharger un fichier", zh: "上传文件" },
+  "msg_upload_opt": { en: "(Optional - leave blank to request file)", fr: "(Optionnel - laisser vide pour demander)", zh: "(可选 - 留空以请求文件)" },
+  "msg_drag_drop": { en: "Drag and drop a file here, or click to browse", fr: "Glissez et déposez, ou cliquez pour parcourir", zh: "拖放文件到此处，或点击浏览" },
+  "btn_save_doc": { en: "Save Document", fr: "Enregistrer le document", zh: "保存文件" },
+  "btn_cancel": { en: "Cancel", fr: "Annuler", zh: "取消" },
+  "lbl_manage_doc_types": { en: "Manage Document Types", fr: "Gérer les types de documents", zh: "管理文件类型" },
+  "ph_new_type": { en: "New Type Name", fr: "Nouveau type", zh: "新类型名称" },
+  "btn_add": { en: "Add", fr: "Ajouter", zh: "添加" },
+  "btn_close": { en: "Close", fr: "Fermer", zh: "关闭" },
+  "msg_no_custom_types": { en: "No custom types added.", fr: "Aucun type personnalisé.", zh: "未添加自定义类型。" },
+  "msg_ready_save": { en: "Ready to save", fr: "Prêt à enregistrer", zh: "准备保存" },
+  "lbl_int_vacancies": { en: "Internal Vacancies", fr: "Postes vacants internes", zh: "内部空缺" },
+  "btn_post_vacancy": { en: "Post Vacancy", fr: "Publier un poste", zh: "发布空缺" },
+  "th_position": { en: "Position", fr: "Poste", zh: "职位" },
+  "th_description": { en: "Description", fr: "Description", zh: "描述" },
+  "th_due_date": { en: "Due Date", fr: "Date limite", zh: "截止日期" },
+  "msg_no_vacancies": { en: "No active vacancies.", fr: "Aucun poste vacant.", zh: "暂无空缺职位。" },
+  "lbl_work_recruit": { en: "Work Recruitment Management", fr: "Gestion du recrutement", zh: "招聘管理" },
+  "btn_add_candidate": { en: "Add Candidate", fr: "Ajouter un candidat", zh: "添加候选人" },
+  "th_candidate_name": { en: "Candidate Name", fr: "Nom du candidat", zh: "候选人姓名" },
+  "th_status": { en: "Status", fr: "Statut", zh: "状态" },
+  "th_attached_file": { en: "Attached File", fr: "Fichier joint", zh: "附件" },
+  "th_notes": { en: "Notes", fr: "Notes", zh: "备注" },
+  "msg_no_candidates": { en: "No candidates yet.", fr: "Aucun candidat pour le moment.", zh: "暂无候选人。" },
+  "btn_download": { en: "Download", fr: "Télécharger", zh: "下载" },
+  "btn_approve": { en: "Approve", fr: "Approuver", zh: "批准" },
+  "lbl_pos_applied": { en: "Position Applied", fr: "Poste postulé", zh: "申请职位" },
+  "opt_new": { en: "New", fr: "Nouveau", zh: "新" },
+  "opt_interviewing": { en: "Interviewing", fr: "En entretien", zh: "面试中" },
+  "opt_hired": { en: "Hired", fr: "Embauché", zh: "已录用" },
+  "opt_rejected": { en: "Rejected", fr: "Rejeté", zh: "已拒绝" },
+  "lbl_cv_file": { en: "Application/CV File (Optional)", fr: "Fichier CV (Optionnel)", zh: "简历文件(可选)" },
+  "btn_save": { en: "Save", fr: "Enregistrer", zh: "保存" },
+  "lbl_post_int_vac": { en: "Post Internal Vacancy", fr: "Publier un poste interne", zh: "发布内部空缺" },
+  "lbl_kpi_track": { en: "Performance & KPI Tracking", fr: "Suivi des performances et KPI", zh: "绩效与KPI跟踪" },
+  "btn_add_kpi": { en: "Add KPI Record", fr: "Ajouter un KPI", zh: "添加KPI记录" },
+  "th_kpi_title": { en: "KPI Title", fr: "Titre du KPI", zh: "KPI标题" },
+  "th_score": { en: "Score / Rating", fr: "Score / Évaluation", zh: "评分" },
+  "th_reviewer": { en: "Reviewer", fr: "Évaluateur", zh: "审核人" },
+  "msg_no_kpi": { en: "No KPI records found.", fr: "Aucun KPI trouvé.", zh: "未找到KPI记录。" },
+  "lbl_kpi_name": { en: "Target Goal / KPI Name", fr: "Objectif / Nom du KPI", zh: "目标/KPI名称" },
+  "lbl_reviewer_name": { en: "Reviewer Name", fr: "Nom de l'évaluateur", zh: "审核人姓名" },
+  "ph_score": { en: "Out of 5 or 100%", fr: "Sur 5 ou 100%", zh: "5分制或100%" },
+  "lbl_support_doc": { en: "Supporting Document (Optional)", fr: "Document justificatif (Optionnel)", zh: "支持文件(可选)" },
+  "lbl_discipline_mgmt": { en: "Staff Discipline Management", fr: "Gestion de la discipline", zh: "员工纪律管理" },
+  "btn_log_discipline": { en: "Log Disciplinary Action", fr: "Enregistrer une action", zh: "记录纪律处分" },
+  "th_type": { en: "Type", fr: "Type", zh: "类型" },
+  "th_violation": { en: "Violation", fr: "Violation", zh: "违规行为" },
+  "th_explanation": { en: "Employee Explanation", fr: "Explication", zh: "员工解释" },
+  "msg_no_discipline": { en: "No disciplinary records found.", fr: "Aucun dossier disciplinaire.", zh: "未找到纪律记录。" },
+  "lbl_pending_exp": { en: "Pending Explanation", fr: "Explication en attente", zh: "等待解释" },
+  "btn_provide_exp": { en: "Provide Explanation", fr: "Fournir une explication", zh: "提供解释" },
+  "lbl_log_new_disc": { en: "Log New Disciplinary Action", fr: "Nouvelle action disciplinaire", zh: "记录新纪律处分" },
+  "opt_verbal_warn": { en: "Verbal Warning", fr: "Avertissement verbal", zh: "口头警告" },
+  "opt_written_warn": { en: "Written Warning", fr: "Avertissement écrit", zh: "书面警告" },
+  "opt_final_warn": { en: "Final Warning", fr: "Dernier avertissement", zh: "最后警告" },
+  "opt_suspension": { en: "Suspension", fr: "Suspension", zh: "停职" },
+  "opt_termination": { en: "Termination", fr: "Licenciement", zh: "解雇" },
+  "lbl_violation_details": { en: "Violation Details", fr: "Détails de la violation", zh: "违规详情" },
+  "lbl_action_taken": { en: "Action Taken", fr: "Mesure prise", zh: "采取的行动" },
+  "lbl_req_emp_exp": { en: "Request Employee Explanation", fr: "Demander une explication", zh: "要求员工解释" },
+  "lbl_submit_exp": { en: "Submit Explanation", fr: "Soumettre une explication", zh: "提交解释" },
+  "lbl_your_exp": { en: "Your Explanation", fr: "Votre explication", zh: "您的解释" },
+  "lbl_evidence_file": { en: "Evidence File (Optional)", fr: "Preuve (Optionnel)", zh: "证据文件(可选)" },
+  "btn_submit": { en: "Submit", fr: "Soumettre", zh: "提交" },
   "language": { en: "Language", fr: "Langue", zh: "语言" },
   "lbl_requests": { en: "requests", fr: "demandes", zh: "请求" },
   "lbl_request": { en: "request", fr: "demande", zh: "请求" },
@@ -953,6 +1015,11 @@ var I18N_DICT = {
   "btn_save_pwd": { en: "Save Password", fr: "Enregistrer mot de passe", zh: "保存密码" },
   "lbl_are_you_sure": { en: "Are you sure?", fr: "Êtes-vous sûr ?", zh: "你确定吗？" },
   "btn_yes_proceed": { en: "Yes, Proceed", fr: "Oui, Continuer", zh: "是的，继续" },
+  "tbl_medical_out": { en: "Medical Outstanding", fr: "Solde médical", zh: "医疗余额" },
+  "txt_generated_by_wokmaneja": { en: "Generated by WokManeja", fr: "Généré par WokManeja", zh: "由 WokManeja 生成" },
+  "menu_documents": { en: "Document Center", fr: "Centre de documents", zh: "文件中心" },
+  "menu_kpi": { en: "Performance KPI", fr: "KPI de performance", zh: "绩效KPI" },
+  "menu_discipline": { en: "Staff Discipline", fr: "Discipline du personnel", zh: "员工纪律" },
 
   "change_pw": { en: "Change Password", fr: "Changer le mot de passe", zh: "修改密码" },
   "sign_out": { en: "Sign out", fr: "Déconnexion", zh: "登出" },
@@ -988,7 +1055,26 @@ var I18N_DICT = {
   "nav_reports": { en: "REPORTS", fr: "RAPPORTS", zh: "报告" },
   "nav_management": { en: "MANAGEMENT", fr: "GESTION", zh: "管理" },
   "nav_help": { en: "HELP", fr: "AIDE", zh: "帮助" },
-  "language": { en: "Language", fr: "Langue", zh: "语言" }
+  "language": { en: "Language", fr: "Langue", zh: "语言" },
+  "doc_vnpf_remittance": { en: "VNPF Remittance", fr: "Versement VNPF", zh: "VNPF汇款" },
+  "lbl_amount_vt": { en: "Amount (Vt)", fr: "Montant (Vt)", zh: "金额 (Vt)" },
+  "lbl_emp_6": { en: "Employee 6%", fr: "Employé 6%", zh: "员工 6%" },
+  "lbl_emp_deduction": { en: "Employee Deduction", fr: "Déduction de l'employé", zh: "员工扣除" },
+  "lbl_employer_contribution": { en: "Employer Contribution", fr: "Contribution de l'employeur", zh: "雇主缴费" },
+  "lbl_empr_6": { en: "Employer 6%", fr: "Employeur 6%", zh: "雇主 6%" },
+  "lbl_finalized": { en: "Finalized", fr: "Finalisé", zh: "已定稿" },
+  "lbl_generated_on": { en: "Generated On", fr: "Généré le", zh: "生成日期" },
+  "lbl_medical_ins": { en: "Medical Insurance", fr: "Assurance médicale", zh: "医疗保险" },
+  "lbl_page_1_of_1": { en: "Page 1 of 1", fr: "Page 1 sur 1", zh: "第 1 页，共 1 页" },
+  "lbl_period": { en: "Period", fr: "Période", zh: "周期" },
+  "lbl_to_account_desc": { en: "To Account Description", fr: "Description du compte", zh: "收款账户说明" },
+  "lbl_total_gross_pay": { en: "Total Gross Pay", fr: "Salaire brut total", zh: "总税前工资" },
+  "lbl_total_vnpf_payable": { en: "Total VNPF Payable", fr: "Total VNPF à payer", zh: "应付VNPF总额" },
+  "lbl_transfer_priority": { en: "Transfer Priority", fr: "Priorité de transfert", zh: "转账优先级" },
+  "lbl_vnpf_breakdown": { en: "VNPF Breakdown", fr: "Détail VNPF", zh: "VNPF明细" },
+  "lbl_vnpf_remit_sum": { en: "VNPF Remittance Summary", fr: "Résumé des versements VNPF", zh: "VNPF汇款摘要" },
+  "tbl_medical_out": { en: "Medical Outstanding", fr: "Solde médical", zh: "医疗余额" },
+  "txt_generated_by_wokmaneja": { en: "Generated by WokManeja", fr: "Généré par WokManeja", zh: "由 WokManeja 生成" }
 };
 
 function changeLang() {
@@ -1086,7 +1172,7 @@ window.customConfirm = function(msg, onConfirm) {
   cancelBtn.addEventListener('click', onCancel);
 };
 
-var MEMORY_DB = { users: [], staff: [], payslips: [], hr_requests: [], departments: [], audit_logs: [], settings: [], archive: [], bulk_templates: [] };
+var MEMORY_DB = { users: [], staff: [], payslips: [], hr_requests: [], departments: [], audit_logs: [], settings: [], archive: [], bulk_templates: [], discipline: [], vacancies: [], documents: [], doc_types: [], kpi: [], recruitment: [] };
 var DB=(function(){
   function _id(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
   function _save(){ localStorage.setItem('demo_db', JSON.stringify(MEMORY_DB)); }
@@ -1207,10 +1293,10 @@ function updateDBIndicator(){var d=document.getElementById('db-status');if(d){d.
 var APP={currentUser:null,editingStaffIdx:-1,editingHRId:null,editingUserId:null};
 var STAFF_ID_MAP={};var HR_ID_MAP={};var REC_ID_MAP={};var USER_ID_MAP={};var NOTIF_ID_MAP={};
 var MENUS={
-  admin:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'summary',label:'Summary Reports',icon:'ti-file-analytics'},{divider:'ADMIN'},{id:'company',label:'Company Settings',icon:'ti-building'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{id:'updates',label:'App Updates',icon:'ti-cloud-download'},{id:'database',label:'Database Manager',icon:'ti-database'},{id:'audit',label:'Audit Logs',icon:'ti-history'},{id:'archive',label:'Trash Bin',icon:'ti-trash'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
-  it:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'summary',label:'Summary Reports',icon:'ti-file-analytics'},{divider:'REPORTS'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
-  manager:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'summary',label:'Summary Reports',icon:'ti-file-analytics'},{divider:'MANAGEMENT'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
-  staff:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'records',label:'My Payslips',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}]
+  admin:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'ADMIN'},{id:'company',label:'Company Settings',icon:'ti-building'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{id:'updates',label:'App Updates',icon:'ti-cloud-download'},{id:'database',label:'Database Manager',icon:'ti-database'},{id:'audit',label:'Audit Logs',icon:'ti-history'},{id:'archive',label:'Trash Bin',icon:'ti-trash'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
+  it:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'REPORTS'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
+  manager:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'MANAGEMENT'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
+  staff:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PAYROLL'},{id:'records',label:'My Payslips',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}]
 };
 var IDLE_TIMEOUT = 15 * 60 * 1000; // 15 minutes
 var idleTimer = null;
@@ -1218,10 +1304,10 @@ function resetIdleTimer(){if(!APP.currentUser)return;if(idleTimer)clearTimeout(i
 document.addEventListener('mousemove',resetIdleTimer);
 document.addEventListener('keydown',resetIdleTimer);
 document.addEventListener('click',resetIdleTimer);
-async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{await DB.init();var user=DB.findOne('users',{username:u,password:p});if(!user){document.getElementById('login-error').style.display='block';return}document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token','demo_token');sessionStorage.setItem('api_user',JSON.stringify(user));APP.currentUser=user;seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=user.name;document.getElementById('nav-badge').textContent=user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+user.role;buildNav(user.role);changeLang();if(typeof renderNotifBadge==='function')renderNotifBadge();if(typeof startNotifPolling==='function')startNotifPolling();if(typeof refreshDeptDropdown==='function')refreshDeptDropdown();resetIdleTimer();if(typeof checkForErrors==='function')checkForErrors();}catch(e){console.error(e);document.getElementById('login-error').style.display='block';}}
+async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors();if(data.user.mustChangePassword){setTimeout(function(){var pw=document.getElementById('modal-changepw');if(pw){pw.style.display='flex';var warn=document.createElement('p');warn.style.cssText='color:#e24b4a;font-size:12px;margin-bottom:12px;padding:8px 12px;background:#fff0f0;border-radius:6px;border:1px solid #f5c0c0;text-align:center';warn.innerHTML='<i class="ti ti-lock" style="margin-right:4px"></i>Please set a new password before continuing.';var inner=pw.querySelector('[style*="background:#fff"]')||pw;inner.insertBefore(warn,inner.firstChild);}},200);}}catch(e){document.getElementById('login-error').style.display='block';}}
 function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
-function buildNav(role){var nav=document.getElementById('sidebar-nav');nav.innerHTML='';MENUS[role].forEach(function(item){if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='summary')renderSummaryReport();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}};nav.appendChild(a);});nav.querySelector('button').click();}
-var ALL_SECTIONS=['payslip','bulk','records','staff','hr','summary','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs'];
+function buildNav(role){var nav=document.getElementById('sidebar-nav');nav.innerHTML='';MENUS[role].forEach(function(item){if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}if(item.id==='documents'&&typeof renderDocuments==='function')renderDocuments();if(item.id==='kpi'&&typeof renderKPI==='function')renderKPI();if(item.id==='recruitment'&&typeof renderRecruitment==='function')renderRecruitment();if(item.id==='discipline'&&typeof renderDiscipline==='function')renderDiscipline();};nav.appendChild(a);});nav.querySelector('button').click();}
+var ALL_SECTIONS=['payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs','documents','kpi','recruitment','discipline'];
 function showSection(id){ALL_SECTIONS.forEach(function(s){var el=document.getElementById('section-'+s);if(el)el.classList.add('hidden')});var target=document.getElementById('section-'+id);if(target)target.classList.remove('hidden');if(id==='payslip'){refreshStaffDropdown();setTodayPayDate()}if(id==='bulk'){setTodayBulkPayDate();renderBulkTemplates();}}
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function fmtDate(dateStr,opts){if(!dateStr)return'';return new Date(dateStr+'T00:00:00').toLocaleDateString('en-GB',opts||{day:'2-digit',month:'short',year:'numeric'});}
@@ -1282,10 +1368,10 @@ function renderRecords(){var wrap=document.getElementById('records-list');var ro
 function getLeaveStats(staffId){var s=DB.findOne('staff',{_id:staffId});if(!s)return{annualAlloc:0,annualTaken:0,annualLeft:0,sickAlloc:0,sickTaken:0,sickLeft:0};var annualAlloc=parseInt(s.annualLeave)||21;var sickAlloc=parseInt(s.sickLeave)||10;var approved=DB.findAll('hr_requests').filter(function(r){return r.staffId===staffId&&r.status==='Approved'});var annualTaken=approved.filter(function(r){return r.type==='Annual Leave'}).reduce(function(t,r){return t+(parseInt(r.days)||0)},0);var sickTaken=approved.filter(function(r){return r.type==='Sick Leave'}).reduce(function(t,r){return t+(parseInt(r.days)||0)},0);var medicalAlloc=parseInt(s.medicalInsurance)||50000;var medicalTaken=approved.filter(function(r){return r.type==='Medical Claim'}).reduce(function(t,r){return t+(parseFloat(r.amount)||0)},0);return{annualAlloc:annualAlloc,annualTaken:annualTaken,annualLeft:Math.max(0,annualAlloc-annualTaken),sickAlloc:sickAlloc,sickTaken:sickTaken,sickLeft:Math.max(0,sickAlloc-sickTaken),medicalAlloc:medicalAlloc,medicalTaken:medicalTaken,medicalLeft:Math.max(0,medicalAlloc-medicalTaken)};}
 function getNextEmpId(){var nums=DB.findAll('staff').map(function(s){var m=s.empid.match(/EMP(\d+)/i);return m?parseInt(m[1]):0});var next=nums.length?Math.max.apply(null,nums)+1:1;return'EMP'+String(next).padStart(3,'0')}
 function setNextEmpId(){if(APP.editingStaffIdx===-1)document.getElementById('sf-id').value=getNextEmpId()}
-function renderStaffTable(){var wrap=document.getElementById('staff-table-wrap');var search=(document.getElementById('staff-search')||{}).value||'';var all=DB.findAll('staff').filter(function(s){return!search||(s.name||'').toLowerCase().includes(search.toLowerCase())||(s.empid||'').toLowerCase().includes(search.toLowerCase())||(s.department||'').toLowerCase().includes(search.toLowerCase())});if(!all.length){wrap.innerHTML='<p style="color:#888;font-size:13px;padding:1rem"><span data-i18n="msg_no_staff">No staff found.</span></p>';return}var rows='';all.forEach(function(s,idx){var sc=s.status==='Active'?'pill-active':'pill-inactive';var ls=getLeaveStats(s._id);var aCol=ls.annualLeft<=0?'color:#dc2626':ls.annualLeft<=5?'color:#f59e0b':'color:#16a34a';var sCol=ls.sickLeft<=0?'color:#dc2626':ls.sickLeft<=2?'color:#f59e0b':'color:#16a34a';var eid='stf'+idx;STAFF_ID_MAP[eid]=s._id;var hrStr=s.hourlyRate?'VUV '+s.hourlyRate+'/hr':'Salaried';var cycleStr=s.payCycle||'Monthly';var delBtn=(APP.currentUser.role==='admin'||APP.currentUser.role==='manager')?'<button class="btn btn-danger btn-sm" onclick="deleteStaff(STAFF_ID_MAP.stf'+idx+')" title="Delete"><i class="ti ti-trash"></i></button>':'';rows+=''+'<tr>'+'<td style="font-weight:600">'+s.name+'</td>'+'<td style="color:#888">'+s.empid+'</td>'+'<td>'+s.designation+'</td>'+'<td>'+s.department+'</td>'+'<td><span style="background:#f0f7ff;color:#000000;padding:2px 6px;border-radius:4px;font-size:11px;display:block;margin-bottom:2px">'+hrStr+'</span><span style="background:#f3e8ff;color:#6b21a8;padding:2px 6px;border-radius:4px;font-size:10px;display:block;text-align:center">'+cycleStr+'</span></td>'+'<td style="background:#f0f8ff;text-align:center">'+ls.annualAlloc+' Days</td>'+'<td style="background:#f0f8ff;text-align:center;color:#1565c0;font-weight:600">'+ls.annualTaken+' Days</td>'+'<td style="background:#f0f8ff;text-align:center;font-weight:700;'+aCol+'">'+ls.annualLeft+' Days</td>'+'<td style="background:#fff5f5;text-align:center">'+ls.sickAlloc+' Days</td>'+'<td style="background:#fff5f5;text-align:center;color:#c62828;font-weight:600">'+ls.sickTaken+' Days</td>'+'<td style="background:#fff5f5;text-align:center;font-weight:700;'+sCol+'">'+ls.sickLeft+' Days</td>'+'<td><span class="status-pill '+sc+'">'+s.status+'</span></td>'+'<td style="white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="editStaff(STAFF_ID_MAP.stf'+idx+')" title="Edit"><i class="ti ti-edit"></i></button> '+delBtn+'</td>'+'</tr>'; setTimeout(translateUI, 10); });wrap.innerHTML='<div style="overflow:auto"><table><thead><tr><th><span data-i18n="tbl_name">Name</span></th><th><span data-i18n="tbl_id">ID</span></th><th><span data-i18n="tbl_designation">Designation</span></th><th><span data-i18n="tbl_dept">Dept</span></th><th><span data-i18n="tbl_pay_type">Pay Type</span></th><th style="background:#e8f4fd;color:#1565c0;text-align:center"><span data-i18n="tbl_annual_alloc">Annual<br>Allocated</span></th><th style="background:#e8f4fd;color:#1565c0;text-align:center"><span data-i18n="tbl_annual_taken">Annual<br>Taken</span></th><th style="background:#e8f4fd;color:#1565c0;text-align:center"><span data-i18n="tbl_annual_left">Annual<br>Left</span></th><th style="background:#fde8e8;color:#c62828;text-align:center"><span data-i18n="tbl_sick_alloc">Sick Leave<br>Allocated</span></th><th style="background:#fde8e8;color:#c62828;text-align:center"><span data-i18n="tbl_sick_taken">Sick Leave<br>Taken</span></th><th style="background:#fde8e8;color:#c62828;text-align:center"><span data-i18n="tbl_sick_left">Sick Leave<br>Left</span></th><th><span data-i18n="tbl_status">Status</span></th><th><span data-i18n="tbl_actions">Actions</span></th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
+function renderStaffTable(){var wrap=document.getElementById('staff-table-wrap');var search=(document.getElementById('staff-search')||{}).value||'';var all=DB.findAll('staff').filter(function(s){return!search||(s.name||'').toLowerCase().includes(search.toLowerCase())||(s.empid||'').toLowerCase().includes(search.toLowerCase())||(s.department||'').toLowerCase().includes(search.toLowerCase())});if(!all.length){wrap.innerHTML='<p style="color:#888;font-size:13px;padding:1rem"><span data-i18n="msg_no_staff">No staff found.</span></p>';return}var rows='';all.forEach(function(s,idx){var sc=s.status==='Active'?'pill-active':'pill-inactive';var ls=getLeaveStats(s._id);var aCol=ls.annualLeft<=0?'color:#dc2626':ls.annualLeft<=5?'color:#f59e0b':'color:#16a34a';var sCol=ls.sickLeft<=0?'color:#dc2626':ls.sickLeft<=2?'color:#f59e0b':'color:#16a34a';var eid='stf'+idx;STAFF_ID_MAP[eid]=s._id;var hrStr=s.hourlyRate?'VUV '+s.hourlyRate+'/hr':'Salaried';var cycleStr=s.payCycle||'Monthly';var linkedUser = DB.findOne('users', {linkedStaffId: s._id});var resetBtn = '';if (linkedUser && (APP.currentUser.role==='admin'||APP.currentUser.role==='manager')) {    resetBtn = '<button class="btn btn-gold btn-sm" style="margin-right:4px;padding:2px 6px;font-size:11px" onclick="resetStaffPassword(\'' + linkedUser._id + '\')" title="Reset Password"><i class="ti ti-key"></i></button>';}var delBtn=(APP.currentUser.role==='admin'||APP.currentUser.role==='manager')? resetBtn + '<button class="btn btn-danger btn-sm" style="padding:2px 6px;font-size:11px" onclick="deleteStaff(STAFF_ID_MAP.stf'+idx+')" title="Delete"><i class="ti ti-trash"></i></button>':'';rows+=''+'<tr>'+'<td style="font-weight:600;white-space:nowrap;padding:4px">'+s.name+'</td>'+'<td style="color:#888;padding:4px">'+s.empid+'</td>'+'<td style="padding:4px">'+s.designation+'</td>'+'<td style="padding:4px">'+s.department+'</td>'+'<td style="padding:4px"><span style="background:#f0f7ff;color:#000000;padding:2px 4px;border-radius:4px;font-size:10px;display:block;margin-bottom:2px;white-space:nowrap">'+hrStr+'</span><span style="background:#f3e8ff;color:#6b21a8;padding:2px 4px;border-radius:4px;font-size:10px;display:block;text-align:center;white-space:nowrap">'+cycleStr+'</span></td>'+'<td style="background:#f0f8ff;text-align:center;padding:4px">'+ls.annualAlloc+'</td>'+'<td style="background:#f0f8ff;text-align:center;color:#1565c0;font-weight:600;padding:4px">'+ls.annualTaken+'</td>'+'<td style="background:#f0f8ff;text-align:center;font-weight:700;padding:4px;'+aCol+'">'+ls.annualLeft+'</td>'+'<td style="background:#fff5f5;text-align:center;padding:4px">'+ls.sickAlloc+'</td>'+'<td style="background:#fff5f5;text-align:center;color:#c62828;font-weight:600;padding:4px">'+ls.sickTaken+'</td>'+'<td style="background:#fff5f5;text-align:center;font-weight:700;padding:4px;'+sCol+'">'+ls.sickLeft+'</td>'+'<td style="padding:4px"><span class="status-pill '+sc+'" style="padding:2px 6px;font-size:10px">'+s.status+'</span></td>'+'<td style="white-space:nowrap;padding:4px"><button class="btn btn-outline btn-sm" style="padding:2px 6px;font-size:11px;margin-right:4px" onclick="editStaff(STAFF_ID_MAP.stf'+idx+')" title="Edit"><i class="ti ti-edit"></i></button>'+delBtn+'</td>'+'</tr>'; setTimeout(translateUI, 10); });wrap.innerHTML='<div style="overflow-x:auto;width:100%"><table style="font-size:11.5px;width:100%;table-layout:auto"><thead><tr><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_name">Name</span></th><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_id">ID</span></th><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_designation">Designation</span></th><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_dept">Dept</span></th><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_pay_type">Pay Type</span></th><th colspan="3" style="background:#e8f4fd;color:#1565c0;text-align:center;padding:4px;border-bottom:1px solid #bbdefb">Annual Leave</th><th colspan="3" style="background:#fde8e8;color:#c62828;text-align:center;padding:4px;border-bottom:1px solid #ffcdd2">Sick Leave</th><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_status">Status</span></th><th rowspan="2" style="padding:6px 4px"><span data-i18n="tbl_actions">Actions</span></th></tr><tr><th style="background:#e8f4fd;color:#1565c0;text-align:center;padding:4px;font-size:10px">Alloc</th><th style="background:#e8f4fd;color:#1565c0;text-align:center;padding:4px;font-size:10px">Taken</th><th style="background:#e8f4fd;color:#1565c0;text-align:center;padding:4px;font-size:10px">Left</th><th style="background:#fde8e8;color:#c62828;text-align:center;padding:4px;font-size:10px">Alloc</th><th style="background:#fde8e8;color:#c62828;text-align:center;padding:4px;font-size:10px">Taken</th><th style="background:#fde8e8;color:#c62828;text-align:center;padding:4px;font-size:10px">Left</th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
 function clearStaffForm(){document.getElementById('sf-name').value='';setNextEmpId();document.getElementById('sf-vnpf').value='';document.getElementById('sf-designation').value='';document.getElementById('sf-department').value='';document.getElementById('sf-email').value='';document.getElementById('sf-phone').value='';document.getElementById('sf-hourly').value='';document.getElementById('sf-bank').value='';document.getElementById('sf-account').value='';document.getElementById('sf-annual').value='21';document.getElementById('sf-sick').value='10';document.getElementById('sf-medical').value='50000';document.getElementById('sf-status').value='Active';document.getElementById('sf-paycycle').value='Monthly';document.getElementById('sf-create-user').checked=false;document.getElementById('sf-user-fields').style.display='none';document.getElementById('sf-username').value='';document.getElementById('sf-password').value='';APP.editingStaffIdx=-1;document.getElementById('staff-form-title').textContent='Add New Staff';}
 function saveStaff(){var n=document.getElementById('sf-name').value.trim();var id=document.getElementById('sf-id').value.trim();var vnpfNum=document.getElementById('sf-vnpf').value.trim();var dsg=document.getElementById('sf-designation').value.trim();var dep=document.getElementById('sf-department').value;var email=document.getElementById('sf-email').value.trim();var phone=document.getElementById('sf-phone').value.trim();var hourlyRate=parseFloat(document.getElementById('sf-hourly').value)||0;var bank=document.getElementById('sf-bank').value.trim();var account=document.getElementById('sf-account').value.trim();var annual=parseInt(document.getElementById('sf-annual').value)||21;var sick=parseInt(document.getElementById('sf-sick').value)||10;var medical=parseInt(document.getElementById('sf-medical').value)||50000;var st=document.getElementById('sf-status').value;var pc=document.getElementById('sf-paycycle').value;if(!n){alert('Staff name is required.');return}if(!dep){alert('Please select a department.');return}var obj={name:n,empid:id,vnpfNumber:vnpfNum,designation:dsg,department:dep,email:email,phone:phone,hourlyRate:hourlyRate,bankName:bank,accountNumber:account,annualLeave:annual,sickLeave:sick,medicalInsurance:medical,status:st,payCycle:pc};var savedId='';if(APP.editingStaffIdx!==-1){DB.update('staff',{_id:APP.editingStaffIdx},obj);savedId=APP.editingStaffIdx;APP.editingStaffIdx=-1;document.getElementById('staff-form-title').textContent='Add New Staff';}else{var newDoc=DB.insert('staff',obj);savedId=newDoc._id;}var createUser=document.getElementById('sf-create-user').checked;var uname=document.getElementById('sf-username').value.trim();var pass=document.getElementById('sf-password').value.trim();if(createUser&&uname){var existingUser=DB.findOne('users',{linkedStaffId:savedId});if(!existingUser){existingUser=DB.findOne('users',{username:uname});}if(existingUser){var userObj={name:n,username:uname,role:'staff',linkedStaffId:savedId};if(pass)userObj.password=pass;DB.update('users',{_id:existingUser._id},userObj);}else{if(!pass)pass='staff123';DB.insert('users',{name:n,username:uname,password:pass,role:'staff',linkedStaffId:savedId});}}clearStaffForm();renderStaffTable();if(typeof renderUsersTable==='function')renderUsersTable();setNextEmpId();var m=document.getElementById('sf-msg');m.textContent='Staff saved to database.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
-function editStaff(dbId){var s=DB.findOne('staff',{_id:dbId});if(!s)return;APP.editingStaffIdx=dbId;document.getElementById('sf-name').value=s.name;document.getElementById('sf-id').value=s.empid;document.getElementById('sf-vnpf').value=s.vnpfNumber||'';document.getElementById('sf-designation').value=s.designation;document.getElementById('sf-department').value=s.department;document.getElementById('sf-email').value=s.email||'';document.getElementById('sf-phone').value=s.phone||'';document.getElementById('sf-hourly').value=s.hourlyRate||'';document.getElementById('sf-bank').value=s.bankName||'';document.getElementById('sf-account').value=s.accountNumber||'';document.getElementById('sf-annual').value=s.annualLeave||21;document.getElementById('sf-sick').value=s.sickLeave||10;document.getElementById('sf-medical').value=s.medicalInsurance||50000;document.getElementById('sf-status').value=s.status;document.getElementById('sf-paycycle').value=s.payCycle||'Monthly';var eu=DB.findOne('users',{linkedStaffId:dbId});if(eu){document.getElementById('sf-create-user').checked=true;document.getElementById('sf-user-fields').style.display='block';document.getElementById('sf-username').value=eu.username;document.getElementById('sf-password').value='';}else{document.getElementById('sf-create-user').checked=false;document.getElementById('sf-user-fields').style.display='none';document.getElementById('sf-username').value='';document.getElementById('sf-password').value='';}document.getElementById('staff-form-title').textContent='Edit Staff - '+s.name;}
+function editStaff(dbId){var s=DB.findOne('staff',{_id:dbId});if(!s)return;APP.editingStaffIdx=dbId;document.getElementById('sf-name').value=s.name;document.getElementById('sf-id').value=s.empid;document.getElementById('sf-vnpf').value=s.vnpfNumber||'';document.getElementById('sf-designation').value=s.designation;document.getElementById('sf-department').value=s.department;document.getElementById('sf-email').value=s.email||'';document.getElementById('sf-phone').value=s.phone||'';document.getElementById('sf-hourly').value=s.hourlyRate||'';document.getElementById('sf-bank').value=s.bankName||'';document.getElementById('sf-account').value=s.accountNumber||'';document.getElementById('sf-annual').value=s.annualLeave||21;document.getElementById('sf-sick').value=s.sickLeave||10;document.getElementById('sf-medical').value=s.medicalInsurance||50000;document.getElementById('sf-status').value=s.status;document.getElementById('sf-paycycle').value=s.payCycle||'Monthly';var eu=DB.findOne('users',{linkedStaffId:dbId});if(eu){document.getElementById('sf-create-user').checked=true;document.getElementById('sf-user-fields').style.display='block';document.getElementById('sf-username').value=eu.username;document.getElementById('sf-password').value='';}else{document.getElementById('sf-create-user').checked=false;document.getElementById('sf-user-fields').style.display='none';document.getElementById('sf-username').value='';document.getElementById('sf-password').value='';}var title=document.getElementById('staff-form-title');title.textContent='Edit Staff - '+s.name;var formCard=title.parentElement;formCard.scrollIntoView({behavior:'smooth',block:'start'});formCard.style.transition='box-shadow 0.4s ease, transform 0.4s ease';formCard.style.boxShadow='0 0 0 4px var(--gold)';formCard.style.transform='scale(1.01)';setTimeout(function(){formCard.style.boxShadow='';formCard.style.transform='scale(1)';},800);}
 function deleteStaff(dbId){var s=DB.findOne('staff',{_id:dbId});customConfirm('Delete '+(s?s.name:'this staff member')+'?', function(){ DB.remove('staff',{_id:dbId});renderStaffTable();setNextEmpId(); });}
 function refreshHRStaffDropdown(){
   var sel=document.getElementById('hr-staff');
@@ -1877,7 +1963,7 @@ function showLicenseLockScreen(errTitle, reason, machineId){
     el=document.createElement('div');
     el.id='license-lock-screen';
     el.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,.92);z-index:99999;display:flex;align-items:center;justify-content:center;';
-    el.innerHTML='<div style="background:#fff;border-radius:16px;padding:2.5rem;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)"><div style="width:64px;height:64px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem"><i class="ti ti-lock" style="font-size:32px;color:#0a0a0a"></i></div><h2 style="font-size:20px;font-weight:800;color:#0a0a0a;margin-bottom:.5rem">Access Locked</h2><p style="font-size:13px;color:#666;margin-bottom:1.5rem"><b>'+errTitle+'</b><br>'+displayReason+'<br>Enter a valid license key to continue.<br><br><b>Machine ID:</b> <span style="font-family:monospace;background:#eee;padding:2px 4px;border-radius:4px;">'+(machineId || 'Unknown')+'</span></p><input type="text" id="lock-key-input" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:15px;letter-spacing:1px;text-align:center;padding:12px;margin-bottom:10px;border:2px solid #d0d0d0;border-radius:8px;width:100%;outline:none" oninput="this.value=this.value.toUpperCase()"/><div id="lock-key-msg" style="font-size:12px;color:#e24b4a;margin-bottom:10px;display:none"></div><button onclick="document.getElementById(\'lock-key-input\').value=\'WM-PRO-LIFETIME-\' + Math.random().toString(36).substring(2,6).toUpperCase() + \'-\' + Math.random().toString(36).substring(2,6).toUpperCase()" class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:10px;border:1px solid #10b981;color:#10b981"><i class="ti ti-wand"></i> Generate Lifetime Key</button><button onclick="activateLicenseFromLock()" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:10px"><i class="ti ti-key"></i> Activate License</button><button onclick="startTrial()" class="btn" style="width:100%;justify-content:center;padding:12px;font-size:14px;background:#f0f0f0;color:#0a0a0a;border:1px solid #d0d0d0"><i class="ti ti-clock"></i> Start 14-Day Free Trial</button><p style="font-size:11px;color:#aaa;margin-top:1.25rem">Contact <a href="mailto:wokmaneja@gmail.com" style="color:#0a0a0a;font-weight:700">wokmaneja@gmail.com</a> to purchase a license.</p></div>';
+    el.innerHTML='<div style="background:#fff;border-radius:16px;padding:2.5rem;max-width:400px;width:90%;text-align:center;box-shadow:0 20px 60px rgba(0,0,0,.5)"><div style="width:64px;height:64px;background:#f0f0f0;border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1.25rem"><i class="ti ti-lock" style="font-size:32px;color:#0a0a0a"></i></div><h2 style="font-size:20px;font-weight:800;color:#0a0a0a;margin-bottom:.5rem">Access Locked</h2><p style="font-size:13px;color:#666;margin-bottom:1.5rem"><b>'+errTitle+'</b><br>'+displayReason+'<br>Enter a valid license key to continue.<br><br><b>Machine ID:</b> <span style="font-family:monospace;background:#eee;padding:2px 4px;border-radius:4px;">'+(machineId || 'Unknown')+'</span></p><input type="text" id="lock-key-input" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:15px;letter-spacing:1px;text-align:center;padding:12px;margin-bottom:10px;border:2px solid #d0d0d0;border-radius:8px;width:100%;outline:none" oninput="this.value=this.value.toUpperCase()"/><div id="lock-key-msg" style="font-size:12px;color:#e24b4a;margin-bottom:10px;display:none"></div><button onclick="document.getElementById(\'lock-key-input\').value=\'WM-PRO-LIFETIME-\' + Math.random().toString(36).substring(2,6).toUpperCase() + \'-\' + Math.random().toString(36).substring(2,6).toUpperCase()" class="btn btn-outline" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:10px;border:1px solid #10b981;color:#10b981"><i class="ti ti-wand"></i> Generate Lifetime Key</button><button onclick="activateLicenseFromLock()" class="btn btn-primary" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-bottom:10px"><i class="ti ti-key"></i> Activate License</button><button onclick="startTrial()" class="btn" style="width:100%;justify-content:center;padding:12px;font-size:14px;background:#f0f0f0;color:#0a0a0a;border:1px solid #d0d0d0"><i class="ti ti-clock"></i> Start 14-Day Free Trial</button><p style="font-size:11px;color:#aaa;margin-top:1.25rem">Contact <a href="mailto:help@wokmaneja.vu" style="color:#0a0a0a;font-weight:700">help@wokmaneja.vu</a> to purchase a license.</p></div>';
     document.body.appendChild(el);
   }else{
     el.querySelector('p').innerHTML = '<b>'+errTitle+'</b><br>'+displayReason+'<br>Enter a valid license key to continue.<br><br><b>Machine ID:</b> <span style="font-family:monospace;background:#eee;padding:2px 4px;border-radius:4px;">'+(machineId || 'Unknown')+'</span>';
@@ -1952,8 +2038,8 @@ function loadReleases(){
     }).catch(function(e){wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#a32d2d;font-size:13px">Failed to load releases: '+e.message+'</div>';});
   }).catch(function(){});
 }
-function applyUpdate(tag,zipball_url){
-  if(!confirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
+async function applyUpdate(tag,zipball_url){
+  if(!await uiConfirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
   var wrap=document.getElementById('upd-releases-wrap');
   wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#185fa5;font-size:13px"><i class="ti ti-loader-2" style="font-size:36px;display:block;margin-bottom:.75rem;animation:spin 1s linear infinite"></i><strong>Installing '+tag+'...</strong><br><span style="font-size:11px;color:#888;margin-top:.5rem;display:block">Downloading from GitHub. The server will restart automatically.</span></div>';
   fetch('/api/admin/apply-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tag:tag,zipball_url:zipball_url})}).then(function(r){return r.json()}).then(function(d){
@@ -1972,7 +2058,7 @@ function deleteForever(id){customConfirm('Permanently delete this record? This c
 function viewCollection(col){var docs=DB.raw(col);document.getElementById('db-viewer').textContent='// Collection: '+col+' ('+docs.length+' documents)\n\n'+JSON.stringify(docs,null,2)}
 function exportDB(){var data=DB.exportAll();var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='triple_k_database_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href);showDBMsg('Database exported.','#ddf0dd','#27500a')}
 function importDB(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){try{var data=JSON.parse(ev.target.result);DB.importAll(data);updateDBIndicator();renderDBStats();showDBMsg('Imported successfully.','#ddf0dd','#27500a')}catch(err){showDBMsg('Import failed: invalid file.','#fff0f0','#a32d2d')}};reader.readAsText(file);e.target.value=''}
-function clearDB(){if(!confirm('Delete ALL data?'))return;if(!confirm('FINAL WARNING: This cannot be undone.'))return;['payslips','staff','users','hr_requests'].forEach(function(c){DB.drop(c)});seedDB();updateDBIndicator();renderDBStats();showDBMsg('Database reset.','#faeeda','#633806')}
+async function clearDB() {if(!await uiConfirm('Delete ALL data?'))return;if(!await uiConfirm('FINAL WARNING: This cannot be undone.'))return;['payslips','staff','users','hr_requests'].forEach(function(c){DB.drop(c)});seedDB();updateDBIndicator();renderDBStats();showDBMsg('Database reset.','#faeeda','#633806')}
 function showDBMsg(msg,bg,color){var el=document.getElementById('db-action-msg');el.textContent=msg;el.style.background=bg;el.style.color=color;el.style.padding='8px 12px';el.style.borderRadius='6px';el.style.display='block';setTimeout(function(){el.style.display='none'},4000)}
 function toggleOTCalc(){var p=document.getElementById('ot-calc-panel');var btn=p.previousElementSibling;if(p.style.display==='none'){p.style.display='block';btn.innerHTML='<i class="ti ti-calculator" style="font-size:13px;color:#10b981"></i> Hide Overtime Calculator';}else{p.style.display='none';btn.innerHTML='<i class="ti ti-calculator" style="font-size:13px;color:#10b981"></i> Show Overtime Calculator';}}
 
@@ -2128,13 +2214,39 @@ function markNotifRead(id){
   renderNotifBadge();
 }
 function notifView(nId){
+  var notifs = getCurrentUserNotifs();
+  var n = notifs.find(function(x){ return x._id===nId; });
   markNotifRead(nId);
   toggleNotifPanel();
-  // Navigate to HR section
+  
+  var section = n && n.action && n.action.section ? n.action.section : '';
   var btns = document.querySelectorAll('#sidebar-nav button');
-  for(var i=0;i<btns.length;i++){
-    var t=btns[i].textContent.trim();
-    if(t.indexOf('Leave')!==-1||t.indexOf('Advance')!==-1){ btns[i].click(); break; }
+  
+  if (section === 'dashboard') {
+    for(var i=0;i<btns.length;i++){
+      var t=btns[i].textContent.trim();
+      if(t.indexOf('Dashboard')!==-1){ btns[i].click(); break; }
+    }
+    setTimeout(function() {
+      var vacCard = document.getElementById('internal-vacancies-card');
+      if (vacCard) vacCard.scrollIntoView({behavior: 'smooth'});
+    }, 100);
+  } else if (section === 'documents') {
+    for(var i=0;i<btns.length;i++){
+      var t=btns[i].textContent.trim();
+      if(t.indexOf('Document Center')!==-1 || t.indexOf('Documents')!==-1){ btns[i].click(); break; }
+    }
+  } else if (section === 'discipline') {
+    for(var i=0;i<btns.length;i++){
+      var t=btns[i].textContent.trim();
+      if(t.indexOf('Staff Discipline')!==-1){ btns[i].click(); break; }
+    }
+  } else {
+    // Navigate to HR section by default
+    for(var i=0;i<btns.length;i++){
+      var t=btns[i].textContent.trim();
+      if(t.indexOf('Leave')!==-1||t.indexOf('Advance')!==-1){ btns[i].click(); break; }
+    }
   }
   renderNotifList();
 }
@@ -2358,76 +2470,1333 @@ document.addEventListener('DOMContentLoaded', function() {
     await fetch('/api/admin/resolve-errors', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({action: 'discard'}) });
   });
 });
+</script>
 
-function renderSummaryReport(){
-    var sStr=document.getElementById('summary-search');
-    var q = sStr ? sStr.value.toLowerCase() : '';
-    var staff = DB.findAll('staff').filter(function(s){return s.status!=='Inactive'});
-    if(q){
-        staff = staff.filter(function(s){
-            return (s.name||'').toLowerCase().includes(q) || (s.department||'').toLowerCase().includes(q) || (s.empid||'').toLowerCase().includes(q);
-        });
+<script>
+// Document Filing
+let currentDocFile = null;
+
+function renderDocuments() {
+    var docs = DB.findAll('documents');
+    var staffList = DB.findAll('staff');
+    var docTypes = DB.findAll('doc_types');
+    var role = APP.currentUser ? APP.currentUser.role : '';
+    
+    if(role === 'staff' && APP.currentUser.linkedStaffId) {
+        var staffRec = DB.findOne('staff', { _id: APP.currentUser.linkedStaffId });
+        if(staffRec) {
+            docs = docs.filter(d => d.staffName === staffRec.name);
+        } else {
+            docs = [];
+        }
     }
     
-    var payslips = DB.raw('payslips');
-    var hrs = DB.raw('hr_requests');
-    var tbody = document.getElementById('summary-tbody');
-    if(!tbody) return;
+    // Default types if empty
+    if(docTypes.length === 0) {
+        docTypes = [{name: 'ID Card'}, {name: 'Driver License'}, {name: 'Contract'}, {name: 'Certificate'}];
+    }
+
+    var html = '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_doc_center">Document Center</span></h3>';
+    if(role === 'admin' || role === 'manager' || role === 'it') {
+        html += '<button class="btn btn-primary" onclick="showDocumentForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_req_add_doc">Request / Add Document</span></button>';
+    }
+    html += '</div>';
+
+    html += '<table><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="th_doc_type">Doc Type</span></th><th><span data-i18n="th_file">File</span></th><th><span data-i18n="th_date">Date</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    if(docs.length === 0) {
+        html += '<tr><td colspan="5" style="text-align:center;color:#888"><span data-i18n="msg_no_docs">No documents filed yet.</span></td></tr>';
+    } else {
+        docs.forEach(function(d) {
+            html += '<tr>';
+            html += '<td style="font-weight:600">'+(d.staffName||'')+'</td>';
+            html += '<td>'+(d.docType||'')+'</td>';
+            let fileDisplay = '--';
+            if (d.fileName && d.fileName.startsWith('/uploads/')) {
+                let niceName = d.fileName.split('_').slice(1).join('_') || 'Download File';
+                fileDisplay = '<a href="'+d.fileName+'" target="_blank" style="color:var(--gold);text-decoration:none"><i class="ti ti-file"></i> '+niceName+'</a>';
+            } else if (d.fileName) {
+                fileDisplay = '<a href="'+d.fileName+'" target="_blank" style="color:var(--gold);text-decoration:none"><i class="ti ti-link"></i> <span data-i18n="btn_ext_link">External Link</span></a>';
+            } else {
+                fileDisplay = '<span style="color:#e24b4a;font-weight:600"><i class="ti ti-alert-circle"></i> <span data-i18n="lbl_requested">Requested</span></span>';
+                if (role === 'staff') {
+                    fileDisplay += ' <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="showFulfillDocForm(\''+d._id+'\')"><span data-i18n="btn_upload">Upload</span></button>';
+                }
+            }
+            html += '<td>'+fileDisplay+'</td>';
+            html += '<td>'+(d._created ? new Date(d._created).toLocaleDateString() : '')+'</td>';
+            html += '<td>';
+            if(role === 'admin' || role === 'manager') {
+                html += '<button class="btn btn-danger btn-sm" onclick="deleteDocument(\''+d._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
+            }
+            html += '</td>';
+            html += '</tr>';
+        });
+    }
+    html += '</tbody></table>';
+
+    // Form modal
+    html += '<div id="doc-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:480px">';
+    html += '<h4 id="doc-modal-title" style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_add_staff_doc">Add Staff Document</span></h4>';
+    
+    html += '<div id="doc-staff-container" style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member">Staff Member</span></label><select id="doc-staff">';
+    html += '<option value=""><span data-i18n="opt_sel_staff">-- Select Staff --</span></option>';
+    staffList.forEach(s => {
+        html += '<option value="'+s.name+'">'+s.name+' ('+(s.empid||'')+')</option>';
+    });
+    html += '</select></div>';
+    
+    html += '<div id="doc-type-container" style="margin-bottom:1rem"><label><span data-i18n="lbl_doc_type">Document Type</span></label><div style="display:flex;gap:0.5rem">';
+    html += '<select id="doc-type" style="flex:1">';
+    docTypes.forEach(t => {
+        html += '<option value="'+t.name+'">'+t.name+'</option>';
+    });
+    html += '</select>';
+    if (APP.currentUser && (APP.currentUser.role === 'admin' || APP.currentUser.role === 'manager')) {
+        html += '<button class="btn btn-outline" onclick="showDocTypeManager()" style="padding:0.5rem;font-size:12px"><span data-i18n="btn_manage_types">Manage Types</span></button>';
+    }
+    html += '</div></div>';
+    
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_upload_file">Upload File</span> <span id="doc-upload-optional" style="color:#888;font-size:12px"><span data-i18n="msg_upload_opt">(Optional - leave blank to request file)</span></span></label>';
+    html += '<div id="doc-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;background:#fafafa;cursor:pointer;transition:all 0.2s">';
+    html += '<i class="ti ti-cloud-upload" style="font-size:32px;color:#aaa"></i>';
+    html += '<p style="margin:10px 0 0 0;color:#666" id="doc-drop-text"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></p>';
+    html += '<input type="file" id="doc-file-input" style="display:none">';
+    html += '</div></div>';
+    
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveDocument()"><span data-i18n="btn_save_doc">Save Document</span></button><button class="btn btn-outline" onclick="document.getElementById(\'doc-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+    
+    // Doc Type Manager Modal
+    html += '<div id="doc-type-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:10000;width:350px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_manage_doc_types">Manage Document Types</span></h4>';
+    html += '<div style="display:flex;gap:0.5rem;margin-bottom:1rem">';
+    html += '<input type="text" id="new-doc-type" placeholder="New Type Name" style="flex:1">';
+    html += '<button class="btn btn-primary" onclick="addDocType()"><span data-i18n="btn_add">Add</span></button>';
+    html += '</div>';
+    html += '<div id="doc-types-list" style="max-height:200px;overflow-y:auto;border:1px solid #eee;border-radius:6px;padding:0.5rem;margin-bottom:1rem"></div>';
+    html += '<button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById(\'doc-type-modal\').classList.add(\'hidden\')"><span data-i18n="btn_close">Close</span></button>';
+    html += '</div>';
+
+    document.getElementById('section-documents').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
+    if (typeof changeLang === 'function') changeLang();
+    
+    setTimeout(setupDocDropzone, 50);
+}
+
+function showDocTypeManager() {
+    renderDocTypesList();
+    document.getElementById('doc-type-modal').classList.remove('hidden');
+}
+
+function renderDocTypesList() {
+    var types = DB.findAll('doc_types');
+    var html = '';
+    if (types.length === 0) {
+        html = '<div style="color:#888;text-align:center;font-size:13px;padding:0.5rem"><span data-i18n="msg_no_custom_types">No custom types added.</span></div>';
+    } else {
+        types.forEach(t => {
+            html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-bottom:1px solid #f0f0f0">';
+            html += '<span style="font-size:14px">'+t.name+'</span>';
+            html += '<i class="ti ti-trash" style="color:var(--error);cursor:pointer" onclick="deleteDocType(\''+t._id+'\')"></i>';
+            html += '</div>';
+        });
+    }
+    document.getElementById('doc-types-list').innerHTML = html;
+}
+
+function addDocType() {
+    var name = document.getElementById('new-doc-type').value.trim();
+    if (!name) return;
+    DB.insert('doc_types', { name: name });
+    document.getElementById('new-doc-type').value = '';
+    renderDocTypesList();
+    renderDocuments();
+    document.getElementById('doc-modal').classList.remove('hidden'); // keep main modal open
+    document.getElementById('doc-type-modal').classList.remove('hidden'); // keep type modal open
+}
+
+async function deleteDocType(id) {
+    if(await uiConfirm('Remove this document type?')) {
+        DB.remove('doc_types', { _id: id });
+        renderDocTypesList();
+        renderDocuments();
+        document.getElementById('doc-modal').classList.remove('hidden');
+        document.getElementById('doc-type-modal').classList.remove('hidden');
+    }
+}
+
+function setupDocDropzone() {
+    var dropzone = document.getElementById('doc-dropzone');
+    var fileInput = document.getElementById('doc-file-input');
+    var dropText = document.getElementById('doc-drop-text');
+    if(!dropzone) return;
+
+    dropzone.onclick = () => fileInput.click();
+    
+    dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--gold)';
+        dropzone.style.background = '#fff8e1';
+    };
+    
+    dropzone.ondragleave = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+    };
+    
+    dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleDocFileSelect(e.dataTransfer.files[0]);
+        }
+    };
+    
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleDocFileSelect(e.target.files[0]);
+        }
+    };
+    
+    function handleDocFileSelect(file) {
+        dropText.innerHTML = '<strong style="color:var(--navy)">' + file.name + '</strong><br><span style="font-size:12px">(' + Math.round(file.size/1024) + ' KB) - Ready to save</span>';
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+            currentDocFile = {
+                filename: file.name,
+                base64: evt.target.result
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+let fulfillDocId = null;
+
+function showDocumentForm() {
+    fulfillDocId = null;
+    currentDocFile = null;
+    var dropText = document.getElementById('doc-drop-text');
+    if (dropText) dropText.innerHTML = 'Drag and drop a file here, or click to browse';
+    var staffCont = document.getElementById('doc-staff-container');
+    if(staffCont) staffCont.style.display = 'block';
+    var typeCont = document.getElementById('doc-type-container');
+    if(typeCont) typeCont.style.display = 'block';
+    var title = document.getElementById('doc-modal-title');
+    if(title) title.innerText = 'Add / Request Staff Document';
+    var opt = document.getElementById('doc-upload-optional');
+    if(opt) opt.style.display = 'inline';
+    document.getElementById('doc-modal').classList.remove('hidden');
+}
+
+function showFulfillDocForm(id) {
+    fulfillDocId = id;
+    currentDocFile = null;
+    var dropText = document.getElementById('doc-drop-text');
+    if (dropText) dropText.innerHTML = 'Drag and drop your file here, or click to browse';
+    var staffCont = document.getElementById('doc-staff-container');
+    if(staffCont) staffCont.style.display = 'none';
+    var typeCont = document.getElementById('doc-type-container');
+    if(typeCont) typeCont.style.display = 'none';
+    var title = document.getElementById('doc-modal-title');
+    if(title) title.innerText = 'Upload Requested Document';
+    var opt = document.getElementById('doc-upload-optional');
+    if(opt) opt.style.display = 'none';
+    document.getElementById('doc-modal').classList.remove('hidden');
+}
+
+async function saveDocument() {
+    var staff = document.getElementById('doc-staff') ? document.getElementById('doc-staff').value : '';
+    var type = document.getElementById('doc-type') ? document.getElementById('doc-type').value : '';
+    
+    if (fulfillDocId) {
+        if (!currentDocFile) return alert('Please select a file to upload.');
+        let fileUrl = '';
+        var doc = DB.findOne('documents', { _id: fulfillDocId });
+        if(!doc) return alert('Document record not found');
+        
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: currentDocFile.filename,
+                    base64: currentDocFile.base64,
+                    staffName: doc.staffName
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                fileUrl = data.filepath;
+            } else {
+                alert('File upload failed: ' + data.error);
+                return;
+            }
+        } catch (e) {
+            alert('File upload error');
+            return;
+        }
+        
+        DB.update('documents', { _id: fulfillDocId }, { fileName: fileUrl });
+        fulfillDocId = null;
+        document.getElementById('doc-modal').classList.add('hidden');
+        renderDocuments();
+        return;
+    }
+    
+    if(!staff) return alert('Please select a staff member.');
+    
+    let fileUrl = '';
+    
+    if (currentDocFile) {
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: currentDocFile.filename,
+                    base64: currentDocFile.base64,
+                    staffName: staff
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                fileUrl = data.filepath;
+            } else {
+                alert('File upload failed: ' + data.error);
+                return;
+            }
+        } catch(e) {
+            alert('File upload failed: ' + e.message);
+            return;
+        }
+    }
+    
+    DB.insert('documents', { staffName: staff, docType: type, fileName: fileUrl, _created: Date.now() });
+    
+    // Also notify staff
+    if (!fileUrl && typeof createNotification === 'function') {
+        var sInfo = DB.findOne('staff', { name: staff });
+        if (sInfo && sInfo.username) {
+            createNotification('info', 'Document Requested', 'HR has requested you to upload: ' + type, { section: 'documents' }, [sInfo.username]);
+        }
+    }
+    
+    document.getElementById('doc-modal').classList.add('hidden');
+    renderDocuments();
+}
+
+async function deleteDocument(id) {
+    if(await uiConfirm('Delete this document?')) {
+        DB.remove('documents', { _id: id });
+        renderDocuments();
+    }
+}
+
+
+// Recruitment
+let currentRecruitFile = null;
+
+function setupRecruitDropzone() {
+    var dropzone = document.getElementById('rec-dropzone');
+    var fileInput = document.getElementById('rec-file-input');
+    var dropText = document.getElementById('rec-drop-text');
+    if(!dropzone) return;
+
+    dropzone.onclick = () => fileInput.click();
+    
+    dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--gold)';
+        dropzone.style.background = '#fff8e1';
+    };
+    
+    dropzone.ondragleave = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+    };
+    
+    dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleRecruitFileSelect(e.dataTransfer.files[0]);
+        }
+    };
+    
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleRecruitFileSelect(e.target.files[0]);
+        }
+    };
+    
+    function handleRecruitFileSelect(file) {
+        dropText.innerHTML = '<strong style="color:var(--navy)">' + file.name + '</strong><br><span style="font-size:12px">(' + Math.round(file.size/1024) + ' KB) - Ready to save</span>';
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+            currentRecruitFile = {
+                filename: file.name,
+                base64: evt.target.result
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+function renderRecruitment() {
+    var recruits = DB.findAll('recruitment');
+    var vacancies = DB.findAll('vacancies');
     
     var html = '';
     
-    var totals = { pay:0, annual:0, sick:0, med:0 };
+    // Internal Vacancies Section
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:1rem;margin-top:1rem">';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_int_vacancies">Internal Vacancies</span></h3>';
+    html += '<button class="btn btn-primary" onclick="showVacancyForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_post_vacancy">Post Vacancy</span></button>';
+    html += '</div>';
 
-    staff.forEach(function(st){
-        // Total Payroll
-        var totalPay = 0;
-        payslips.forEach(function(p){
-            if(p.staffId === st._id) totalPay += parseFloat(p.net||0);
-        });
-        
-        // Leaves
-        var ann = parseFloat(st.annualLeave||0);
-        var sck = parseFloat(st.sickLeave||0);
-        
-        // Medical
-        var usedMedical = 0;
-        hrs.forEach(function(r){
-            if(r.staffId === st._id && r.type === 'Medical Claim' && r.status === 'Approved') {
-                usedMedical += parseFloat(r.amount||0);
-            }
-        });
-        var allocated = parseFloat(st.medicalInsurance || 50000);
-        var medBal = allocated - usedMedical;
-        
-        totals.pay += totalPay;
-        totals.annual += ann;
-        totals.sick += sck;
-        totals.med += medBal;
-
-        html += '<tr>' +
-            '<td><div style="font-weight:600;color:var(--navy)">'+(st.name||'Unknown')+'</div><div style="font-size:12px;color:var(--text2)">'+(st.empid||'')+' &middot; '+(st.department||'')+'</div></td>' +
-            '<td style="font-weight:600">'+vuvFmt(totalPay)+'</td>' +
-            '<td>'+ann+' days</td>' +
-            '<td>'+sck+' days</td>' +
-            '<td>'+vuvFmt(medBal)+'</td>' +
-        '</tr>';
-    });
-    
-    if(staff.length === 0){
-        html = '<tr><td colspan="5" style="text-align:center;padding:30px;color:var(--text2)">No active staff found.</td></tr>';
+    html += '<table><thead><tr><th><span data-i18n="th_position">Position</span></th><th><span data-i18n="th_description">Description</span></th><th><span data-i18n="th_due_date">Due Date</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    if(vacancies.length === 0) {
+        html += '<tr><td colspan="4" style="text-align:center;color:#888"><span data-i18n="msg_no_vacancies">No active vacancies.</span></td></tr>';
     } else {
-        html += '<tr style="background:#f9f9f9;font-weight:bold">' +
-            '<td style="text-align:right">TOTALS:</td>' +
-            '<td style="color:var(--gold)">'+vuvFmt(totals.pay)+'</td>' +
-            '<td>'+totals.annual+' days</td>' +
-            '<td>'+totals.sick+' days</td>' +
-            '<td>'+vuvFmt(totals.med)+'</td>' +
-        '</tr>';
+        vacancies.forEach(function(v) {
+            html += '<tr>';
+            html += '<td style="font-weight:600">'+(v.position||'')+'</td>';
+            html += '<td>'+(v.description||'')+'</td>';
+            html += '<td>'+(v.dueDate||'')+'</td>';
+            html += '<td><button class="btn btn-danger btn-sm" onclick="deleteVacancy(\''+v._id+'\')"><span data-i18n="btn_delete">Delete</span></button></td>';
+            html += '</tr>';
+        });
+    }
+    html += '</tbody></table><br><hr><br>';
+
+    // Recruitment Management Section
+    html += '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_work_recruit">Work Recruitment Management</span></h3>';
+    html += '<button class="btn btn-primary" onclick="showRecruitForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_add_candidate">Add Candidate</span></button>';
+    html += '</div>';
+
+    html += '<table><thead><tr><th><span data-i18n="th_candidate_name">Candidate Name</span></th><th><span data-i18n="th_position">Position</span></th><th><span data-i18n="th_status">Status</span></th><th><span data-i18n="th_attached_file">Attached File</span></th><th><span data-i18n="th_notes">Notes</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    if(recruits.length === 0) {
+        html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_candidates">No candidates yet.</span></td></tr>';
+    } else {
+        recruits.forEach(function(r) {
+            html += '<tr>';
+            html += '<td style="font-weight:600">'+(r.name||'')+'</td>';
+            html += '<td>'+(r.position||'')+'</td>';
+            html += '<td><span class="status-pill '+(r.status==='Hired'?'pill-approved':(r.status==='Rejected'?'pill-rejected':(r.status==='Internal Application'?'pill-pending':'pill-pending')))+'">'+(r.status||'New')+'</span></td>';
+            
+            let fileDisplay = '--';
+            if (r.fileName && r.fileName.startsWith('/uploads/')) {
+                let niceName = r.fileName.split('_').slice(1).join('_') || 'Download File';
+                fileDisplay = '<a href="'+r.fileName+'" target="_blank" style="color:var(--gold);text-decoration:none"><i class="ti ti-file"></i> '+niceName+'</a>';
+            } else if (r.fileName) {
+                fileDisplay = '<a href="'+r.fileName+'" target="_blank" style="color:var(--gold);text-decoration:none"><i class="ti ti-link"></i> <span data-i18n="btn_download">Download</span></a>';
+            }
+            html += '<td>'+fileDisplay+'</td>';
+
+            html += '<td>'+(r.notes||'')+'</td>';
+            html += '<td>';
+            if (r.status === 'Internal Application') {
+                html += '<button class="btn btn-primary btn-sm" style="margin-right:5px" onclick="approveInternalApplicant(\''+r._id+'\')"><span data-i18n="btn_approve">Approve</span></button>';
+            }
+            html += '<button class="btn btn-danger btn-sm" onclick="deleteRecruit(\''+r._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
+            html += '</td>';
+            html += '</tr>';
+        });
+    }
+    html += '</tbody></table>';
+
+    // Form modal
+    html += '<div id="recruit-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:400px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="btn_add_candidate">Add Candidate</span></h4>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_candidate_name">Candidate Name</span></label><input type="text" id="rec-name"></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_pos_applied">Position Applied</span></label><input type="text" id="rec-pos"></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_status">Status</span></label><select id="rec-status"><option><span data-i18n="opt_new">New</span></option><option><span data-i18n="opt_interviewing">Interviewing</span></option><option><span data-i18n="opt_hired">Hired</span></option><option><span data-i18n="opt_rejected">Rejected</span></option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_notes">Notes</span></label><textarea id="rec-notes"></textarea></div>';
+    
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_cv_file">Application/CV File (Optional)</span></label>';
+    html += '<div id="rec-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;background:#fafafa;cursor:pointer;transition:all 0.2s">';
+    html += '<i class="ti ti-cloud-upload" style="font-size:32px;color:#aaa"></i>';
+    html += '<p style="margin:10px 0 0 0;color:#666" id="rec-drop-text"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></p>';
+    html += '<input type="file" id="rec-file-input" style="display:none">';
+    html += '</div></div>';
+
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveRecruit()"><span data-i18n="btn_save">Save</span></button><button class="btn btn-outline" onclick="document.getElementById(\'recruit-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+
+    // Vacancy Modal
+    html += '<div id="vacancy-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:400px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_post_int_vac">Post Internal Vacancy</span></h4>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_position">Position</span></label><input type="text" id="vac-pos"></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_description">Description</span></label><textarea id="vac-desc" style="height:80px"></textarea></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_due_date">Due Date</span></label><input type="date" id="vac-due"></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveVacancy()">Post</button><button class="btn btn-outline" onclick="document.getElementById(\'vacancy-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+
+    document.getElementById('section-recruitment').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
+    if (typeof changeLang === 'function') changeLang();
+    setTimeout(setupRecruitDropzone, 50);
+}
+
+function showRecruitForm() {
+    currentRecruitFile = null;
+    var dropText = document.getElementById('rec-drop-text');
+    if (dropText) dropText.innerHTML = 'Drag and drop a file here, or click to browse';
+    document.getElementById('recruit-modal').classList.remove('hidden');
+}
+
+async function saveRecruit() {
+    var name = document.getElementById('rec-name').value;
+    var pos = document.getElementById('rec-pos').value;
+    var status = document.getElementById('rec-status').value;
+    var notes = document.getElementById('rec-notes').value;
+    if(!name) return alert('Name required');
+
+    let fileUrl = '';
+    
+    if (currentRecruitFile) {
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: currentRecruitFile.filename,
+                    base64: currentRecruitFile.base64,
+                    staffName: name
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                fileUrl = data.filepath;
+            } else {
+                alert('File upload failed: ' + data.error);
+                return;
+            }
+        } catch (e) {
+            alert('File upload error');
+            return;
+        }
+    }
+
+    DB.insert('recruitment', { name: name, position: pos, status: status, notes: notes, fileName: fileUrl });
+    renderRecruitment();
+}
+
+async function deleteRecruit(id) {
+    if(await uiConfirm('Delete candidate?')) {
+        DB.remove('recruitment', { _id: id });
+        renderRecruitment();
+    }
+}
+
+function approveInternalApplicant(id) {
+    var r = DB.findOne('recruitment', { _id: id });
+    if(r) {
+        r.status = 'Interviewing';
+        DB.update('recruitment', { _id: id }, r);
+        renderRecruitment();
+    }
+}
+
+function showVacancyForm() {
+    document.getElementById('vacancy-modal').classList.remove('hidden');
+}
+
+function saveVacancy() {
+    var pos = document.getElementById('vac-pos').value;
+    var desc = document.getElementById('vac-desc').value;
+    var due = document.getElementById('vac-due').value;
+    if(!pos) return alert('Position required');
+    DB.insert('vacancies', { position: pos, description: desc, dueDate: due, _created: Date.now() });
+    
+    // Notify staff
+    if (typeof createNotification === 'function') {
+        createNotification('info', 'Internal Vacancy: ' + pos, 'A new internal vacancy has been posted. Due Date: ' + (due||'Open'), { section: 'dashboard' }, ['staff']);
     }
     
-    tbody.innerHTML = html;
+    renderRecruitment();
+}
+
+async function deleteVacancy(id) {
+    if(await uiConfirm('Delete this vacancy?')) {
+        DB.remove('vacancies', { _id: id });
+        renderRecruitment();
+    }
+}
+
+// KPI Tracking
+let currentKPIFile = null;
+
+function setupKPIDropzone() {
+    var dropzone = document.getElementById('kpi-dropzone');
+    var fileInput = document.getElementById('kpi-file-input');
+    var dropText = document.getElementById('kpi-drop-text');
+    if(!dropzone) return;
+
+    dropzone.onclick = () => fileInput.click();
+    
+    dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--gold)';
+        dropzone.style.background = '#fff8e1';
+    };
+    
+    dropzone.ondragleave = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+    };
+    
+    dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleKPIFileSelect(e.dataTransfer.files[0]);
+        }
+    };
+    
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleKPIFileSelect(e.target.files[0]);
+        }
+    };
+    
+    function handleKPIFileSelect(file) {
+        dropText.innerHTML = '<strong style="color:var(--navy)">' + file.name + '</strong><br><span style="font-size:12px">(' + Math.round(file.size/1024) + ' KB) - Ready to save</span>';
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+            currentKPIFile = {
+                filename: file.name,
+                base64: evt.target.result
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+function renderKPI() {
+    var role = APP.currentUser ? APP.currentUser.role : '';
+    var kpis = DB.findAll('kpi');
+    
+    if(role === 'staff' && APP.currentUser.linkedStaffId) {
+        var staffRec = DB.findOne('staff', { _id: APP.currentUser.linkedStaffId });
+        if(staffRec) {
+            kpis = kpis.filter(k => k.staffName === staffRec.name);
+        } else {
+            kpis = [];
+        }
+    }
+
+    var staffList = DB.findAll('staff');
+    var html = '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
+    html += '<h3 style="color:var(--navy);font-size:18px">'+(role === 'staff' ? '<span data-i18n="lbl_my_kpi">My KPIs & Appraisals</span>' : '<span data-i18n="lbl_kpi_track">Staff KPI Tracking</span>')+'</h3>';
+    if(role === 'admin' || role === 'manager') {
+        html += '<button class="btn btn-primary" onclick="showKPIForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_add_kpi">Add KPI Goal</span></button>';
+    }
+    html += '</div>';
+
+    html += '<table><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="lbl_kpi_name">Goal / Objective</span></th><th style="width:250px"><span data-i18n="th_score">Score</span></th><th><span data-i18n="lbl_period">Review Period</span></th><th><span data-i18n="th_attached_file">Attached File</span></th><th><span data-i18n="lbl_feedback">Feedback</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    if(kpis.length === 0) {
+        html += '<tr><td colspan="7" style="text-align:center;color:#888"><span data-i18n="msg_no_kpi">No KPIs assigned yet.</span></td></tr>';
+    } else {
+        kpis.forEach(function(k) {
+            var s = parseInt(k.score) || 0;
+            var color = s >= 80 ? '#16a34a' : (s < 50 ? '#dc2626' : '#d97706');
+            var badgeText = s >= 80 ? 'Exceeds Expectations' : (s < 50 ? 'Needs Improvement' : 'Meets Expectations');
+            var badgeBg = s >= 80 ? '#dcfce7' : (s < 50 ? '#fee2e2' : '#fef3c7');
+            var badgeColor = s >= 80 ? '#166534' : (s < 50 ? '#991b1b' : '#92400e');
+            
+            html += '<tr>';
+            html += '<td style="font-weight:600">'+(k.staffName||'')+'</td>';
+            html += '<td>'+(k.goal||'')+'</td>';
+            
+            // Progress Bar & Badge
+            html += '<td>';
+            html += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:4px">';
+            html += '<span style="font-weight:700;color:'+color+';width:35px">'+s+'%</span>';
+            html += '<div style="flex:1;height:8px;background:#eee;border-radius:4px;overflow:hidden">';
+            html += '<div style="width:'+s+'%;height:100%;background:'+color+';border-radius:4px"></div>';
+            html += '</div></div>';
+            html += '<span style="font-size:11px;padding:2px 6px;border-radius:10px;background:'+badgeBg+';color:'+badgeColor+';display:inline-block">'+badgeText+'</span>';
+            html += '</td>';
+            
+            // File Link
+            let fileDisplay = '--';
+            if (k.fileName && k.fileName.startsWith('/uploads/')) {
+                let niceName = k.fileName.split('_').slice(1).join('_') || 'Download File';
+                fileDisplay = '<a href="'+k.fileName+'" target="_blank" style="color:var(--gold);text-decoration:none"><i class="ti ti-file"></i> '+niceName+'</a>';
+            } else if (k.fileName) {
+                fileDisplay = '<a href="'+k.fileName+'" target="_blank" style="color:var(--gold);text-decoration:none"><i class="ti ti-link"></i> <span data-i18n="btn_download">Download</span></a>';
+            }
+            html += '<td>'+fileDisplay+'</td>';
+
+            html += '<td><div style="font-size:12px;color:#555;max-width:200px;max-height:40px;overflow-y:auto">'+(k.feedback||'<i>No feedback provided</i>')+'</div></td>';
+            
+            html += '<td>';
+            if (role === 'admin' || role === 'manager') {
+                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')" style="margin-right:8px"><span data-i18n="lbl_feedback">Feedback</span></button>';
+                html += '<button class="btn btn-danger btn-sm" onclick="deleteKPI(\''+k._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
+            } else if (role === 'staff') {
+                html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')"><span data-i18n="btn_submit_feedback">Submit Feedback</span></button>';
+            }
+            html += '</td>';
+            html += '</tr>';
+        });
+    }
+    html += '</tbody></table>';
+
+    // Form modal
+    html += '<div id="kpi-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:9999;width:450px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Add Staff KPI</h4>';
+    
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member">Staff Member</span></label><select id="kpi-staff">';
+    html += '<option value=""><span data-i18n="opt_sel_staff">-- Select Staff --</span></option>';
+    staffList.forEach(st => {
+        html += '<option value="'+st.name+'">'+st.name+' ('+(st.empid||'')+')</option>';
+    });
+    html += '</select></div>';
+    
+    html += '<div style="margin-bottom:1rem"><label>Goal / Objective</label><textarea id="kpi-goal" placeholder="Describe the KPI objective"></textarea></div>';
+    
+    html += '<div style="display:flex;gap:1rem;margin-bottom:1rem">';
+    html += '<div style="flex:1"><label>Score (0-100)</label><input type="number" min="0" max="100" id="kpi-score" placeholder="e.g. 85"></div>';
+    html += '<div style="flex:1"><label>Review Period</label><input type="text" id="kpi-period" placeholder="e.g. Q1 2026"></div>';
+    html += '</div>';
+    
+    html += '<div style="margin-bottom:1.5rem"><label>Manager Feedback</label><textarea id="kpi-feedback" placeholder="Leave qualitative feedback or comments..."></textarea></div>';
+    
+    html += '<div style="margin-bottom:1rem"><label>Attach Form / Scorecard (Optional)</label>';
+    html += '<div id="kpi-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;background:#fafafa;cursor:pointer;transition:all 0.2s">';
+    html += '<i class="ti ti-cloud-upload" style="font-size:32px;color:#aaa"></i>';
+    html += '<p style="margin:10px 0 0 0;color:#666" id="kpi-drop-text"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></p>';
+    html += '<input type="file" id="kpi-file-input" style="display:none">';
+    html += '</div></div>';
+    
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveKPI()">Save KPI</button><button class="btn btn-outline" onclick="document.getElementById(\'kpi-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+
+    // Staff Feedback Modal
+    html += '<div id="kpi-feedback-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:9999;width:400px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Submit KPI Feedback</h4>';
+    html += '<input type="hidden" id="kpi-feedback-id">';
+    html += '<div style="margin-bottom:1rem"><label>Your Comments</label><textarea id="kpi-staff-feedback" placeholder="Enter your feedback or comments..." style="height:100px"></textarea></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveKPIFeedback()"><span data-i18n="btn_submit">Submit</span></button><button class="btn btn-outline" onclick="document.getElementById(\'kpi-feedback-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+
+    document.getElementById('section-kpi').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
+    if (typeof changeLang === 'function') changeLang();
+    setTimeout(setupKPIDropzone, 50);
+}
+
+function showKPIForm() {
+    currentKPIFile = null;
+    var dropText = document.getElementById('kpi-drop-text');
+    if (dropText) dropText.innerHTML = 'Drag and drop a file here, or click to browse';
+    document.getElementById('kpi-modal').classList.remove('hidden');
+}
+
+function showKPIFeedbackForm(id) {
+    document.getElementById('kpi-feedback-id').value = id;
+    document.getElementById('kpi-staff-feedback').value = '';
+    document.getElementById('kpi-feedback-modal').classList.remove('hidden');
+}
+
+function saveKPIFeedback() {
+    var id = document.getElementById('kpi-feedback-id').value;
+    var feedback = document.getElementById('kpi-staff-feedback').value;
+    if(!feedback) return alert('Please enter feedback');
+    var k = DB.findOne('kpi', { _id: id });
+    if(k) {
+        var existing = k.feedback || '';
+        var roleStr = (APP.currentUser && APP.currentUser.role === 'staff') ? 'Staff Feedback' : 'Manager Feedback';
+        k.feedback = existing + '<br><br><b>[' + roleStr + ']:</b> ' + feedback;
+        DB.update('kpi', { _id: id }, k);
+    }
+    renderKPI();
+}
+
+async function saveKPI() {
+    var staff = document.getElementById('kpi-staff').value;
+    var goal = document.getElementById('kpi-goal').value;
+    var score = document.getElementById('kpi-score').value;
+    var period = document.getElementById('kpi-period').value;
+    var feedback = document.getElementById('kpi-feedback').value;
+    if(!staff || !goal) return alert('Staff member and goal required');
+    
+    let fileUrl = '';
+    
+    if (currentKPIFile) {
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: currentKPIFile.filename,
+                    base64: currentKPIFile.base64,
+                    staffName: staff
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                fileUrl = data.filepath;
+            } else {
+                alert('File upload failed: ' + data.error);
+                return;
+            }
+        } catch (e) {
+            alert('File upload error');
+            return;
+        }
+    }
+    
+    DB.insert('kpi', { staffName: staff, goal: goal, score: score, period: period, feedback: feedback, fileName: fileUrl });
+    if(fileUrl) {
+        DB.insert('documents', { staffName: staff, docType: 'KPI / Appraisal', fileName: fileUrl });
+    }
+    renderKPI();
+}
+
+async function deleteKPI(id) {
+    if(await uiConfirm('Delete this KPI record?')) {
+        DB.remove('kpi', { _id: id });
+        renderKPI();
+    }
+}
+
+// Vacancy Application (Staff Portal)
+let currentVacancyApplyFile = null;
+let currentVacancyPosition = '';
+
+function setupVacancyApplyDropzone() {
+    var dropzone = document.getElementById('vac-apply-dropzone');
+    var fileInput = document.getElementById('vac-apply-file-input');
+    var dropText = document.getElementById('vac-apply-drop-text');
+    if(!dropzone) return;
+
+    dropzone.onclick = () => fileInput.click();
+    
+    dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--gold)';
+        dropzone.style.background = '#fff8e1';
+    };
+    
+    dropzone.ondragleave = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+    };
+    
+    dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleVacFileSelect(e.dataTransfer.files[0]);
+        }
+    };
+    
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleVacFileSelect(e.target.files[0]);
+        }
+    };
+    
+    function handleVacFileSelect(file) {
+        dropText.innerHTML = '<strong style="color:var(--navy)">' + file.name + '</strong><br><span style="font-size:12px">(' + Math.round(file.size/1024) + ' KB) - Ready to save</span>';
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+            currentVacancyApplyFile = {
+                filename: file.name,
+                base64: evt.target.result
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function showVacancyApplyForm(position) {
+    currentVacancyApplyFile = null;
+    currentVacancyPosition = position;
+    var dropText = document.getElementById('vac-apply-drop-text');
+    if (dropText) dropText.innerHTML = 'Drag and drop your CV here, or click to browse';
+    document.getElementById('vac-apply-notes').value = '';
+    document.getElementById('vac-apply-modal').classList.remove('hidden');
+}
+
+async function submitVacancyApplication() {
+    var notes = document.getElementById('vac-apply-notes').value;
+    var name = APP.currentUser.name;
+    if(APP.currentUser.linkedStaffId) {
+        var s = DB.findOne('staff', { _id: APP.currentUser.linkedStaffId });
+        if(s) name = s.name;
+    }
+    
+    let fileUrl = '';
+    
+    if (currentVacancyApplyFile) {
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: currentVacancyApplyFile.filename,
+                    base64: currentVacancyApplyFile.base64,
+                    staffName: name
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                fileUrl = data.filepath;
+            } else {
+                alert('File upload failed: ' + data.error);
+                return;
+            }
+        } catch (e) {
+            alert('File upload error');
+            return;
+        }
+    }
+    
+    DB.insert('recruitment', { name: name, position: currentVacancyPosition, status: 'Internal Application', notes: notes, fileName: fileUrl });
+    alert('Application submitted successfully!');
+    document.getElementById('vac-apply-modal').classList.add('hidden');
+}
+
+// ══════════════════════════════════════════════════
+// STAFF DISCIPLINE MODULE
+// ══════════════════════════════════════════════════
+
+let currentDiscFile = null;
+let actionDiscId = null;
+
+function renderDiscipline() {
+    var docs = DB.findAll('discipline');
+    var staffList = DB.findAll('staff');
+    var role = APP.currentUser ? APP.currentUser.role : '';
+    
+    if(role === 'staff' && APP.currentUser.linkedStaffId) {
+        var staffRec = DB.findOne('staff', { _id: APP.currentUser.linkedStaffId });
+        if(staffRec) {
+            docs = docs.filter(d => d.staffName === staffRec.name);
+        } else {
+            docs = [];
+        }
+    }
+    
+    docs.sort((a,b) => b._created - a._created);
+
+    var html = '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_discipline_mgmt">Staff Discipline Management</span></h3>';
+    if(role === 'admin' || role === 'manager') {
+        html += '<button class="btn btn-primary" onclick="showIncidentForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_log_discipline">Log Disciplinary Action</span></button>';
+    }
+    html += '</div>';
+
+    html += '<table class="table"><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="th_type">Type</span></th><th><span data-i18n="th_severity">Severity</span></th><th><span data-i18n="th_date">Date</span></th><th><span data-i18n="th_status">Status</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    if(docs.length === 0) {
+        html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_discipline">No disciplinary records found.</span></td></tr>';
+    } else {
+        docs.forEach(function(d) {
+            html += '<tr>';
+            html += '<td style="font-weight:600">'+(d.staffName||'')+'</td>';
+            html += '<td>'+(d.type||'')+'</td>';
+            html += '<td>'+(d.severity||'')+'</td>';
+            html += '<td>'+(d.date ? new Date(d.date).toLocaleDateString() : '')+'</td>';
+            
+            let statusColor = d.status === 'Finalized' ? '#16a34a' : (d.status === 'Pending Explanation' ? '#e24b4a' : '#f59e0b');
+            html += '<td style="color:'+statusColor+';font-weight:600">'+(d.status||'')+'</td>';
+            
+            html += '<td>';
+            if (d.status === 'Pending Explanation' && role === 'staff') {
+                html += '<button class="btn btn-primary btn-sm" onclick="showExplanationForm(\''+d._id+'\')"><span data-i18n="btn_add_explanation">Add Explanation</span></button>';
+            } else if (d.status === 'Under Review' && (role === 'admin' || role === 'manager')) {
+                html += '<button class="btn btn-gold btn-sm" onclick="showFinalizeForm(\''+d._id+'\')"><span data-i18n="btn_feedback_finalize">Feedback / Finalize</span></button>';
+            } else if (d.status === 'Finalized') {
+                html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')"><span data-i18n="btn_view_record">View Record</span></button>';
+            } else if (role === 'admin' || role === 'manager') {
+                html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')"><span data-i18n="btn_view">View</span></button>';
+            }
+            if(role === 'admin') {
+                html += ' <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteDiscipline(\''+d._id+'\')"><i class="ti ti-trash"></i></button>';
+            }
+            html += '</td>';
+            html += '</tr>';
+        });
+    }
+    html += '</tbody></table>';
+
+    // Log Incident Modal
+    html += '<div id="disc-incident-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Log Disciplinary Incident</h4>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member">Staff Member</span></label><select id="disc-staff"><option value=""><span data-i18n="opt_sel_staff">-- Select Staff --</span></option>';
+    staffList.forEach(s => { html += '<option value="'+s.name+'">'+s.name+'</option>'; });
+    html += '</select></div>';
+    html += '<div style="margin-bottom:1rem"><label>Incident Date</label><input type="date" id="disc-date" value="'+(new Date().toISOString().split('T')[0])+'"></div>';
+    html += '<div style="margin-bottom:1rem"><label>Offense Type</label><select id="disc-type"><option>Tardiness</option><option>Absence</option><option>Insubordination</option><option>Misconduct</option><option>Performance</option><option>Other</option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label>Initial Severity</label><select id="disc-severity"><option><span data-i18n="opt_verbal_warn">Verbal Warning</span></option><option><span data-i18n="opt_written_warn">Written Warning</span></option><option><span data-i18n="opt_final_warn">Final Warning</span></option><option><span data-i18n="opt_suspension">Suspension</span></option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_description">Description</span></label><textarea id="disc-desc" rows="4" placeholder="Describe the incident..."></textarea></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveIncident()">Log Incident</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-incident-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+
+    // Explanation Modal
+    html += '<div id="disc-explain-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px;max-height:90vh;overflow-y:auto">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Add Explanation / Evidence</h4>';
+    html += '<p style="font-size:12px;color:#666;margin-bottom:1rem">Please provide your explanation for the incident. You may optionally attach supporting evidence.</p>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_your_exp">Your Explanation</span></label><textarea id="disc-explain" rows="4" placeholder="Type your response here..."></textarea></div>';
+    html += '<div style="margin-bottom:1rem"><label>Upload Evidence <span style="color:#888;font-size:12px">(Optional)</span></label>';
+    html += '<div id="disc-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:1.5rem;text-align:center;background:#fafafa;cursor:pointer;">';
+    html += '<i class="ti ti-upload" style="font-size:24px;color:#aaa"></i><p style="margin:5px 0 0 0;color:#666;font-size:12px" id="disc-drop-text">Click to browse or drag file here</p>';
+    html += '<input type="file" id="disc-file-input" style="display:none">';
+    html += '</div></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveExplanation()">Submit Response</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-explain-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+
+    // Finalize Modal
+    html += '<div id="disc-finalize-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Manager Feedback & Finalize</h4>';
+    html += '<div id="disc-finalize-details" style="background:#f9f9f9;padding:1rem;border-radius:8px;margin-bottom:1rem;font-size:13px;max-height:150px;overflow-y:auto"></div>';
+    html += '<div style="margin-bottom:1rem"><label>Final Outcome</label><select id="disc-final-outcome"><option>Verbal Warning Recorded</option><option>Written Warning Issued</option><option>Final Warning Issued</option><option>Suspension Executed</option><option><span data-i18n="opt_termination">Termination</span></option><option>Cleared/No Action</option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label>Manager Feedback / Notes</label><textarea id="disc-final-notes" rows="3" placeholder="Provide feedback and additional notes..."></textarea></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveFinalize()">Finalize Record</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-finalize-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
+    html += '</div>';
+    
+    // View Modal
+    html += '<div id="disc-view-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px;max-height:90vh;overflow-y:auto">';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Disciplinary Record</h4>';
+    html += '<div id="disc-view-content" style="font-size:13px;color:#333;line-height:1.6"></div>';
+    html += '<div style="margin-top:1.5rem"><button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById(\'disc-view-modal\').classList.add(\'hidden\')"><span data-i18n="btn_close">Close</span></button></div>';
+    html += '</div>';
+
+    document.getElementById('section-discipline').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
+    if (typeof changeLang === 'function') changeLang();
+    setTimeout(setupDiscDropzone, 50);
+}
+
+function showIncidentForm() {
+    document.getElementById('disc-date').value = new Date().toISOString().split('T')[0];
+    document.getElementById('disc-desc').value = '';
+    document.getElementById('disc-staff').value = '';
+    document.getElementById('disc-incident-modal').classList.remove('hidden');
+}
+
+function saveIncident() {
+    var staff = document.getElementById('disc-staff').value;
+    var date = document.getElementById('disc-date').value;
+    var type = document.getElementById('disc-type').value;
+    var severity = document.getElementById('disc-severity').value;
+    var desc = document.getElementById('disc-desc').value;
+    
+    if(!staff || !desc) return alert('Please fill in staff and description.');
+    
+    DB.insert('discipline', {
+        staffName: staff,
+        date: date,
+        type: type,
+        severity: severity,
+        description: desc,
+        status: 'Pending Explanation',
+        _created: Date.now(),
+        createdBy: APP.currentUser ? APP.currentUser.username : 'System'
+    });
+    
+    if (typeof createNotification === 'function') {
+        var sInfo = DB.findOne('staff', { name: staff });
+        if (sInfo && sInfo.username) {
+            createNotification('pending', 'Disciplinary Incident Logged', 'An incident ('+type+') requires your explanation.', { section: 'discipline' }, [sInfo.username]);
+        }
+    }
+    
+    document.getElementById('disc-incident-modal').classList.add('hidden');
+    renderDiscipline();
+}
+
+async function deleteDiscipline(id) {
+    if(await uiConfirm('Are you sure you want to delete this record?')) {
+        DB.remove('discipline', { _id: id });
+        renderDiscipline();
+    }
+}
+
+function setupDiscDropzone() {
+    var dropzone = document.getElementById('disc-dropzone');
+    var fileInput = document.getElementById('disc-file-input');
+    var dropText = document.getElementById('disc-drop-text');
+    if(!dropzone) return;
+    
+    dropzone.onclick = () => fileInput.click();
+    
+    dropzone.ondragover = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = 'var(--gold)';
+        dropzone.style.background = '#f0fcf6';
+    };
+    dropzone.ondragleave = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+    };
+    dropzone.ondrop = (e) => {
+        e.preventDefault();
+        dropzone.style.borderColor = '#ccc';
+        dropzone.style.background = '#fafafa';
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleDiscFileSelect(e.dataTransfer.files[0]);
+        }
+    };
+    fileInput.onchange = (e) => {
+        if (e.target.files && e.target.files.length > 0) {
+            handleDiscFileSelect(e.target.files[0]);
+        }
+    };
+    
+    function handleDiscFileSelect(file) {
+        dropText.innerHTML = '<strong style="color:var(--navy)">' + file.name + '</strong><br><span style="font-size:12px">(' + Math.round(file.size/1024) + ' KB)</span>';
+        var reader = new FileReader();
+        reader.onload = function(evt) {
+            currentDiscFile = {
+                filename: file.name,
+                base64: evt.target.result
+            };
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function showExplanationForm(id) {
+    actionDiscId = id;
+    currentDiscFile = null;
+    document.getElementById('disc-explain').value = '';
+    var dropText = document.getElementById('disc-drop-text');
+    if(dropText) dropText.innerHTML = 'Click to browse or drag file here';
+    document.getElementById('disc-explain-modal').classList.remove('hidden');
+}
+
+async function saveExplanation() {
+    var explain = document.getElementById('disc-explain').value;
+    if(!explain && !currentDiscFile) return alert('Please provide an explanation or upload evidence.');
+    
+    var doc = DB.findOne('discipline', { _id: actionDiscId });
+    if(!doc) return alert('Record not found.');
+    
+    let fileUrl = '';
+    if (currentDiscFile) {
+        try {
+            const res = await fetch('/api/upload', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    filename: currentDiscFile.filename,
+                    base64: currentDiscFile.base64,
+                    staffName: doc.staffName
+                })
+            });
+            const data = await res.json();
+            if(data.success) {
+                fileUrl = data.filepath;
+            } else {
+                alert('File upload failed: ' + data.error);
+                return;
+            }
+        } catch (e) {
+            alert('File upload error');
+            return;
+        }
+    }
+    
+    DB.update('discipline', { _id: actionDiscId }, {
+        explanation: explain,
+        explanationFile: fileUrl,
+        status: 'Under Review'
+    });
+    
+    if (typeof createNotification === 'function') {
+        createNotification('info', 'Explanation Submitted', doc.staffName + ' submitted explanation for ' + doc.type, { section: 'discipline' }, ['admin', 'manager']);
+    }
+    
+    document.getElementById('disc-explain-modal').classList.add('hidden');
+    renderDiscipline();
+}
+
+function showFinalizeForm(id) {
+    actionDiscId = id;
+    var doc = DB.findOne('discipline', { _id: id });
+    if(!doc) return;
+    
+    var html = '<strong>Incident:</strong> ' + doc.description + '<br><br>';
+    html += '<strong>Staff Explanation:</strong> ' + (doc.explanation || '<em>None provided</em>') + '<br>';
+    if(doc.explanationFile) {
+        let niceName = doc.explanationFile.split('_').slice(1).join('_') || 'View Evidence';
+        html += '<strong>Evidence:</strong> <a href="'+doc.explanationFile+'" target="_blank" style="color:var(--gold)">'+niceName+'</a><br>';
+    }
+    
+    document.getElementById('disc-finalize-details').innerHTML = html;
+    document.getElementById('disc-final-notes').value = '';
+    document.getElementById('disc-finalize-modal').classList.remove('hidden');
+}
+
+function saveFinalize() {
+    var outcome = document.getElementById('disc-final-outcome').value;
+    var notes = document.getElementById('disc-final-notes').value;
+    
+    var doc = DB.findOne('discipline', { _id: actionDiscId });
+    if(!doc) return;
+    
+    DB.update('discipline', { _id: actionDiscId }, {
+        finalOutcome: outcome,
+        finalNotes: notes,
+        status: 'Finalized',
+        finalizedAt: Date.now()
+    });
+    
+    // Auto-generate Document record in Document Center
+    var docRecord = {
+        staffName: doc.staffName,
+        docType: 'Disciplinary Record',
+        fileName: '',
+        description: 'Auto-generated discipline record: ' + outcome + ' for ' + doc.type,
+        _created: Date.now()
+    };
+    if(doc.explanationFile) {
+        docRecord.fileName = doc.explanationFile;
+    }
+    DB.insert('documents', docRecord);
+    
+    if (typeof createNotification === 'function') {
+        var sInfo = DB.findOne('staff', { name: doc.staffName });
+        if (sInfo && sInfo.username) {
+            createNotification('approved', 'Disciplinary Action Finalized', 'Your incident review is complete. Outcome: ' + outcome, { section: 'discipline' }, [sInfo.username]);
+        }
+    }
+    
+    document.getElementById('disc-finalize-modal').classList.add('hidden');
+    renderDiscipline();
+}
+
+function viewDisciplineRecord(id) {
+    var doc = DB.findOne('discipline', { _id: id });
+    if(!doc) return;
+    
+    var html = '<div style="margin-bottom:10px"><strong>Staff:</strong> ' + doc.staffName + '</div>';
+    html += '<div style="margin-bottom:10px"><strong>Date:</strong> ' + (doc.date ? new Date(doc.date).toLocaleDateString() : '') + '</div>';
+    html += '<div style="margin-bottom:10px"><strong>Type:</strong> ' + doc.type + ' (' + doc.severity + ')</div>';
+    html += '<div style="margin-bottom:15px"><strong>Incident Description:</strong><br><div style="background:#f9f9f9;padding:10px;border-radius:6px;margin-top:5px">' + doc.description + '</div></div>';
+    
+    if(doc.explanation || doc.explanationFile) {
+        html += '<div style="margin-bottom:15px"><strong>Staff Explanation:</strong><br><div style="background:#f9f9f9;padding:10px;border-radius:6px;margin-top:5px">' + (doc.explanation || '<em>None</em>') + '</div></div>';
+        if(doc.explanationFile) {
+            html += '<div style="margin-bottom:15px"><strong>Evidence:</strong> <a href="'+doc.explanationFile+'" target="_blank" style="color:var(--gold)"><span data-i18n="btn_dl_file">Download File</span></a></div>';
+        }
+    }
+    
+    if(doc.status === 'Finalized') {
+        html += '<div style="background:#eafaf1;padding:10px;border-radius:6px;margin-top:15px;border:1px solid #a7f3d0">';
+        html += '<strong>Final Outcome:</strong> ' + doc.finalOutcome + '<br>';
+        if(doc.finalNotes) html += '<strong>HR Notes:</strong> ' + doc.finalNotes + '<br>';
+        html += '<strong>Finalized On:</strong> ' + new Date(doc.finalizedAt).toLocaleDateString();
+        html += '</div>';
+    }
+    
+    document.getElementById('disc-view-content').innerHTML = html;
+    document.getElementById('disc-view-modal').classList.remove('hidden');
 }
 
 </script>
+  <div id="modal-custom-alert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
+        <i class="ti ti-info-circle" style="color:var(--gold);font-size:24px"></i>
+        <h3 style="font-size:16px;color:var(--navy);margin:0">Notification</h3>
+      </div>
+      <p id="custom-alert-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" onclick="uiAlertClose()">OK</button>
+      </div>
+    </div>
+  </div>
 
+  <div id="modal-custom-confirm" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
+        <i class="ti ti-help" style="color:var(--gold);font-size:24px"></i>
+        <h3 style="font-size:16px;color:var(--navy);margin:0">Confirm Action</h3>
+      </div>
+      <p id="custom-confirm-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-outline" onclick="uiConfirmClose(false)">Cancel</button>
+        <button class="btn btn-primary" onclick="uiConfirmClose(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window._uiAlertResolve = null;
+    window.uiAlert = function(msg) {
+      return new Promise(function(resolve) {
+        document.getElementById('custom-alert-msg').textContent = msg;
+        document.getElementById('modal-custom-alert').style.display = 'flex';
+        window._uiAlertResolve = resolve;
+      });
+    };
+    window.uiAlertClose = function() {
+      document.getElementById('modal-custom-alert').style.display = 'none';
+      if(window._uiAlertResolve) {
+        var fn = window._uiAlertResolve;
+        window._uiAlertResolve = null;
+        fn();
+      }
+    };
+
+    window._uiConfirmResolve = null;
+    window.uiConfirm = function(msg) {
+      return new Promise(function(resolve) {
+        document.getElementById('custom-confirm-msg').textContent = msg;
+        document.getElementById('modal-custom-confirm').style.display = 'flex';
+        window._uiConfirmResolve = resolve;
+      });
+    };
+    window.uiConfirmClose = function(res) {
+      document.getElementById('modal-custom-confirm').style.display = 'none';
+      if(window._uiConfirmResolve) {
+        var fn = window._uiConfirmResolve;
+        window._uiConfirmResolve = null;
+        fn(res);
+      }
+    };
+
+    window.alert = function(msg) {
+      console.warn("Native alert intercepted. Please use uiAlert().");
+      return window.uiAlert(msg);
+    };
+    window.confirm = function(msg) {
+      console.error("Native confirm used synchronously! Returning false.");
+      window.uiConfirm(msg);
+      return false;
+    };
+  </script>
 </body></html>
+<script>
+async function resetStaffPassword(userId) {
+    if(await uiConfirm("Are you sure you want to reset this staff member's password? It will be set to 'staff123'.")) {
+        DB.update('users', { _id: userId }, { password: 'staff123' });
+        alert("Password reset to 'staff123'");
+    }
+}
+</script>
