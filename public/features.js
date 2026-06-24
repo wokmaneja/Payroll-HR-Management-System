@@ -104,6 +104,7 @@ function renderDocuments() {
     html += '</div>';
 
     document.getElementById('section-documents').innerHTML = html;
+    if (typeof changeLang === 'function') changeLang();
     
     setTimeout(setupDocDropzone, 50);
 }
@@ -463,6 +464,7 @@ function renderRecruitment() {
     html += '</div>';
 
     document.getElementById('section-recruitment').innerHTML = html;
+    if (typeof changeLang === 'function') changeLang();
     setTimeout(setupRecruitDropzone, 50);
 }
 
@@ -712,6 +714,7 @@ function renderKPI() {
     html += '</div>';
 
     document.getElementById('section-kpi').innerHTML = html;
+    if (typeof changeLang === 'function') changeLang();
     setTimeout(setupKPIDropzone, 50);
 }
 
@@ -996,6 +999,7 @@ function renderDiscipline() {
     html += '</div>';
 
     document.getElementById('section-discipline').innerHTML = html;
+    if (typeof changeLang === 'function') changeLang();
     setTimeout(setupDiscDropzone, 50);
 }
 
