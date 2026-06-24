@@ -1636,7 +1636,80 @@ function downloadCompliancePDF(){
   var narrative=LAST_COMPLIANCE_DATA._narrative||defaultNarrative(freshData);
   var reportHTML=buildReportHTML(freshData,narrative,true);
   var win=window.open('','_blank');
-  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Compliance Report - WokManeja</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:\'Montserrat\', sans-serif}body{background:#fff;color:#1a1a1a;padding:0}.rpt-page{max-width:100%;padding:2rem;color:#1a1a1a}.rpt-header{border-bottom:3px solid #0a0a0a;padding-bottom:1.25rem;margin-bottom:1.5rem}.rpt-logo-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.rpt-title{font-size:22px;font-weight:800;color:#0a0a0a;margin-bottom:2px}.rpt-subtitle{font-size:13px;color:#555}.rpt-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:12px}.rpt-meta-item p{color:#888;margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.rpt-meta-item span{font-weight:700;color:#0a0a0a;font-size:13px}.rpt-section{margin-bottom:1.75rem;page-break-inside:avoid}.rpt-section-title{font-size:14px;font-weight:700;color:#0a0a0a;border-left:4px solid #10b981;padding-left:.75rem;margin-bottom:1rem}.rpt-section-num{color:#10b981;margin-right:.35rem}.rpt-summary-table{width:100%;border-collapse:collapse;margin-bottom:.5rem}.rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}.rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}.rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}.rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}.rpt-detail-table tr:nth-child(even) td{background:#fafafa}.rpt-obs-block{background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:.75rem;border-left:3px solid #0a0a0a}.rpt-obs-title{font-size:12px;font-weight:700;color:#0a0a0a;margin-bottom:.4rem}.rpt-obs-text{font-size:12.5px;color:#444;line-height:1.7}.rpt-obs-text ul{padding-left:1.2rem;margin-top:.35rem}.rpt-obs-text li{margin-bottom:.2rem}.rpt-rec-list{list-style:none;padding:0}.rpt-rec-list li{font-size:12.5px;color:#444;padding:8px 0;border-bottom:1px solid #eee;display:flex;gap:.6rem;align-items:flex-start;line-height:1.6}.rpt-rec-list li::before{content:"\\2192";color:#10b981;font-weight:800;flex-shrink:0}.rpt-footer{border-top:2px solid #0a0a0a;padding-top:1rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#666}.rpt-highlight-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#7c5000;margin-top:.5rem}.rpt-highlight-ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#1b5e20;margin-top:.5rem}@media print{body{padding:0}@page{margin:1.5cm}}</style></head><body>' + reportHTML + '</body></html>');
+  win.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><title>Compliance Report - WokManeja</title><style>*{box-sizing:border-box;margin:0;padding:0;font-family:\'Montserrat\', sans-serif}body{background:#fff;color:#1a1a1a;padding:0}.rpt-page{max-width:100%;padding:2rem;color:#1a1a1a}.rpt-header{border-bottom:3px solid #0a0a0a;padding-bottom:1.25rem;margin-bottom:1.5rem}.rpt-logo-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.rpt-title{font-size:22px;font-weight:800;color:#0a0a0a;margin-bottom:2px}.rpt-subtitle{font-size:13px;color:#555}.rpt-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:12px}.rpt-meta-item p{color:#888;margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.rpt-meta-item span{font-weight:700;color:#0a0a0a;font-size:13px}.rpt-section{margin-bottom:1.75rem;page-break-inside:avoid}.rpt-section-title{font-size:14px;font-weight:700;color:#0a0a0a;border-left:4px solid #10b981;padding-left:.75rem;margin-bottom:1rem}.rpt-section-num{color:#10b981;margin-right:.35rem}.rpt-summary-table{width:100%;border-collapse:collapse;margin-bottom:.5rem}.rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}.rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}.rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}.rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}.rpt-detail-table tr:nth-child(even) td{background:#fafafa}.rpt-obs-block{background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:.75rem;border-left:3px solid #0a0a0a}.rpt-obs-title{font-size:12px;font-weight:700;color:#0a0a0a;margin-bottom:.4rem}.rpt-obs-text{font-size:12.5px;color:#444;line-height:1.7}.rpt-obs-text ul{padding-left:1.2rem;margin-top:.35rem}.rpt-obs-text li{margin-bottom:.2rem}.rpt-rec-list{list-style:none;padding:0}.rpt-rec-list li{font-size:12.5px;color:#444;padding:8px 0;border-bottom:1px solid #eee;display:flex;gap:.6rem;align-items:flex-start;line-height:1.6}.rpt-rec-list li::before{content:"\\2192";color:#10b981;font-weight:800;flex-shrink:0}.rpt-footer{border-top:2px solid #0a0a0a;padding-top:1rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#666}.rpt-highlight-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#7c5000;margin-top:.5rem}.rpt-highlight-ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#1b5e20;margin-top:.5rem}@media print{body{padding:0}@page{margin:1.5cm}}</style></head><body>' + reportHTML + '
+  <div id="modal-custom-alert" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
+        <i class="ti ti-info-circle" style="color:var(--gold);font-size:24px"></i>
+        <h3 style="font-size:16px;color:var(--navy);margin:0">Notification</h3>
+      </div>
+      <p id="custom-alert-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
+      <div style="display:flex;justify-content:flex-end">
+        <button class="btn btn-primary" onclick="uiAlertClose()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="modal-custom-confirm" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.5);z-index:10000;align-items:center;justify-content:center;backdrop-filter:blur(3px)">
+    <div class="card" style="width:100%;max-width:380px;padding:2.5rem;animation: scaleIn 0.2s ease-out;box-shadow: 0 10px 25px rgba(0,0,0,0.2);">
+      <div style="display:flex;align-items:center;margin-bottom:1rem;gap:10px">
+        <i class="ti ti-help" style="color:var(--gold);font-size:24px"></i>
+        <h3 style="font-size:16px;color:var(--navy);margin:0">Confirm Action</h3>
+      </div>
+      <p id="custom-confirm-msg" style="font-size:14px;color:#333;margin-bottom:1.5rem;line-height:1.5;white-space:pre-wrap"></p>
+      <div style="display:flex;justify-content:flex-end;gap:10px">
+        <button class="btn btn-outline" onclick="uiConfirmClose(false)">Cancel</button>
+        <button class="btn btn-primary" onclick="uiConfirmClose(true)">Confirm</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    window._uiAlertResolve = null;
+    window.uiAlert = function(msg) {
+      return new Promise(function(resolve) {
+        document.getElementById('custom-alert-msg').textContent = msg;
+        document.getElementById('modal-custom-alert').style.display = 'flex';
+        window._uiAlertResolve = resolve;
+      });
+    };
+    window.uiAlertClose = function() {
+      document.getElementById('modal-custom-alert').style.display = 'none';
+      if(window._uiAlertResolve) {
+        var fn = window._uiAlertResolve;
+        window._uiAlertResolve = null;
+        fn();
+      }
+    };
+
+    window._uiConfirmResolve = null;
+    window.uiConfirm = function(msg) {
+      return new Promise(function(resolve) {
+        document.getElementById('custom-confirm-msg').textContent = msg;
+        document.getElementById('modal-custom-confirm').style.display = 'flex';
+        window._uiConfirmResolve = resolve;
+      });
+    };
+    window.uiConfirmClose = function(res) {
+      document.getElementById('modal-custom-confirm').style.display = 'none';
+      if(window._uiConfirmResolve) {
+        var fn = window._uiConfirmResolve;
+        window._uiConfirmResolve = null;
+        fn(res);
+      }
+    };
+
+    window.alert = function(msg) {
+      console.warn("Native alert intercepted. Please use uiAlert().");
+      return window.uiAlert(msg);
+    };
+    window.confirm = function(msg) {
+      console.error("Native confirm used synchronously! Returning false.");
+      window.uiConfirm(msg);
+      return false;
+    };
+  </script>
+</body></html>');
   win.document.close();
   setTimeout(function(){win.focus();win.print();},600);
 }
@@ -2021,7 +2094,7 @@ function loadReleases(){
   }).catch(function(){});
 }
 function applyUpdate(tag,zipball_url){
-  if(!confirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
+  if(!await uiConfirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
   var wrap=document.getElementById('upd-releases-wrap');
   wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#185fa5;font-size:13px"><i class="ti ti-loader-2" style="font-size:36px;display:block;margin-bottom:.75rem;animation:spin 1s linear infinite"></i><strong>Installing '+tag+'...</strong><br><span style="font-size:11px;color:#888;margin-top:.5rem;display:block">Downloading from GitHub. The server will restart automatically.</span></div>';
   fetch('/api/admin/apply-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tag:tag,zipball_url:zipball_url})}).then(function(r){return r.json()}).then(function(d){
@@ -2040,7 +2113,7 @@ function deleteForever(id){customConfirm('Permanently delete this record? This c
 function viewCollection(col){var docs=DB.raw(col);document.getElementById('db-viewer').textContent='// Collection: '+col+' ('+docs.length+' documents)\n\n'+JSON.stringify(docs,null,2)}
 function exportDB(){var data=DB.exportAll();var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='triple_k_database_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href);showDBMsg('Database exported.','#ddf0dd','#27500a')}
 function importDB(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){try{var data=JSON.parse(ev.target.result);DB.importAll(data);updateDBIndicator();renderDBStats();showDBMsg('Imported successfully.','#ddf0dd','#27500a')}catch(err){showDBMsg('Import failed: invalid file.','#fff0f0','#a32d2d')}};reader.readAsText(file);e.target.value=''}
-function clearDB(){if(!confirm('Delete ALL data?'))return;if(!confirm('FINAL WARNING: This cannot be undone.'))return;['payslips','staff','users','hr_requests'].forEach(function(c){DB.drop(c)});seedDB();updateDBIndicator();renderDBStats();showDBMsg('Database reset.','#faeeda','#633806')}
+async function clearDB() {if(!await uiConfirm('Delete ALL data?'))return;if(!await uiConfirm('FINAL WARNING: This cannot be undone.'))return;['payslips','staff','users','hr_requests'].forEach(function(c){DB.drop(c)});seedDB();updateDBIndicator();renderDBStats();showDBMsg('Database reset.','#faeeda','#633806')}
 function showDBMsg(msg,bg,color){var el=document.getElementById('db-action-msg');el.textContent=msg;el.style.background=bg;el.style.color=color;el.style.padding='8px 12px';el.style.borderRadius='6px';el.style.display='block';setTimeout(function(){el.style.display='none'},4000)}
 function toggleOTCalc(){var p=document.getElementById('ot-calc-panel');var btn=p.previousElementSibling;if(p.style.display==='none'){p.style.display='block';btn.innerHTML='<i class="ti ti-calculator" style="font-size:13px;color:#10b981"></i> Hide Overtime Calculator';}else{p.style.display='none';btn.innerHTML='<i class="ti ti-calculator" style="font-size:13px;color:#10b981"></i> Show Overtime Calculator';}}
 
@@ -2602,7 +2675,7 @@ function addDocType() {
 }
 
 function deleteDocType(id) {
-    if(confirm('Remove this document type?')) {
+    if(await uiConfirm('Remove this document type?')) {
         DB.remove('doc_types', { _id: id });
         renderDocTypesList();
         renderDocuments();
@@ -2774,8 +2847,8 @@ async function saveDocument() {
     renderDocuments();
 }
 
-function deleteDocument(id) {
-    if(confirm('Delete this document?')) {
+async function deleteDocument(id) {
+    if(await uiConfirm('Delete this document?')) {
         DB.remove('documents', { _id: id });
         renderDocuments();
     }
@@ -2976,7 +3049,7 @@ async function saveRecruit() {
 }
 
 function deleteRecruit(id) {
-    if(confirm('Delete candidate?')) {
+    if(await uiConfirm('Delete candidate?')) {
         DB.remove('recruitment', { _id: id });
         renderRecruitment();
     }
@@ -3010,8 +3083,8 @@ function saveVacancy() {
     renderRecruitment();
 }
 
-function deleteVacancy(id) {
-    if(confirm('Delete this vacancy?')) {
+async function deleteVacancy(id) {
+    if(await uiConfirm('Delete this vacancy?')) {
         DB.remove('vacancies', { _id: id });
         renderRecruitment();
     }
@@ -3252,8 +3325,8 @@ async function saveKPI() {
     renderKPI();
 }
 
-function deleteKPI(id) {
-    if(confirm('Delete this KPI record?')) {
+async function deleteKPI(id) {
+    if(await uiConfirm('Delete this KPI record?')) {
         DB.remove('kpi', { _id: id });
         renderKPI();
     }
@@ -3510,8 +3583,8 @@ function saveIncident() {
     renderDiscipline();
 }
 
-function deleteDiscipline(id) {
-    if(confirm('Are you sure you want to delete this record?')) {
+async function deleteDiscipline(id) {
+    if(await uiConfirm('Are you sure you want to delete this record?')) {
         DB.remove('discipline', { _id: id });
         renderDiscipline();
     }
@@ -3704,7 +3777,7 @@ function viewDisciplineRecord(id) {
 </body></html>
 <script>
 function resetStaffPassword(userId) {
-    if(confirm("Are you sure you want to reset this staff member's password? It will be set to 'staff123'.")) {
+    if(await uiConfirm("Are you sure you want to reset this staff member's password? It will be set to 'staff123'.")) {
         DB.update('users', { _id: userId }, { password: 'staff123' });
         alert("Password reset to 'staff123'");
     }

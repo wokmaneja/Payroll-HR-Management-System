@@ -407,7 +407,7 @@ window.fetch = async function(url, options) {
     }
   }
   var res = await originalFetch(url, options);
-  if (res.status === 401 && typeof url === 'string' && !url.startsWith('/api/auth/')) {
+  if (res.status === 401 && typeof url === 'string' && url.startsWith('/api/') && !url.startsWith('/api/auth/')) {
     if (typeof doLogout === 'function') doLogout();
     throw new Error('Unauthorized');
   }
@@ -1188,7 +1188,7 @@ async function renderLicenseStatus(){
 }
 
 async function transferLicense() {
-    if(!confirm("Are you sure you want to unlock this license from this hardware?\n\nYou will immediately lose access to WokManeja on this machine, but you will be able to reuse your license key on another machine.")) return;
+    if(!await uiConfirm("Are you sure you want to unlock this license from this hardware?\n\nYou will immediately lose access to WokManeja on this machine, but you will be able to reuse your license key on another machine.")) return;
     try {
         const res = await fetch('/api/license/unlock', { method: 'POST' });
         if(res.ok) {
@@ -1308,7 +1308,7 @@ function loadReleases(){
   }).catch(function(){});
 }
 function applyUpdate(tag,zipball_url){
-  if(!confirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
+  if(!await uiConfirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
   var wrap=document.getElementById('upd-releases-wrap');
   wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#185fa5;font-size:13px"><i class="ti ti-loader-2" style="font-size:36px;display:block;margin-bottom:.75rem;animation:spin 1s linear infinite"></i><strong>Installing '+tag+'...</strong><br><span style="font-size:11px;color:#888;margin-top:.5rem;display:block">Downloading from GitHub. The server will restart automatically.</span></div>';
   fetch('/api/admin/apply-update',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({tag:tag,zipball_url:zipball_url})}).then(function(r){return r.json()}).then(function(d){
@@ -1326,7 +1326,7 @@ function deleteForever(id){customConfirm('Permanently delete this record? This c
 function viewCollection(col){var docs=DB.raw(col);document.getElementById('db-viewer').textContent='// Collection: '+col+' ('+docs.length+' documents)\n\n'+JSON.stringify(docs,null,2)}
 function exportDB(){var data=DB.exportAll();var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='triple_k_database_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href);showDBMsg('Database exported.','#ddf0dd','#27500a')}
 function importDB(e){var file=e.target.files[0];if(!file)return;var reader=new FileReader();reader.onload=function(ev){try{var data=JSON.parse(ev.target.result);DB.importAll(data);updateDBIndicator();renderDBStats();showDBMsg('Imported successfully.','#ddf0dd','#27500a')}catch(err){showDBMsg('Import failed: invalid file.','#fff0f0','#a32d2d')}};reader.readAsText(file);e.target.value=''}
-function clearDB(){if(!confirm('Delete ALL data?'))return;if(!confirm('FINAL WARNING: This cannot be undone.'))return;['payslips','staff','users','hr_requests'].forEach(function(c){DB.drop(c)});seedDB();updateDBIndicator();renderDBStats();showDBMsg('Database reset.','#faeeda','#633806')}
+async function clearDB() {if(!await uiConfirm('Delete ALL data?'))return;if(!await uiConfirm('FINAL WARNING: This cannot be undone.'))return;['payslips','staff','users','hr_requests'].forEach(function(c){DB.drop(c)});seedDB();updateDBIndicator();renderDBStats();showDBMsg('Database reset.','#faeeda','#633806')}
 function showDBMsg(msg,bg,color){var el=document.getElementById('db-action-msg');el.textContent=msg;el.style.background=bg;el.style.color=color;el.style.padding='8px 12px';el.style.borderRadius='6px';el.style.display='block';setTimeout(function(){el.style.display='none'},4000)}
 function toggleOTCalc(){var p=document.getElementById('ot-calc-panel');var btn=p.previousElementSibling;if(p.style.display==='none'){p.style.display='block';btn.innerHTML='<i class="ti ti-calculator" style="font-size:13px;color:#10b981"></i> Hide Overtime Calculator';}else{p.style.display='none';btn.innerHTML='<i class="ti ti-calculator" style="font-size:13px;color:#10b981"></i> Show Overtime Calculator';}}
 

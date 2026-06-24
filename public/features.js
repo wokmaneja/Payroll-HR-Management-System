@@ -145,7 +145,7 @@ function addDocType() {
 }
 
 function deleteDocType(id) {
-    if(confirm('Remove this document type?')) {
+    if(await uiConfirm('Remove this document type?')) {
         DB.remove('doc_types', { _id: id });
         renderDocTypesList();
         renderDocuments();
@@ -317,8 +317,8 @@ async function saveDocument() {
     renderDocuments();
 }
 
-function deleteDocument(id) {
-    if(confirm('Delete this document?')) {
+async function deleteDocument(id) {
+    if(await uiConfirm('Delete this document?')) {
         DB.remove('documents', { _id: id });
         renderDocuments();
     }
@@ -519,7 +519,7 @@ async function saveRecruit() {
 }
 
 function deleteRecruit(id) {
-    if(confirm('Delete candidate?')) {
+    if(await uiConfirm('Delete candidate?')) {
         DB.remove('recruitment', { _id: id });
         renderRecruitment();
     }
@@ -553,8 +553,8 @@ function saveVacancy() {
     renderRecruitment();
 }
 
-function deleteVacancy(id) {
-    if(confirm('Delete this vacancy?')) {
+async function deleteVacancy(id) {
+    if(await uiConfirm('Delete this vacancy?')) {
         DB.remove('vacancies', { _id: id });
         renderRecruitment();
     }
@@ -795,8 +795,8 @@ async function saveKPI() {
     renderKPI();
 }
 
-function deleteKPI(id) {
-    if(confirm('Delete this KPI record?')) {
+async function deleteKPI(id) {
+    if(await uiConfirm('Delete this KPI record?')) {
         DB.remove('kpi', { _id: id });
         renderKPI();
     }
@@ -1053,8 +1053,8 @@ function saveIncident() {
     renderDiscipline();
 }
 
-function deleteDiscipline(id) {
-    if(confirm('Are you sure you want to delete this record?')) {
+async function deleteDiscipline(id) {
+    if(await uiConfirm('Are you sure you want to delete this record?')) {
         DB.remove('discipline', { _id: id });
         renderDiscipline();
     }
