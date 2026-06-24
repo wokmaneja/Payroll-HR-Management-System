@@ -4,9 +4,9 @@
 <title>WokManeja — Payroll &amp; HR System</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
-<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@700;800&display=swap" rel="stylesheet">
+
 <link rel="icon" type="image/svg+xml" href="favicon.svg">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
@@ -1262,7 +1262,7 @@ function resetIdleTimer(){if(!APP.currentUser)return;if(idleTimer)clearTimeout(i
 document.addEventListener('mousemove',resetIdleTimer);
 document.addEventListener('keydown',resetIdleTimer);
 document.addEventListener('click',resetIdleTimer);
-async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors();}catch(e){document.getElementById('login-error').style.display='block';}}
+async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors();if(data.user.mustChangePassword){setTimeout(function(){var pw=document.getElementById('modal-changepw');if(pw){pw.style.display='flex';var warn=document.createElement('p');warn.style.cssText='color:#e24b4a;font-size:12px;margin-bottom:12px;padding:8px 12px;background:#fff0f0;border-radius:6px;border:1px solid #f5c0c0;text-align:center';warn.innerHTML='<i class="ti ti-lock" style="margin-right:4px"></i>Please set a new password before continuing.';var inner=pw.querySelector('[style*="background:#fff"]')||pw;inner.insertBefore(warn,inner.firstChild);}},200);}}catch(e){document.getElementById('login-error').style.display='block';}}
 function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
 function buildNav(role){var nav=document.getElementById('sidebar-nav');nav.innerHTML='';MENUS[role].forEach(function(item){if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}if(item.id==='documents'&&typeof renderDocuments==='function')renderDocuments();if(item.id==='kpi'&&typeof renderKPI==='function')renderKPI();if(item.id==='recruitment'&&typeof renderRecruitment==='function')renderRecruitment();if(item.id==='discipline'&&typeof renderDiscipline==='function')renderDiscipline();};nav.appendChild(a);});nav.querySelector('button').click();}
 var ALL_SECTIONS=['payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs','documents','kpi','recruitment','discipline'];
@@ -2455,15 +2455,15 @@ function renderDocuments() {
     }
 
     var html = '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
-    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_doc_center"><span data-i18n="lbl_doc_center">Document Center</span></span></h3>';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_doc_center">Document Center</span></h3>';
     if(role === 'admin' || role === 'manager' || role === 'it') {
         html += '<button class="btn btn-primary" onclick="showDocumentForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_req_add_doc">Request / Add Document</span></button>';
     }
     html += '</div>';
 
-    html += '<table><thead><tr><th><span data-i18n="th_staff_name"><span data-i18n="th_staff_name">Staff Name</span></span></th><th><span data-i18n="th_doc_type"><span data-i18n="th_doc_type">Doc Type</span></span></th><th><span data-i18n="th_file"><span data-i18n="th_file">File</span></span></th><th><span data-i18n="th_date"><span data-i18n="th_date">Date</span></span></th><th><span data-i18n="th_action"><span data-i18n="th_action">Action</span></span></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="th_doc_type">Doc Type</span></th><th><span data-i18n="th_file">File</span></th><th><span data-i18n="th_date">Date</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(docs.length === 0) {
-        html += '<tr><td colspan="5" style="text-align:center;color:#888"><span data-i18n="msg_no_docs"><span data-i18n="msg_no_docs">No documents filed yet.</span></span></td></tr>';
+        html += '<tr><td colspan="5" style="text-align:center;color:#888"><span data-i18n="msg_no_docs">No documents filed yet.</span></td></tr>';
     } else {
         docs.forEach(function(d) {
             html += '<tr>';
@@ -2478,14 +2478,14 @@ function renderDocuments() {
             } else {
                 fileDisplay = '<span style="color:#e24b4a;font-weight:600"><i class="ti ti-alert-circle"></i> <span data-i18n="lbl_requested">Requested</span></span>';
                 if (role === 'staff') {
-                    fileDisplay += ' <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="showFulfillDocForm(\''+d._id+'\')"><span data-i18n="btn_upload"><span data-i18n="btn_upload">Upload</span></span></button>';
+                    fileDisplay += ' <button class="btn btn-primary btn-sm" style="margin-left:8px" onclick="showFulfillDocForm(\''+d._id+'\')"><span data-i18n="btn_upload">Upload</span></button>';
                 }
             }
             html += '<td>'+fileDisplay+'</td>';
             html += '<td>'+(d._created ? new Date(d._created).toLocaleDateString() : '')+'</td>';
             html += '<td>';
             if(role === 'admin' || role === 'manager') {
-                html += '<button class="btn btn-danger btn-sm" onclick="deleteDocument(\''+d._id+'\')"><span data-i18n="btn_delete"><span data-i18n="btn_delete">Delete</span></span></button>';
+                html += '<button class="btn btn-danger btn-sm" onclick="deleteDocument(\''+d._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
             }
             html += '</td>';
             html += '</tr>';
@@ -2495,45 +2495,45 @@ function renderDocuments() {
 
     // Form modal
     html += '<div id="doc-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:480px">';
-    html += '<h4 id="doc-modal-title" style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_add_staff_doc"><span data-i18n="lbl_add_staff_doc">Add Staff Document</span></span></h4>';
+    html += '<h4 id="doc-modal-title" style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_add_staff_doc">Add Staff Document</span></h4>';
     
-    html += '<div id="doc-staff-container" style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member"><span data-i18n="lbl_staff_member">Staff Member</span></span></label><select id="doc-staff">';
-    html += '<option value=""><span data-i18n="opt_sel_staff"><span data-i18n="opt_sel_staff">-- Select Staff --</span></span></option>';
+    html += '<div id="doc-staff-container" style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member">Staff Member</span></label><select id="doc-staff">';
+    html += '<option value=""><span data-i18n="opt_sel_staff">-- Select Staff --</span></option>';
     staffList.forEach(s => {
         html += '<option value="'+s.name+'">'+s.name+' ('+(s.empid||'')+')</option>';
     });
     html += '</select></div>';
     
-    html += '<div id="doc-type-container" style="margin-bottom:1rem"><label><span data-i18n="lbl_doc_type"><span data-i18n="lbl_doc_type">Document Type</span></span></label><div style="display:flex;gap:0.5rem">';
+    html += '<div id="doc-type-container" style="margin-bottom:1rem"><label><span data-i18n="lbl_doc_type">Document Type</span></label><div style="display:flex;gap:0.5rem">';
     html += '<select id="doc-type" style="flex:1">';
     docTypes.forEach(t => {
         html += '<option value="'+t.name+'">'+t.name+'</option>';
     });
     html += '</select>';
     if (APP.currentUser && (APP.currentUser.role === 'admin' || APP.currentUser.role === 'manager')) {
-        html += '<button class="btn btn-outline" onclick="showDocTypeManager()" style="padding:0.5rem;font-size:12px"><span data-i18n="btn_manage_types"><span data-i18n="btn_manage_types">Manage Types</span></span></button>';
+        html += '<button class="btn btn-outline" onclick="showDocTypeManager()" style="padding:0.5rem;font-size:12px"><span data-i18n="btn_manage_types">Manage Types</span></button>';
     }
     html += '</div></div>';
     
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_upload_file">Upload File</span> <span id="doc-upload-optional" style="color:#888;font-size:12px"><span data-i18n="msg_upload_opt"><span data-i18n="msg_upload_opt">(Optional - leave blank to request file)</span></span></span></label>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_upload_file">Upload File</span> <span id="doc-upload-optional" style="color:#888;font-size:12px"><span data-i18n="msg_upload_opt">(Optional - leave blank to request file)</span></span></label>';
     html += '<div id="doc-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;background:#fafafa;cursor:pointer;transition:all 0.2s">';
     html += '<i class="ti ti-cloud-upload" style="font-size:32px;color:#aaa"></i>';
-    html += '<p style="margin:10px 0 0 0;color:#666" id="doc-drop-text"><span data-i18n="msg_drag_drop"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></span></p>';
+    html += '<p style="margin:10px 0 0 0;color:#666" id="doc-drop-text"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></p>';
     html += '<input type="file" id="doc-file-input" style="display:none">';
     html += '</div></div>';
     
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveDocument()"><span data-i18n="btn_save_doc"><span data-i18n="btn_save_doc">Save Document</span></span></button><button class="btn btn-outline" onclick="document.getElementById(\'doc-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveDocument()"><span data-i18n="btn_save_doc">Save Document</span></button><button class="btn btn-outline" onclick="document.getElementById(\'doc-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
     
     // Doc Type Manager Modal
     html += '<div id="doc-type-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:10000;width:350px">';
-    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_manage_doc_types"><span data-i18n="lbl_manage_doc_types">Manage Document Types</span></span></h4>';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_manage_doc_types">Manage Document Types</span></h4>';
     html += '<div style="display:flex;gap:0.5rem;margin-bottom:1rem">';
     html += '<input type="text" id="new-doc-type" placeholder="New Type Name" style="flex:1">';
-    html += '<button class="btn btn-primary" onclick="addDocType()"><span data-i18n="btn_add"><span data-i18n="btn_add">Add</span></span></button>';
+    html += '<button class="btn btn-primary" onclick="addDocType()"><span data-i18n="btn_add">Add</span></button>';
     html += '</div>';
     html += '<div id="doc-types-list" style="max-height:200px;overflow-y:auto;border:1px solid #eee;border-radius:6px;padding:0.5rem;margin-bottom:1rem"></div>';
-    html += '<button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById(\'doc-type-modal\').classList.add(\'hidden\')"><span data-i18n="btn_close"><span data-i18n="btn_close">Close</span></span></button>';
+    html += '<button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById(\'doc-type-modal\').classList.add(\'hidden\')"><span data-i18n="btn_close">Close</span></button>';
     html += '</div>';
 
     document.getElementById('section-documents').innerHTML = html;
@@ -2550,7 +2550,7 @@ function renderDocTypesList() {
     var types = DB.findAll('doc_types');
     var html = '';
     if (types.length === 0) {
-        html = '<div style="color:#888;text-align:center;font-size:13px;padding:0.5rem"><span data-i18n="msg_no_custom_types"><span data-i18n="msg_no_custom_types">No custom types added.</span></span></div>';
+        html = '<div style="color:#888;text-align:center;font-size:13px;padding:0.5rem"><span data-i18n="msg_no_custom_types">No custom types added.</span></div>';
     } else {
         types.forEach(t => {
             html += '<div style="display:flex;justify-content:space-between;align-items:center;padding:0.5rem;border-bottom:1px solid #f0f0f0">';
@@ -2812,20 +2812,20 @@ function renderRecruitment() {
     
     // Internal Vacancies Section
     html += '<div style="display:flex;justify-content:space-between;margin-bottom:1rem;margin-top:1rem">';
-    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_int_vacancies"><span data-i18n="lbl_int_vacancies">Internal Vacancies</span></span></h3>';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_int_vacancies">Internal Vacancies</span></h3>';
     html += '<button class="btn btn-primary" onclick="showVacancyForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_post_vacancy">Post Vacancy</span></button>';
     html += '</div>';
 
-    html += '<table><thead><tr><th><span data-i18n="th_position"><span data-i18n="th_position">Position</span></span></th><th><span data-i18n="th_description"><span data-i18n="th_description">Description</span></span></th><th><span data-i18n="th_due_date"><span data-i18n="th_due_date">Due Date</span></span></th><th><span data-i18n="th_action"><span data-i18n="th_action">Action</span></span></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th><span data-i18n="th_position">Position</span></th><th><span data-i18n="th_description">Description</span></th><th><span data-i18n="th_due_date">Due Date</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(vacancies.length === 0) {
-        html += '<tr><td colspan="4" style="text-align:center;color:#888"><span data-i18n="msg_no_vacancies"><span data-i18n="msg_no_vacancies">No active vacancies.</span></span></td></tr>';
+        html += '<tr><td colspan="4" style="text-align:center;color:#888"><span data-i18n="msg_no_vacancies">No active vacancies.</span></td></tr>';
     } else {
         vacancies.forEach(function(v) {
             html += '<tr>';
             html += '<td style="font-weight:600">'+(v.position||'')+'</td>';
             html += '<td>'+(v.description||'')+'</td>';
             html += '<td>'+(v.dueDate||'')+'</td>';
-            html += '<td><button class="btn btn-danger btn-sm" onclick="deleteVacancy(\''+v._id+'\')"><span data-i18n="btn_delete"><span data-i18n="btn_delete">Delete</span></span></button></td>';
+            html += '<td><button class="btn btn-danger btn-sm" onclick="deleteVacancy(\''+v._id+'\')"><span data-i18n="btn_delete">Delete</span></button></td>';
             html += '</tr>';
         });
     }
@@ -2833,13 +2833,13 @@ function renderRecruitment() {
 
     // Recruitment Management Section
     html += '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
-    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_work_recruit"><span data-i18n="lbl_work_recruit">Work Recruitment Management</span></span></h3>';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_work_recruit">Work Recruitment Management</span></h3>';
     html += '<button class="btn btn-primary" onclick="showRecruitForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_add_candidate">Add Candidate</span></button>';
     html += '</div>';
 
-    html += '<table><thead><tr><th><span data-i18n="th_candidate_name"><span data-i18n="th_candidate_name">Candidate Name</span></span></th><th><span data-i18n="th_position"><span data-i18n="th_position">Position</span></span></th><th><span data-i18n="th_status"><span data-i18n="th_status">Status</span></span></th><th><span data-i18n="th_attached_file"><span data-i18n="th_attached_file">Attached File</span></span></th><th><span data-i18n="th_notes"><span data-i18n="th_notes">Notes</span></span></th><th><span data-i18n="th_action"><span data-i18n="th_action">Action</span></span></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th><span data-i18n="th_candidate_name">Candidate Name</span></th><th><span data-i18n="th_position">Position</span></th><th><span data-i18n="th_status">Status</span></th><th><span data-i18n="th_attached_file">Attached File</span></th><th><span data-i18n="th_notes">Notes</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(recruits.length === 0) {
-        html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_candidates"><span data-i18n="msg_no_candidates">No candidates yet.</span></span></td></tr>';
+        html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_candidates">No candidates yet.</span></td></tr>';
     } else {
         recruits.forEach(function(r) {
             html += '<tr>';
@@ -2859,9 +2859,9 @@ function renderRecruitment() {
             html += '<td>'+(r.notes||'')+'</td>';
             html += '<td>';
             if (r.status === 'Internal Application') {
-                html += '<button class="btn btn-primary btn-sm" style="margin-right:5px" onclick="approveInternalApplicant(\''+r._id+'\')"><span data-i18n="btn_approve"><span data-i18n="btn_approve">Approve</span></span></button>';
+                html += '<button class="btn btn-primary btn-sm" style="margin-right:5px" onclick="approveInternalApplicant(\''+r._id+'\')"><span data-i18n="btn_approve">Approve</span></button>';
             }
-            html += '<button class="btn btn-danger btn-sm" onclick="deleteRecruit(\''+r._id+'\')"><span data-i18n="btn_delete"><span data-i18n="btn_delete">Delete</span></span></button>';
+            html += '<button class="btn btn-danger btn-sm" onclick="deleteRecruit(\''+r._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
             html += '</td>';
             html += '</tr>';
         });
@@ -2870,29 +2870,29 @@ function renderRecruitment() {
 
     // Form modal
     html += '<div id="recruit-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:400px">';
-    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="btn_add_candidate"><span data-i18n="btn_add_candidate">Add Candidate</span></span></h4>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_candidate_name"><span data-i18n="th_candidate_name">Candidate Name</span></span></label><input type="text" id="rec-name"></div>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_pos_applied"><span data-i18n="lbl_pos_applied">Position Applied</span></span></label><input type="text" id="rec-pos"></div>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_status"><span data-i18n="th_status">Status</span></span></label><select id="rec-status"><option><span data-i18n="opt_new"><span data-i18n="opt_new">New</span></span></option><option><span data-i18n="opt_interviewing"><span data-i18n="opt_interviewing">Interviewing</span></span></option><option><span data-i18n="opt_hired"><span data-i18n="opt_hired">Hired</span></span></option><option><span data-i18n="opt_rejected"><span data-i18n="opt_rejected">Rejected</span></span></option></select></div>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_notes"><span data-i18n="th_notes">Notes</span></span></label><textarea id="rec-notes"></textarea></div>';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="btn_add_candidate">Add Candidate</span></h4>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_candidate_name">Candidate Name</span></label><input type="text" id="rec-name"></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_pos_applied">Position Applied</span></label><input type="text" id="rec-pos"></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_status">Status</span></label><select id="rec-status"><option><span data-i18n="opt_new">New</span></option><option><span data-i18n="opt_interviewing">Interviewing</span></option><option><span data-i18n="opt_hired">Hired</span></option><option><span data-i18n="opt_rejected">Rejected</span></option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_notes">Notes</span></label><textarea id="rec-notes"></textarea></div>';
     
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_cv_file"><span data-i18n="lbl_cv_file">Application/CV File (Optional)</span></span></label>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_cv_file">Application/CV File (Optional)</span></label>';
     html += '<div id="rec-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;background:#fafafa;cursor:pointer;transition:all 0.2s">';
     html += '<i class="ti ti-cloud-upload" style="font-size:32px;color:#aaa"></i>';
-    html += '<p style="margin:10px 0 0 0;color:#666" id="rec-drop-text"><span data-i18n="msg_drag_drop"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></span></p>';
+    html += '<p style="margin:10px 0 0 0;color:#666" id="rec-drop-text"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></p>';
     html += '<input type="file" id="rec-file-input" style="display:none">';
     html += '</div></div>';
 
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveRecruit()"><span data-i18n="btn_save"><span data-i18n="btn_save">Save</span></span></button><button class="btn btn-outline" onclick="document.getElementById(\'recruit-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveRecruit()"><span data-i18n="btn_save">Save</span></button><button class="btn btn-outline" onclick="document.getElementById(\'recruit-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
 
     // Vacancy Modal
     html += '<div id="vacancy-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:400px">';
-    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_post_int_vac"><span data-i18n="lbl_post_int_vac">Post Internal Vacancy</span></span></h4>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_position"><span data-i18n="th_position">Position</span></span></label><input type="text" id="vac-pos"></div>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_description"><span data-i18n="th_description">Description</span></span></label><textarea id="vac-desc" style="height:80px"></textarea></div>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_due_date"><span data-i18n="th_due_date">Due Date</span></span></label><input type="date" id="vac-due"></div>';
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveVacancy()">Post</button><button class="btn btn-outline" onclick="document.getElementById(\'vacancy-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<h4 style="margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_post_int_vac">Post Internal Vacancy</span></h4>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_position">Position</span></label><input type="text" id="vac-pos"></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_description">Description</span></label><textarea id="vac-desc" style="height:80px"></textarea></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_due_date">Due Date</span></label><input type="date" id="vac-due"></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveVacancy()">Post</button><button class="btn btn-outline" onclick="document.getElementById(\'vacancy-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
 
     document.getElementById('section-recruitment').innerHTML = html;
@@ -3056,7 +3056,7 @@ function renderKPI() {
     }
     html += '</div>';
 
-    html += '<table><thead><tr><th><span data-i18n="th_staff_name"><span data-i18n="th_staff_name">Staff Name</span></span></th><th>Goal / Objective</th><th style="width:250px">Score</th><th>Review Period</th><th><span data-i18n="th_attached_file"><span data-i18n="th_attached_file">Attached File</span></span></th><th>Feedback</th><th><span data-i18n="th_action"><span data-i18n="th_action">Action</span></span></th></tr></thead><tbody>';
+    html += '<table><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th>Goal / Objective</th><th style="width:250px">Score</th><th>Review Period</th><th><span data-i18n="th_attached_file">Attached File</span></th><th>Feedback</th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(kpis.length === 0) {
         html += '<tr><td colspan="6" style="text-align:center;color:#888">No KPIs assigned yet.</td></tr>';
     } else {
@@ -3096,7 +3096,7 @@ function renderKPI() {
             html += '<td>';
             if (role === 'admin' || role === 'manager') {
                 html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')" style="margin-right:8px">Feedback</button>';
-                html += '<button class="btn btn-danger btn-sm" onclick="deleteKPI(\''+k._id+'\')"><span data-i18n="btn_delete"><span data-i18n="btn_delete">Delete</span></span></button>';
+                html += '<button class="btn btn-danger btn-sm" onclick="deleteKPI(\''+k._id+'\')"><span data-i18n="btn_delete">Delete</span></button>';
             } else if (role === 'staff') {
                 html += '<button class="btn btn-primary btn-sm" onclick="showKPIFeedbackForm(\''+k._id+'\')">Submit Feedback</button>';
             }
@@ -3110,8 +3110,8 @@ function renderKPI() {
     html += '<div id="kpi-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.3);z-index:9999;width:450px">';
     html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Add Staff KPI</h4>';
     
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member"><span data-i18n="lbl_staff_member">Staff Member</span></span></label><select id="kpi-staff">';
-    html += '<option value=""><span data-i18n="opt_sel_staff"><span data-i18n="opt_sel_staff">-- Select Staff --</span></span></option>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member">Staff Member</span></label><select id="kpi-staff">';
+    html += '<option value=""><span data-i18n="opt_sel_staff">-- Select Staff --</span></option>';
     staffList.forEach(st => {
         html += '<option value="'+st.name+'">'+st.name+' ('+(st.empid||'')+')</option>';
     });
@@ -3129,11 +3129,11 @@ function renderKPI() {
     html += '<div style="margin-bottom:1rem"><label>Attach Form / Scorecard (Optional)</label>';
     html += '<div id="kpi-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:2rem;text-align:center;background:#fafafa;cursor:pointer;transition:all 0.2s">';
     html += '<i class="ti ti-cloud-upload" style="font-size:32px;color:#aaa"></i>';
-    html += '<p style="margin:10px 0 0 0;color:#666" id="kpi-drop-text"><span data-i18n="msg_drag_drop"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></span></p>';
+    html += '<p style="margin:10px 0 0 0;color:#666" id="kpi-drop-text"><span data-i18n="msg_drag_drop">Drag and drop a file here, or click to browse</span></p>';
     html += '<input type="file" id="kpi-file-input" style="display:none">';
     html += '</div></div>';
     
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveKPI()">Save KPI</button><button class="btn btn-outline" onclick="document.getElementById(\'kpi-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveKPI()">Save KPI</button><button class="btn btn-outline" onclick="document.getElementById(\'kpi-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
 
     // Staff Feedback Modal
@@ -3141,7 +3141,7 @@ function renderKPI() {
     html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Submit KPI Feedback</h4>';
     html += '<input type="hidden" id="kpi-feedback-id">';
     html += '<div style="margin-bottom:1rem"><label>Your Comments</label><textarea id="kpi-staff-feedback" placeholder="Enter your feedback or comments..." style="height:100px"></textarea></div>';
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveKPIFeedback()"><span data-i18n="btn_submit"><span data-i18n="btn_submit">Submit</span></span></button><button class="btn btn-outline" onclick="document.getElementById(\'kpi-feedback-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveKPIFeedback()"><span data-i18n="btn_submit">Submit</span></button><button class="btn btn-outline" onclick="document.getElementById(\'kpi-feedback-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
 
     document.getElementById('section-kpi').innerHTML = html;
@@ -3353,9 +3353,9 @@ function renderDiscipline() {
     }
     html += '</div>';
 
-    html += '<table class="table"><thead><tr><th><span data-i18n="th_staff_name"><span data-i18n="th_staff_name">Staff Name</span></span></th><th><span data-i18n="th_type"><span data-i18n="th_type">Type</span></span></th><th>Severity</th><th><span data-i18n="th_date"><span data-i18n="th_date">Date</span></span></th><th><span data-i18n="th_status"><span data-i18n="th_status">Status</span></span></th><th><span data-i18n="th_action"><span data-i18n="th_action">Action</span></span></th></tr></thead><tbody>';
+    html += '<table class="table"><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="th_type">Type</span></th><th>Severity</th><th><span data-i18n="th_date">Date</span></th><th><span data-i18n="th_status">Status</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(docs.length === 0) {
-        html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_discipline"><span data-i18n="msg_no_discipline">No disciplinary records found.</span></span></td></tr>';
+        html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_discipline">No disciplinary records found.</span></td></tr>';
     } else {
         docs.forEach(function(d) {
             html += '<tr>';
@@ -3389,43 +3389,43 @@ function renderDiscipline() {
     // Log Incident Modal
     html += '<div id="disc-incident-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px">';
     html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Log Disciplinary Incident</h4>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member"><span data-i18n="lbl_staff_member">Staff Member</span></span></label><select id="disc-staff"><option value=""><span data-i18n="opt_sel_staff"><span data-i18n="opt_sel_staff">-- Select Staff --</span></span></option>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_staff_member">Staff Member</span></label><select id="disc-staff"><option value=""><span data-i18n="opt_sel_staff">-- Select Staff --</span></option>';
     staffList.forEach(s => { html += '<option value="'+s.name+'">'+s.name+'</option>'; });
     html += '</select></div>';
     html += '<div style="margin-bottom:1rem"><label>Incident Date</label><input type="date" id="disc-date" value="'+(new Date().toISOString().split('T')[0])+'"></div>';
     html += '<div style="margin-bottom:1rem"><label>Offense Type</label><select id="disc-type"><option>Tardiness</option><option>Absence</option><option>Insubordination</option><option>Misconduct</option><option>Performance</option><option>Other</option></select></div>';
-    html += '<div style="margin-bottom:1rem"><label>Initial Severity</label><select id="disc-severity"><option><span data-i18n="opt_verbal_warn"><span data-i18n="opt_verbal_warn">Verbal Warning</span></span></option><option><span data-i18n="opt_written_warn"><span data-i18n="opt_written_warn">Written Warning</span></span></option><option><span data-i18n="opt_final_warn"><span data-i18n="opt_final_warn">Final Warning</span></span></option><option><span data-i18n="opt_suspension"><span data-i18n="opt_suspension">Suspension</span></span></option></select></div>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_description"><span data-i18n="th_description">Description</span></span></label><textarea id="disc-desc" rows="4" placeholder="Describe the incident..."></textarea></div>';
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveIncident()">Log Incident</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-incident-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="margin-bottom:1rem"><label>Initial Severity</label><select id="disc-severity"><option><span data-i18n="opt_verbal_warn">Verbal Warning</span></option><option><span data-i18n="opt_written_warn">Written Warning</span></option><option><span data-i18n="opt_final_warn">Final Warning</span></option><option><span data-i18n="opt_suspension">Suspension</span></option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="th_description">Description</span></label><textarea id="disc-desc" rows="4" placeholder="Describe the incident..."></textarea></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveIncident()">Log Incident</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-incident-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
 
     // Explanation Modal
     html += '<div id="disc-explain-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px;max-height:90vh;overflow-y:auto">';
     html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Add Explanation / Evidence</h4>';
     html += '<p style="font-size:12px;color:#666;margin-bottom:1rem">Please provide your explanation for the incident. You may optionally attach supporting evidence.</p>';
-    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_your_exp"><span data-i18n="lbl_your_exp">Your Explanation</span></span></label><textarea id="disc-explain" rows="4" placeholder="Type your response here..."></textarea></div>';
+    html += '<div style="margin-bottom:1rem"><label><span data-i18n="lbl_your_exp">Your Explanation</span></label><textarea id="disc-explain" rows="4" placeholder="Type your response here..."></textarea></div>';
     html += '<div style="margin-bottom:1rem"><label>Upload Evidence <span style="color:#888;font-size:12px">(Optional)</span></label>';
     html += '<div id="disc-dropzone" style="border:2px dashed #ccc;border-radius:8px;padding:1.5rem;text-align:center;background:#fafafa;cursor:pointer;">';
     html += '<i class="ti ti-upload" style="font-size:24px;color:#aaa"></i><p style="margin:5px 0 0 0;color:#666;font-size:12px" id="disc-drop-text">Click to browse or drag file here</p>';
     html += '<input type="file" id="disc-file-input" style="display:none">';
     html += '</div></div>';
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveExplanation()">Submit Response</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-explain-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveExplanation()">Submit Response</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-explain-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
 
     // Finalize Modal
     html += '<div id="disc-finalize-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px">';
     html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Manager Feedback & Finalize</h4>';
     html += '<div id="disc-finalize-details" style="background:#f9f9f9;padding:1rem;border-radius:8px;margin-bottom:1rem;font-size:13px;max-height:150px;overflow-y:auto"></div>';
-    html += '<div style="margin-bottom:1rem"><label>Final Outcome</label><select id="disc-final-outcome"><option>Verbal Warning Recorded</option><option>Written Warning Issued</option><option>Final Warning Issued</option><option>Suspension Executed</option><option><span data-i18n="opt_termination"><span data-i18n="opt_termination">Termination</span></span></option><option>Cleared/No Action</option></select></div>';
+    html += '<div style="margin-bottom:1rem"><label>Final Outcome</label><select id="disc-final-outcome"><option>Verbal Warning Recorded</option><option>Written Warning Issued</option><option>Final Warning Issued</option><option>Suspension Executed</option><option><span data-i18n="opt_termination">Termination</span></option><option>Cleared/No Action</option></select></div>';
     html += '<div style="margin-bottom:1rem"><label>Manager Feedback / Notes</label><textarea id="disc-final-notes" rows="3" placeholder="Provide feedback and additional notes..."></textarea></div>';
-    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveFinalize()">Finalize Record</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-finalize-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel"><span data-i18n="btn_cancel">Cancel</span></span></button></div>';
+    html += '<div style="display:flex;gap:1rem"><button class="btn btn-primary" onclick="saveFinalize()">Finalize Record</button><button class="btn btn-outline" onclick="document.getElementById(\'disc-finalize-modal\').classList.add(\'hidden\')"><span data-i18n="btn_cancel">Cancel</span></button></div>';
     html += '</div>';
     
     // View Modal
     html += '<div id="disc-view-modal" class="hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);background:#fff;padding:2rem;border-radius:12px;box-shadow:0 10px 25px rgba(0,0,0,0.2);z-index:9999;width:500px;max-height:90vh;overflow-y:auto">';
     html += '<h4 style="margin-bottom:1rem;color:var(--navy)">Disciplinary Record</h4>';
     html += '<div id="disc-view-content" style="font-size:13px;color:#333;line-height:1.6"></div>';
-    html += '<div style="margin-top:1.5rem"><button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById(\'disc-view-modal\').classList.add(\'hidden\')"><span data-i18n="btn_close"><span data-i18n="btn_close">Close</span></span></button></div>';
+    html += '<div style="margin-top:1.5rem"><button class="btn btn-outline" style="width:100%;justify-content:center" onclick="document.getElementById(\'disc-view-modal\').classList.add(\'hidden\')"><span data-i18n="btn_close">Close</span></button></div>';
     html += '</div>';
 
     document.getElementById('section-discipline').innerHTML = html;
@@ -3644,7 +3644,7 @@ function viewDisciplineRecord(id) {
     if(doc.explanation || doc.explanationFile) {
         html += '<div style="margin-bottom:15px"><strong>Staff Explanation:</strong><br><div style="background:#f9f9f9;padding:10px;border-radius:6px;margin-top:5px">' + (doc.explanation || '<em>None</em>') + '</div></div>';
         if(doc.explanationFile) {
-            html += '<div style="margin-bottom:15px"><strong>Evidence:</strong> <a href="'+doc.explanationFile+'" target="_blank" style="color:var(--gold)"><span data-i18n="btn_dl_file"><span data-i18n="btn_dl_file">Download File</span></span></a></div>';
+            html += '<div style="margin-bottom:15px"><strong>Evidence:</strong> <a href="'+doc.explanationFile+'" target="_blank" style="color:var(--gold)"><span data-i18n="btn_dl_file">Download File</span></a></div>';
         }
     }
     

@@ -89,7 +89,7 @@ process.on('unhandledRejection', (reason, promise) => {
 const host = '0.0.0.0'; // Bind to 0.0.0.0 for local network access (protected by auth middleware)
 
 // ─── Version Info ────────────────────────────────────────────────────────────
-const APP_VERSION = '1.0.0';
+const { version: APP_VERSION } = require('./package.json');
 const GITHUB_OWNER = 'wokmaneja';
 const GITHUB_REPO  = 'Payroll-HR-Management-System';
 // ─────────────────────────────────────────────────────────────────────────────
@@ -99,8 +99,52 @@ const GITHUB_REPO  = 'Payroll-HR-Management-System';
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
 
+
+// ─── Password Hashing (PBKDF2 via built-in crypto) ───────────────────────────
+const PASS_ITERATIONS = 100000;
+const PASS_KEYLEN = 64;
+const PASS_DIGEST = 'sha512';
+
+function hashPassword(password) {
+    const salt = crypto.randomBytes(16).toString('hex');
+    const hash = crypto.pbkdf2Sync(password, salt, PASS_ITERATIONS, PASS_KEYLEN, PASS_DIGEST).toString('hex');
+    return salt + ':' + hash;
+}
+
+function verifyPassword(password, stored) {
+    // Support plain-text passwords during migration (no colon separator = old plain text)
+    if (!stored || !stored.includes(':')) return password === stored;
+    const [salt, hash] = stored.split(':');
+    const verify = crypto.pbkdf2Sync(password, salt, PASS_ITERATIONS, PASS_KEYLEN, PASS_DIGEST).toString('hex');
+    return verify === hash;
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
 // ─── Authentication Middleware ───────────────────────────────────────────────
-const activeSessions = new Map(); // token -> user object
+const activeSessions = new Map(); // token -> user object (runtime cache)
+
+// Load active sessions from DB on startup (called after DB is ready)
+async function loadPersistedSessions() {
+    try {
+        const rows = await runQuery("SELECT data FROM docs WHERE collection = 'sessions'");
+        const now = Date.now();
+        let expired = 0;
+        rows.forEach(r => {
+            try {
+                const s = JSON.parse(r.data);
+                if (s.expiresAt && s.expiresAt > now) {
+                    activeSessions.set(s.token, s.user);
+                } else {
+                    expired++;
+                    runExec("DELETE FROM docs WHERE id = ? AND collection = 'sessions'", [s.token]).catch(() => {});
+                }
+            } catch(_) {}
+        });
+        if (rows.length > 0) console.log(`[Sessions] Restored ${activeSessions.size} sessions (${expired} expired removed)`);
+    } catch(e) {
+        console.error('[Sessions] Could not load persisted sessions:', e.message);
+    }
+}
 
 app.post('/api/auth/login', async (req, res) => {
     try {
@@ -150,9 +194,64 @@ app.post('/api/auth/login', async (req, res) => {
         
         if (!found) {
             return res.status(401).json({ error: 'Invalid username or password' });
+}
+
+app.post('/api/auth/login', async (req, res) => {
+    try {
+        // Hardware License Lock Check
+        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+        if (licRows.length === 0) {
+            return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
+        }
+        const dbLicense = JSON.parse(licRows[0].data);
+        let licenseData = decryptLicense(dbLicense);
+        
+        if (!licenseData) {
+            return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware', machineId: MACHINE_ID });
         }
         
-        const crypto = require('crypto');
+        const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
+        let currentCompanyName = '';
+        if (compRows.length > 0) {
+            const compData = JSON.parse(compRows[0].data);
+            currentCompanyName = (compData.name || '').trim();
+        }
+        if (licenseData.company && licenseData.company !== currentCompanyName) {
+            return res.status(403).json({ error: 'Company Mismatch', reason: 'company', machineId: MACHINE_ID });
+        }
+
+        if (new Date(licenseData.expires) < new Date()) {
+            console.log('[License] License expired locally. Attempting auto-renewal sync...');
+            await verifyRemoteLicense(licenseData);
+            
+            const updatedRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+            if (updatedRows.length > 0) {
+                 const newDbLicense = JSON.parse(updatedRows[0].data);
+                 const newLicenseData = decryptLicense(newDbLicense);
+                 if (!newLicenseData || new Date(newLicenseData.expires) < new Date()) {
+                     return res.status(402).json({ error: 'License Expired', reason: 'expired', machineId: MACHINE_ID });
+                 }
+                 licenseData = newLicenseData;
+            } else {
+                 return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
+            }
+        }
+
+        const { username, password } = req.body;
+        const rows = await runQuery("SELECT data FROM docs WHERE collection = 'users'");
+        const users = rows.map(r => JSON.parse(r.data));
+        const found = users.find(u => u.username === username && verifyPassword(password, u.password));
+        
+        if (!found) {
+            return res.status(401).json({ error: 'Invalid username or password' });
+        }
+        
+        // Migrate plain-text password to hashed on successful login
+        if (found.password && !found.password.includes(':')) {
+            found.password = hashPassword(password);
+            await runExec("UPDATE docs SET data = ? WHERE id = ? AND collection = 'users'", [JSON.stringify(found), found._id]);
+        }
+        
         const token = crypto.randomBytes(32).toString('hex');
         
         // Remove password before sending/storing session
@@ -160,6 +259,10 @@ app.post('/api/auth/login', async (req, res) => {
         delete safeUser.password;
         
         activeSessions.set(token, safeUser);
+        
+        // Persist session to DB (survives server restart)
+        const sessionDoc = { token, user: safeUser, createdAt: Date.now(), expiresAt: Date.now() + (8 * 60 * 60 * 1000) };
+        runExec("INSERT OR REPLACE INTO docs (id, collection, data) VALUES (?, ?, ?)", [token, 'sessions', JSON.stringify(sessionDoc)]).catch(() => {});
 
         // Silently verify remote license status in the background
         verifyRemoteLicense(licenseData).catch(e => console.error('[License Check]', e.message));
@@ -177,21 +280,14 @@ async function verifyRemoteLicense(licenseData) {
         const result = await httpsGet(url);
         if (result.status === 200) {
             const issues = JSON.parse(result.body);
-            
-            // Find all issues related to our license key
             const keyIssues = issues.filter(issue => issue.body && issue.body.includes(`**License Key:** ${licenseData.key}`));
-            
             if (keyIssues.length > 0) {
-                // Find if any of these issues is active AND belongs to our machine
                 const ourActiveIssue = keyIssues.find(issue => issue.state === 'open' && issue.body.includes(`**Machine ID:** ${MACHINE_ID}`));
-                
                 if (!ourActiveIssue) {
-                    // The license was closed, unlocked, or transferred to another machine
                     console.log(`[License] Remote license deactivated or transferred for ${licenseData.key}. Erasing local license.`);
                     await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
                     return false;
                 } else {
-                    // We have an active issue. Check if it was renewed.
                     const expiresMatch = ourActiveIssue.body.match(/\*\*Expires:\*\* (.*)/);
                     const planMatch = ourActiveIssue.body.match(/\*\*Plan:\*\* (.*)/);
                     if (expiresMatch) {
@@ -232,12 +328,15 @@ app.post('/api/auth/change-password', async (req, res) => {
         const rows = await runQuery("SELECT data FROM docs WHERE id = ? AND collection = 'users'", [user._id]);
         if (rows.length === 0) return res.status(404).json({ error: 'User not found' });
         const userDoc = JSON.parse(rows[0].data);
-        if (userDoc.password !== currentPassword) {
+        if (!verifyPassword(currentPassword, userDoc.password)) {
             return res.status(401).json({ error: 'Incorrect current password' });
         }
-        userDoc.password = newPassword;
+        userDoc.password = hashPassword(newPassword);
+        userDoc.mustChangePassword = false;
         userDoc._updated = new Date().toISOString();
         await runExec("UPDATE docs SET data = ? WHERE id = ? AND collection = 'users'", [JSON.stringify(userDoc), user._id]);
+        const updatedSessionUser = { ...user, mustChangePassword: false };
+        activeSessions.set(token, updatedSessionUser);
         res.json({ success: true });
     } catch (err) {
         console.error('Change password error:', err);
@@ -504,7 +603,8 @@ app.post('/api/upload', (req, res) => {
         
         const safeName = Date.now() + '_' + filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         fs.writeFileSync(path.join(staffFolder, safeName), buffer);
-        res.json({ url: '/uploads/' + encodeURIComponent(safeStaffName) + '/' + safeName });
+        const filepath = '/uploads/' + encodeURIComponent(safeStaffName) + '/' + safeName;
+        res.json({ success: true, filepath: filepath, url: filepath });
     } catch (err) {
         console.error('Upload Error:', err);
         res.status(500).json({ error: 'Upload failed' });
@@ -524,6 +624,7 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
             PRIMARY KEY (id, collection)
         )`, () => {
             if (typeof setupAutoBackup === 'function') setupAutoBackup();
+            loadPersistedSessions().catch(e => console.error('[Sessions] Load error:', e));
             
             // Install Telemetry
             db.all("SELECT id FROM docs WHERE id = 'install_reported' AND collection = 'settings'", [], (err, rows) => {
@@ -635,7 +736,8 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
                         _created: new Date().toISOString(),
                         name: 'Administrator',
                         username: 'admin',
-                        password: 'admin123',
+                        password: hashPassword('admin123'),
+                        mustChangePassword: true,
                         role: 'admin'
                     };
                     db.run("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", [adminDoc._id, 'users', JSON.stringify(adminDoc)]);
@@ -761,6 +863,9 @@ app.delete('/api/:collection', async (req, res) => {
 // API: Drop collection
 app.post('/api/drop/:collection', async (req, res) => {
     try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden: Admin access required' });
+        }
         const collection = req.params.collection;
         await runExec('DELETE FROM docs WHERE collection = ?', [collection]);
         res.json({ success: true });
