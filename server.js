@@ -190,56 +190,6 @@ app.post('/api/auth/login', async (req, res) => {
         const { username, password } = req.body;
         const rows = await runQuery("SELECT data FROM docs WHERE collection = 'users'");
         const users = rows.map(r => JSON.parse(r.data));
-        const found = users.find(u => u.username === username && u.password === password);
-        
-        if (!found) {
-            return res.status(401).json({ error: 'Invalid username or password' });
-}
-
-app.post('/api/auth/login', async (req, res) => {
-    try {
-        // Hardware License Lock Check
-        const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
-        if (licRows.length === 0) {
-            return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
-        }
-        const dbLicense = JSON.parse(licRows[0].data);
-        let licenseData = decryptLicense(dbLicense);
-        
-        if (!licenseData) {
-            return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware', machineId: MACHINE_ID });
-        }
-        
-        const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
-        let currentCompanyName = '';
-        if (compRows.length > 0) {
-            const compData = JSON.parse(compRows[0].data);
-            currentCompanyName = (compData.name || '').trim();
-        }
-        if (licenseData.company && licenseData.company !== currentCompanyName) {
-            return res.status(403).json({ error: 'Company Mismatch', reason: 'company', machineId: MACHINE_ID });
-        }
-
-        if (new Date(licenseData.expires) < new Date()) {
-            console.log('[License] License expired locally. Attempting auto-renewal sync...');
-            await verifyRemoteLicense(licenseData);
-            
-            const updatedRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
-            if (updatedRows.length > 0) {
-                 const newDbLicense = JSON.parse(updatedRows[0].data);
-                 const newLicenseData = decryptLicense(newDbLicense);
-                 if (!newLicenseData || new Date(newLicenseData.expires) < new Date()) {
-                     return res.status(402).json({ error: 'License Expired', reason: 'expired', machineId: MACHINE_ID });
-                 }
-                 licenseData = newLicenseData;
-            } else {
-                 return res.status(402).json({ error: 'License Required', reason: 'missing', machineId: MACHINE_ID });
-            }
-        }
-
-        const { username, password } = req.body;
-        const rows = await runQuery("SELECT data FROM docs WHERE collection = 'users'");
-        const users = rows.map(r => JSON.parse(r.data));
         const found = users.find(u => u.username === username && verifyPassword(password, u.password));
         
         if (!found) {
