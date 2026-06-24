@@ -104,6 +104,9 @@ function renderDocuments() {
     html += '</div>';
 
     document.getElementById('section-documents').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
     if (typeof changeLang === 'function') changeLang();
     
     setTimeout(setupDocDropzone, 50);
@@ -464,6 +467,9 @@ function renderRecruitment() {
     html += '</div>';
 
     document.getElementById('section-recruitment').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
     if (typeof changeLang === 'function') changeLang();
     setTimeout(setupRecruitDropzone, 50);
 }
@@ -714,6 +720,9 @@ function renderKPI() {
     html += '</div>';
 
     document.getElementById('section-kpi').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
     if (typeof changeLang === 'function') changeLang();
     setTimeout(setupKPIDropzone, 50);
 }
@@ -917,13 +926,13 @@ function renderDiscipline() {
     docs.sort((a,b) => b._created - a._created);
 
     var html = '<div style="display:flex;justify-content:space-between;margin-bottom:1rem">';
-    html += '<h3 style="color:var(--navy);font-size:18px">Staff Discipline</h3>';
+    html += '<h3 style="color:var(--navy);font-size:18px"><span data-i18n="lbl_discipline_mgmt">Staff Discipline Management</span></h3>';
     if(role === 'admin' || role === 'manager') {
-        html += '<button class="btn btn-primary" onclick="showIncidentForm()"><i class="ti ti-plus"></i> Log Incident</button>';
+        html += '<button class="btn btn-primary" onclick="showIncidentForm()"><i class="ti ti-plus"></i> <span data-i18n="btn_log_discipline">Log Disciplinary Action</span></button>';
     }
     html += '</div>';
 
-    html += '<table class="table"><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="th_type">Type</span></th><th>Severity</th><th><span data-i18n="th_date">Date</span></th><th><span data-i18n="th_status">Status</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
+    html += '<table class="table"><thead><tr><th><span data-i18n="th_staff_name">Staff Name</span></th><th><span data-i18n="th_type">Type</span></th><th><span data-i18n="th_severity">Severity</span></th><th><span data-i18n="th_date">Date</span></th><th><span data-i18n="th_status">Status</span></th><th><span data-i18n="th_action">Action</span></th></tr></thead><tbody>';
     if(docs.length === 0) {
         html += '<tr><td colspan="6" style="text-align:center;color:#888"><span data-i18n="msg_no_discipline">No disciplinary records found.</span></td></tr>';
     } else {
@@ -939,13 +948,13 @@ function renderDiscipline() {
             
             html += '<td>';
             if (d.status === 'Pending Explanation' && role === 'staff') {
-                html += '<button class="btn btn-primary btn-sm" onclick="showExplanationForm(\''+d._id+'\')">Add Explanation</button>';
+                html += '<button class="btn btn-primary btn-sm" onclick="showExplanationForm(\''+d._id+'\')"><span data-i18n="btn_add_explanation">Add Explanation</span></button>';
             } else if (d.status === 'Under Review' && (role === 'admin' || role === 'manager')) {
-                html += '<button class="btn btn-gold btn-sm" onclick="showFinalizeForm(\''+d._id+'\')">Feedback / Finalize</button>';
+                html += '<button class="btn btn-gold btn-sm" onclick="showFinalizeForm(\''+d._id+'\')"><span data-i18n="btn_feedback_finalize">Feedback / Finalize</span></button>';
             } else if (d.status === 'Finalized') {
-                html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')">View Record</button>';
+                html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')"><span data-i18n="btn_view_record">View Record</span></button>';
             } else if (role === 'admin' || role === 'manager') {
-                html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')">View</button>';
+                html += '<button class="btn btn-outline btn-sm" onclick="viewDisciplineRecord(\''+d._id+'\')"><span data-i18n="btn_view">View</span></button>';
             }
             if(role === 'admin') {
                 html += ' <button class="btn btn-danger btn-sm" style="margin-left:4px" onclick="deleteDiscipline(\''+d._id+'\')"><i class="ti ti-trash"></i></button>';
@@ -999,6 +1008,9 @@ function renderDiscipline() {
     html += '</div>';
 
     document.getElementById('section-discipline').innerHTML = html;
+
+
+    if (typeof changeLang === 'function') changeLang();
     if (typeof changeLang === 'function') changeLang();
     setTimeout(setupDiscDropzone, 50);
 }
