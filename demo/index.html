@@ -1171,6 +1171,11 @@ document.addEventListener('DOMContentLoaded', function() {
           return new Response(JSON.stringify({ count: 0 }), {status: 200});
         }
         if (url.startsWith('/api/')) {
+          if (!options || !options.method || options.method.toUpperCase() === 'GET') {
+            var col = url.split('/')[2];
+            var data = (window.DB && DB.raw) ? DB.raw(col) : [];
+            return new Response(JSON.stringify(data), {status: 200});
+          }
           return new Response(JSON.stringify({ success: true, ok: true }), {status: 200});
         }
       }
