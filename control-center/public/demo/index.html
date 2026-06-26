@@ -103,7 +103,11 @@ tr:hover td{background:#fafafa}
   #page-login,#db-indicator,#page-main,.db-indicator{display:none!important}
   #print-overlay{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
   #print-overlay>div{width:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;padding:0.6cm 0.8cm!important;border:none!important;overflow:visible!important}
-  .btn{display:none!important}
+  #invoice-print-overlay{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
+  #invoice-print-overlay>div{width:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;padding:0.5cm 0.8cm!important;border:none!important;overflow:visible!important}
+  #receipt-print-overlay{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
+  #receipt-print-overlay>div{width:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;padding:0.5cm 0.8cm!important;border:none!important;overflow:visible!important}
+  .btn,.no-print-btn{display:none!important}
   * {-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   /* Scale everything down to fit one page */
   #print-overlay>div{font-size:11px!important}
@@ -562,6 +566,97 @@ tr:hover td{background:#fafafa}
     </div>
   </div>
 </div>
+</div>
+
+<!-- Invoice Print Overlay -->
+<div id="invoice-print-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto">
+  <div style="background:#fff;width:820px;max-width:100%;border-radius:12px;padding:40px;color:#111;font-family:'Segoe UI',Arial,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.4);margin:auto">
+    <!-- Invoice Header -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0a0a0a;padding-bottom:24px;margin-bottom:28px">
+      <div>
+        <img src="logo.png" id="inv-print-logo" alt="" style="height:52px;margin-bottom:8px;display:block">
+        <div id="inv-print-company" style="font-size:18px;font-weight:800;color:#0a0a0a"></div>
+        <div id="inv-print-address" style="font-size:12px;color:#666;margin-top:3px"></div>
+        <div id="inv-print-phone" style="font-size:12px;color:#666"></div>
+        <div id="inv-print-email" style="font-size:12px;color:#666"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:36px;font-weight:900;text-transform:uppercase;letter-spacing:3px;color:#0a0a0a">Invoice</div>
+        <div id="inv-print-num" style="font-size:14px;font-family:monospace;color:#555;margin-top:6px"></div>
+        <div id="inv-print-status" style="margin-top:10px"></div>
+      </div>
+    </div>
+    <!-- Bill To / Details -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:24px;margin-bottom:28px">
+      <div>
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:1px;margin-bottom:8px">Bill To</div>
+        <div id="inv-print-client" style="font-size:15px;font-weight:700;color:#1a1a1a"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:1px;margin-bottom:8px">Details</div>
+        <div id="inv-print-dates" style="font-size:13px;line-height:1.8;color:#333"></div>
+      </div>
+    </div>
+    <!-- Line Items Table -->
+    <table style="width:100%;border-collapse:collapse;margin-bottom:4px">
+      <thead>
+        <tr style="background:#0a0a0a">
+          <th style="padding:11px 13px;color:#fff;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Description</th>
+          <th style="padding:11px 13px;color:#fff;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;width:60px">Qty</th>
+          <th style="padding:11px 13px;color:#fff;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;width:130px">Unit Price</th>
+          <th style="padding:11px 13px;color:#fff;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;width:130px">Amount (VUV)</th>
+        </tr>
+      </thead>
+      <tbody id="inv-print-lines"></tbody>
+      <tfoot>
+        <tr style="background:#0a0a0a">
+          <td colspan="3" style="padding:13px;text-align:right;color:#fff;font-weight:700;font-size:13px">TOTAL DUE (VUV)</td>
+          <td id="inv-print-total" style="padding:13px;text-align:right;color:#fff;font-weight:900;font-size:18px"></td>
+        </tr>
+      </tfoot>
+    </table>
+    <!-- Notes -->
+    <div id="inv-print-notes-wrap" style="display:none;background:#f8f9fb;border-left:4px solid #10b981;border-radius:0 8px 8px 0;padding:13px;font-size:12px;color:#444;margin-top:20px;line-height:1.7">
+      <strong>Notes / Payment Terms:</strong><br><span id="inv-print-notes"></span>
+    </div>
+    <!-- Footer -->
+    <div style="margin-top:28px;border-top:1px solid #eee;padding-top:16px;display:flex;justify-content:space-between;font-size:11px;color:#999">
+      <span>Thank you for your business!</span>
+      <span id="inv-print-footer"></span>
+    </div>
+    <!-- Action buttons (hidden on print) -->
+    <div class="no-print-btn" style="display:flex;gap:10px;margin-top:20px;justify-content:center;padding-top:16px;border-top:1px solid #eee">
+      <button onclick="document.getElementById('invoice-print-overlay').style.display='none'" style="padding:10px 22px;background:#f0f0f0;border:none;border-radius:7px;cursor:pointer;font-weight:600;font-size:13px">✕ Close</button>
+      <button onclick="window.print()" style="padding:10px 22px;background:#0a0a0a;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-size:13px">🖨️ Print / Save PDF</button>
+    </div>
+  </div>
+</div>
+
+<!-- Receipt Print Overlay -->
+<div id="receipt-print-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:1000;align-items:center;justify-content:center;padding:20px">
+  <div style="background:#fff;width:500px;max-width:100%;border-radius:12px;padding:40px;color:#111;font-family:'Segoe UI',Arial,sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.4)">
+    <!-- Receipt Header -->
+    <div style="text-align:center;border-bottom:2px solid #0a0a0a;margin-bottom:24px;padding-bottom:20px">
+      <img src="logo.png" alt="" style="height:50px;margin-bottom:8px;display:block;margin-left:auto;margin-right:auto">
+      <div id="rcpt-print-company" style="font-size:18px;font-weight:800"></div>
+      <div id="rcpt-print-address" style="font-size:12px;color:#888;margin-top:3px"></div>
+    </div>
+    <div style="font-size:22px;font-weight:900;text-align:center;text-transform:uppercase;letter-spacing:2px;background:#f8f8f8;padding:12px;border-radius:8px;margin-bottom:20px">Payment Receipt</div>
+    <div id="rcpt-print-rows" style="margin-bottom:20px"></div>
+    <div style="background:#0a0a0a;color:#fff;border-radius:10px;padding:16px 20px;display:flex;justify-content:space-between;align-items:center;margin-bottom:20px">
+      <div style="font-size:12px;font-weight:700;opacity:.85">AMOUNT RECEIVED (VUV)</div>
+      <div id="rcpt-print-amount" style="font-size:24px;font-weight:900"></div>
+    </div>
+    <div style="text-align:center;margin-bottom:20px">
+      <span style="display:inline-block;background:#dcfce7;color:#166534;padding:9px 32px;border-radius:30px;font-size:20px;font-weight:900;letter-spacing:2px;border:3px solid #16a34a">✓ PAID IN FULL</span>
+    </div>
+    <div id="rcpt-print-footer" style="text-align:center;font-size:11px;color:#bbb;line-height:1.8"></div>
+    <!-- Action buttons (hidden on print) -->
+    <div class="no-print-btn" style="display:flex;gap:10px;margin-top:20px;justify-content:center;padding-top:16px;border-top:1px solid #eee">
+      <button onclick="document.getElementById('receipt-print-overlay').style.display='none'" style="padding:10px 22px;background:#f0f0f0;border:none;border-radius:7px;cursor:pointer;font-weight:600;font-size:13px">✕ Close</button>
+      <button onclick="window.print()" style="padding:10px 22px;background:#0a0a0a;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:700;font-size:13px">🖨️ Print Receipt</button>
+    </div>
+  </div>
 </div>
 
 <script>
