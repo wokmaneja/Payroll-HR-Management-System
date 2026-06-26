@@ -944,7 +944,7 @@ function postPayrollGL(p) {
 
 async function renderFinanceContacts() {
     var c = document.getElementById('section-finance-contacts');
-    c.innerHTML = '<div style="padding:20px"><h2 style="margin:0 0 15px 0">Contacts (Clients & Vendors)</h2><div style="background:#fff;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:20px"><h3 style="margin-top:0">Add New Contact</h3><input type="text" id="contact-name" placeholder="Company/Individual Name" style="padding:8px;width:200px;margin-right:10px"><select id="contact-type" style="padding:8px;margin-right:10px"><option value="Client">Client</option><option value="Vendor">Vendor</option><option value="Both">Both</option></select><input type="email" id="contact-email" placeholder="Email (Optional)" style="padding:8px;width:200px;margin-right:10px"><button onclick="saveContact()" class="btn-primary" style="padding:8px 15px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer">Save Contact</button></div><div id="contacts-list"></div></div>';
+    c.innerHTML = '<div style="padding:20px"><p class="section-title"><i class="ti ti-address-book" style="color:var(--gold)"></i> <span>Contacts (Clients & Vendors)</span></p><div style="background:#fff;padding:20px;border-radius:10px;box-shadow:0 1px 6px rgba(0,0,0,0.08);margin-bottom:20px"><h3 style="margin:0 0 1rem 0;font-size:15px">Add New Contact</h3><div style="display:flex;gap:10px;flex-wrap:wrap"><input type="text" id="contact-name" placeholder="Company / Individual Name" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;flex:2;min-width:160px"><select id="contact-type" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px"><option value="Client">Client</option><option value="Vendor">Vendor</option><option value="Both">Both</option></select><input type="email" id="contact-email" placeholder="Email (Optional)" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;flex:2;min-width:160px"><input type="text" id="contact-phone" placeholder="Phone (Optional)" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;width:140px"><input type="text" id="contact-address" placeholder="Address (Optional)" style="padding:8px 12px;border:1px solid #ddd;border-radius:7px;font-size:13px;flex:2;min-width:160px"><button onclick="saveContact()" style="padding:8px 18px;background:#0a0a0a;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:600;font-size:13px">+ Save Contact</button></div></div><div id="contacts-list"></div></div>';
     await refreshContactsList();
 }
 
@@ -952,89 +952,496 @@ async function saveContact() {
     var name = document.getElementById('contact-name').value.trim();
     var type = document.getElementById('contact-type').value;
     var email = document.getElementById('contact-email').value.trim();
+    var phone = document.getElementById('contact-phone').value.trim();
+    var address = document.getElementById('contact-address').value.trim();
     if(!name) return alert('Name is required');
-    await fetch('/api/finance_contacts', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name, type, email, created_at: new Date().toISOString()}) });
+    await fetch('/api/finance_contacts', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({name, type, email, phone, address, created_at: new Date().toISOString()}) });
     renderFinanceContacts();
 }
 
 async function refreshContactsList() {
     var res = await fetch('/api/finance_contacts');
     var contacts = await res.json();
-    var html = '<table style="width:100%;border-collapse:collapse;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);border-radius:8px;overflow:hidden"><thead><tr style="background:#f4f4f4;text-align:left"><th style="padding:10px">Name</th><th style="padding:10px">Type</th><th style="padding:10px">Email</th></tr></thead><tbody>';
+    var html = '<table style="width:100%;border-collapse:collapse;background:#fff;box-shadow:0 1px 6px rgba(0,0,0,0.08);border-radius:10px;overflow:hidden"><thead><tr style="background:#f8f8f8"><th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Name</th><th style="padding:11px 14px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Type</th><th style="padding:11px 14px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Email</th><th style="padding:11px 14px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Phone</th><th style="padding:11px 14px;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Address</th><th style="padding:11px 14px"></th></tr></thead><tbody>';
     contacts.forEach(c => {
-        html += `<tr style="border-top:1px solid #eee"><td style="padding:10px">${c.name}</td><td style="padding:10px"><span style="background:#eef;color:#338;padding:2px 8px;border-radius:10px;font-size:12px">${c.type}</span></td><td style="padding:10px">${c.email||'-'}</td><td style="padding:10px;text-align:right"><button onclick="deleteContact('${c._id}')" style="background:transparent;border:none;color:#ef4444;cursor:pointer"><i class="ti ti-trash"></i></button></td></tr>`;
+        html += `<tr style="border-top:1px solid #f0f0f0"><td style="padding:11px 14px;font-weight:600">${c.name}</td><td style="padding:11px 14px"><span style="background:#eef;color:#338;padding:2px 9px;border-radius:10px;font-size:11px;font-weight:700">${c.type}</span></td><td style="padding:11px 14px;font-size:13px">${c.email||'-'}</td><td style="padding:11px 14px;font-size:13px">${c.phone||'-'}</td><td style="padding:11px 14px;font-size:13px">${c.address||'-'}</td><td style="padding:11px 14px;text-align:right"><button onclick="deleteContact('${c._id}')" style="background:transparent;border:none;color:#ef4444;cursor:pointer"><i class="ti ti-trash"></i></button></td></tr>`;
     });
     html += '</tbody></table>';
     document.getElementById('contacts-list').innerHTML = html;
 }
 
+// ==========================================
+// INVOICES (Accounts Receivable)
+// ==========================================
+
 async function renderFinanceInvoices() {
     var c = document.getElementById('section-finance-invoices');
-    var res = await fetch('/api/finance_contacts');
-    var contacts = await res.json();
+    var [cRes, accRes] = await Promise.all([fetch('/api/finance_contacts'), fetch('/api/finance_accounts')]);
+    var contacts = await cRes.json();
+    var accounts = await accRes.json();
     var clientOptions = contacts.filter(x => x.type === 'Client' || x.type === 'Both').map(x => `<option value="${x.name}">${x.name}</option>`).join('');
-    
-    c.innerHTML = `<div style="padding:20px"><h2 style="margin:0 0 15px 0">Invoices (Accounts Receivable)</h2><div style="background:#fff;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:20px"><h3 style="margin-top:0">Create New Invoice</h3><div style="display:flex;gap:10px;margin-bottom:10px"><select id="inv-client" style="padding:8px;width:200px"><option value="">-- Select Client --</option>${clientOptions}</select><input type="text" id="inv-desc" placeholder="Description/Services" style="padding:8px;flex:1"><input type="number" id="inv-amount" placeholder="Amount" style="padding:8px;width:120px"><input type="date" id="inv-due" style="padding:8px;width:150px"></div><button onclick="saveInvoice()" class="btn-primary" style="padding:8px 15px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer">Generate Invoice</button></div><div id="invoices-list"></div></div>`;
+    var revenueOptions = accounts.filter(x => x.type === 'Revenue' || x.type === 'Income').map(x => `<option value="${x.name}">${x.name}</option>`).join('');
+
+    c.innerHTML = `
+    <div style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+            <div>
+                <p class="section-title"><i class="ti ti-file-invoice" style="color:var(--gold)"></i> <span>Invoices (Accounts Receivable)</span></p>
+                <p style="font-size:13px;color:var(--text2);margin:0">Create, manage and print professional invoices</p>
+            </div>
+            <button onclick="openInvoiceModal()" style="display:flex;align-items:center;gap:7px;padding:10px 18px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">
+                <i class="ti ti-plus"></i> New Invoice
+            </button>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">
+            <input type="text" id="inv-search" placeholder="Search invoices..." oninput="filterInvoices()" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;width:220px">
+            <select id="inv-filter-status" onchange="filterInvoices()" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px">
+                <option value="">All Statuses</option>
+                <option value="Draft">Draft</option>
+                <option value="Sent">Sent</option>
+                <option value="Paid">Paid</option>
+                <option value="Overdue">Overdue</option>
+            </select>
+            <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap" id="inv-summary-pills"></div>
+        </div>
+        <div id="invoices-list"></div>
+    </div>
+    <div id="modal-invoice" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 15px">
+        <div style="background:#fff;border-radius:14px;width:100%;max-width:800px;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,0.25);margin:auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+                <h2 style="margin:0;font-size:20px;font-weight:800">Create Invoice</h2>
+                <button onclick="document.getElementById('modal-invoice').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#888">&times;</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem">
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Client *</label>
+                    <select id="inv-client" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px"><option value="">-- Select Client --</option>${clientOptions}</select>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Revenue Account</label>
+                    <select id="inv-revenue-acct" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px"><option value="Sales Revenue">Sales Revenue</option>${revenueOptions}</select>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Invoice Date *</label>
+                    <input type="date" id="inv-date" value="${new Date().toISOString().split('T')[0]}" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Due Date *</label>
+                    <input type="date" id="inv-due" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                </div>
+                <div style="grid-column:1/-1">
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Notes / Payment Terms</label>
+                    <textarea id="inv-notes" placeholder="e.g. Payment due within 30 days. Bank: BSP Account 1234567..." rows="2" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea>
+                </div>
+            </div>
+            <div style="margin-bottom:1.2rem">
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+                    <label style="font-size:11px;font-weight:700;text-transform:uppercase;color:#888">Line Items *</label>
+                    <button onclick="addInvoiceLineItem()" style="font-size:12px;padding:5px 12px;background:#f0f0f0;border:none;border-radius:6px;cursor:pointer;font-weight:600"><i class="ti ti-plus"></i> Add Row</button>
+                </div>
+                <table style="width:100%;border-collapse:collapse;font-size:13px">
+                    <thead><tr style="background:#f8f8f8">
+                        <th style="padding:9px 10px;text-align:left;font-weight:700;font-size:11px;color:#888;text-transform:uppercase">Description</th>
+                        <th style="padding:9px 10px;text-align:right;width:70px;font-weight:700;font-size:11px;color:#888;text-transform:uppercase">Qty</th>
+                        <th style="padding:9px 10px;text-align:right;width:130px;font-weight:700;font-size:11px;color:#888;text-transform:uppercase">Unit Price</th>
+                        <th style="padding:9px 10px;text-align:right;width:130px;font-weight:700;font-size:11px;color:#888;text-transform:uppercase">Total</th>
+                        <th style="width:36px"></th>
+                    </tr></thead>
+                    <tbody id="inv-line-items"></tbody>
+                    <tfoot><tr style="border-top:2px solid #eee">
+                        <td colspan="3" style="padding:10px;text-align:right;font-weight:700;font-size:13px">TOTAL (VUV)</td>
+                        <td style="padding:10px;text-align:right;font-weight:900;font-size:18px;color:#0a0a0a" id="inv-total-display">0.00</td>
+                        <td></td>
+                    </tr></tfoot>
+                </table>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap">
+                <button onclick="document.getElementById('modal-invoice').style.display='none'" style="padding:10px 20px;background:#f0f0f0;border:none;border-radius:7px;cursor:pointer;font-weight:600">Cancel</button>
+                <button onclick="saveInvoice('Draft')" style="padding:10px 20px;background:#f59e0b;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:600">Save as Draft</button>
+                <button onclick="saveInvoice('Sent')" style="padding:10px 20px;background:#0a0a0a;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:600">Generate Invoice</button>
+            </div>
+        </div>
+    </div>`;
+
+    addInvoiceLineItem();
     await refreshInvoicesList();
 }
 
-async function saveInvoice() {
+function openInvoiceModal() {
+    document.getElementById('modal-invoice').style.display = 'flex';
+    document.getElementById('inv-line-items').innerHTML = '';
+    document.getElementById('inv-notes').value = '';
+    document.getElementById('inv-total-display').textContent = '0.00';
+    addInvoiceLineItem();
+}
+
+function addInvoiceLineItem(data) {
+    var tbody = document.getElementById('inv-line-items');
+    var row = document.createElement('tr');
+    row.innerHTML = `<td style="padding:5px"><input type="text" placeholder="Description of service or item" value="${data ? data.desc : ''}" class="inv-li-desc" oninput="recalcInvoiceTotal()" style="width:100%;padding:7px 9px;border:1px solid #eee;border-radius:5px;font-size:13px"></td>
+        <td style="padding:5px"><input type="number" value="${data ? data.qty : 1}" min="0" class="inv-li-qty" oninput="recalcInvoiceTotal()" style="width:65px;padding:7px;border:1px solid #eee;border-radius:5px;font-size:13px;text-align:right"></td>
+        <td style="padding:5px"><input type="number" value="${data ? data.price : ''}" min="0" placeholder="0.00" class="inv-li-price" oninput="recalcInvoiceTotal()" style="width:120px;padding:7px;border:1px solid #eee;border-radius:5px;font-size:13px;text-align:right"></td>
+        <td style="padding:5px;text-align:right;font-weight:600;color:#0a0a0a" class="inv-li-total">0.00</td>
+        <td style="padding:5px;text-align:center"><button onclick="this.closest('tr').remove();recalcInvoiceTotal()" style="background:none;border:none;color:#ef4444;cursor:pointer;font-size:18px;line-height:1">&times;</button></td>`;
+    tbody.appendChild(row);
+    recalcInvoiceTotal();
+}
+
+function recalcInvoiceTotal() {
+    var rows = document.querySelectorAll('#inv-line-items tr');
+    var total = 0;
+    rows.forEach(r => {
+        var qty = parseFloat(r.querySelector('.inv-li-qty').value) || 0;
+        var price = parseFloat(r.querySelector('.inv-li-price').value) || 0;
+        var lineTotal = qty * price;
+        r.querySelector('.inv-li-total').textContent = lineTotal.toLocaleString(undefined, {minimumFractionDigits:2});
+        total += lineTotal;
+    });
+    var el = document.getElementById('inv-total-display');
+    if(el) el.textContent = total.toLocaleString(undefined, {minimumFractionDigits:2});
+}
+
+async function saveInvoice(status) {
     var client = document.getElementById('inv-client').value;
-    var desc = document.getElementById('inv-desc').value.trim();
-    var amount = parseFloat(document.getElementById('inv-amount').value);
+    var date = document.getElementById('inv-date').value;
     var due = document.getElementById('inv-due').value;
-    if(!client || !desc || isNaN(amount) || !due) return alert('Fill all fields');
-    
-    var invNum = 'INV-' + Date.now().toString().slice(-6);
-    var doc = { num: invNum, client, desc, amount, due, status: 'Sent', date: new Date().toISOString().split('T')[0] };
+    var notes = document.getElementById('inv-notes').value.trim();
+    var revenueAcct = document.getElementById('inv-revenue-acct').value || 'Sales Revenue';
+    if(!client) return alert('Please select a client');
+    if(!date || !due) return alert('Please fill in invoice and due dates');
+    var lineItems = [];
+    document.querySelectorAll('#inv-line-items tr').forEach(r => {
+        var desc = r.querySelector('.inv-li-desc').value.trim();
+        var qty = parseFloat(r.querySelector('.inv-li-qty').value) || 0;
+        var price = parseFloat(r.querySelector('.inv-li-price').value) || 0;
+        if(desc && qty > 0 && price > 0) lineItems.push({ desc, qty, price, total: qty * price });
+    });
+    if(lineItems.length === 0) return alert('Please add at least one line item');
+    var amount = lineItems.reduce((s, l) => s + l.total, 0);
+    var yr = new Date().getFullYear();
+    var invNum = 'INV-' + yr + '-' + String(Date.now()).slice(-5);
+    var doc = { num: invNum, client, date, due, notes, lineItems, amount, revenueAcct, status };
     await fetch('/api/finance_invoices', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(doc) });
-    
-    // Auto-post to GL (AR increases, Revenue increases)
-    await postJournalEntry('Invoice ' + invNum + ' to ' + client, doc.date, [
-        { accountName: 'Accounts Receivable', debit: amount },
-        { accountName: 'Sales Revenue', credit: amount }
-    ]);
-    renderFinanceInvoices();
+    if(status === 'Sent') {
+        await postJournalEntry('Invoice ' + invNum + ' to ' + client, date, [
+            { accountName: 'Accounts Receivable', debit: amount },
+            { accountName: revenueAcct, credit: amount }
+        ]);
+    }
+    document.getElementById('modal-invoice').style.display = 'none';
+    await refreshInvoicesList();
 }
 
 async function refreshInvoicesList() {
     var res = await fetch('/api/finance_invoices');
     var invoices = await res.json();
-    var html = '<table style="width:100%;border-collapse:collapse;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);border-radius:8px;overflow:hidden"><thead><tr style="background:#f4f4f4;text-align:left"><th style="padding:10px">Invoice #</th><th style="padding:10px">Client</th><th style="padding:10px">Description</th><th style="padding:10px">Amount</th><th style="padding:10px">Due Date</th><th style="padding:10px">Status</th><th style="padding:10px">Action</th></tr></thead><tbody>';
-    invoices.forEach(i => {
-        var s = i.status;
-        var badge = s === 'Paid' ? '<span style="color:#2a2;background:#eef6ee;padding:2px 6px;border-radius:4px;font-size:12px">Paid</span>' : '<span style="color:#d90;background:#fef5e6;padding:2px 6px;border-radius:4px;font-size:12px">Sent</span>';
-        var action = s === 'Sent' ? `<button onclick="markInvoicePaid('${i.id}', '${i.num}', '${i.client}', ${i.amount})" style="padding:4px 8px;background:#2a2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Mark Paid</button>` : '';
-        html += `<tr style="border-top:1px solid #eee"><td style="padding:10px">${i.num}</td><td style="padding:10px">${i.client}</td><td style="padding:10px">${i.desc}</td><td style="padding:10px">${i.amount.toLocaleString()}</td><td style="padding:10px">${i.due}</td><td style="padding:10px">${badge}</td><td style="padding:10px">${action}</td></tr>`;
+    var today = new Date(); today.setHours(0,0,0,0);
+    invoices.forEach(inv => {
+        if(inv.status !== 'Paid' && inv.due) {
+            var d = new Date(inv.due); d.setHours(0,0,0,0);
+            inv._computed = d < today ? 'Overdue' : inv.status;
+        } else { inv._computed = inv.status; }
     });
-    html += '</tbody></table>';
-    document.getElementById('invoices-list').innerHTML = html;
+    var paid = invoices.filter(i => i._computed === 'Paid').length;
+    var overdue = invoices.filter(i => i._computed === 'Overdue').length;
+    var pending = invoices.filter(i => i._computed !== 'Paid' && i._computed !== 'Overdue').length;
+    var totalOut = invoices.filter(i => i._computed !== 'Paid').reduce((s, i) => s + (i.amount||0), 0);
+    var pillsHtml = `<span style="background:#dcfce7;color:#166534;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${paid} Paid</span><span style="background:#fef9c3;color:#92400e;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${pending} Pending</span><span style="background:#fee2e2;color:#991b1b;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${overdue} Overdue</span><span style="background:#f0f0f0;color:#444;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">Outstanding: VUV ${totalOut.toLocaleString()}</span>`;
+    var pillEl = document.getElementById('inv-summary-pills');
+    if(pillEl) pillEl.innerHTML = pillsHtml;
+    window._allInvoices = invoices;
+    renderInvoiceTable(invoices);
+}
+
+function filterInvoices() {
+    var q = (document.getElementById('inv-search').value || '').toLowerCase();
+    var st = (document.getElementById('inv-filter-status').value || '').toLowerCase();
+    var list = (window._allInvoices || []).filter(i => {
+        var matchQ = !q || (i.num||'').toLowerCase().includes(q) || (i.client||'').toLowerCase().includes(q);
+        var matchS = !st || (i._computed||'').toLowerCase() === st;
+        return matchQ && matchS;
+    });
+    renderInvoiceTable(list);
+}
+
+function renderInvoiceTable(invoices) {
+    var statusColors = { Paid:'background:#dcfce7;color:#166534', Sent:'background:#e0f2fe;color:#0369a1', Draft:'background:#f3f4f6;color:#6b7280', Overdue:'background:#fee2e2;color:#991b1b' };
+    var html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.08)">
+        <thead><tr style="background:#f8f8f8">
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Invoice #</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Client</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Date</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Due</th>
+            <th style="padding:11px 14px;text-align:right;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Amount (VUV)</th>
+            <th style="padding:11px 14px;text-align:center;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Status</th>
+            <th style="padding:11px 14px;text-align:right;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Actions</th>
+        </tr></thead><tbody>`;
+    if(invoices.length === 0) html += '<tr><td colspan="7" style="padding:35px;text-align:center;color:#aaa;font-size:14px">No invoices found. Click <strong>New Invoice</strong> to create one.</td></tr>';
+    invoices.forEach(inv => {
+        var s = inv._computed || inv.status;
+        var style = statusColors[s] || statusColors['Sent'];
+        var badge = `<span style="${style};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${s}</span>`;
+        var actions = `<button onclick="printInvoice('${inv._id}')" title="Print/PDF Invoice" style="padding:5px 9px;background:#f0f0f0;border:none;border-radius:6px;cursor:pointer;font-size:12px;margin-right:4px"><i class="ti ti-printer"></i> Print</button>`;
+        if(s !== 'Paid') {
+            actions += `<button onclick="markInvoicePaid('${inv._id}', '${inv.num}', '${inv.client}', ${inv.amount})" title="Mark Paid" style="padding:5px 9px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px"><i class="ti ti-check"></i> Mark Paid</button>`;
+        } else {
+            actions += `<button onclick="printReceipt('${inv._id}')" title="Print Receipt" style="padding:5px 9px;background:#0a0a0a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px"><i class="ti ti-receipt"></i> Receipt</button>`;
+        }
+        html += `<tr style="border-top:1px solid #f0f0f0">
+            <td style="padding:11px 14px;font-weight:700;font-family:monospace;font-size:12px">${inv.num}</td>
+            <td style="padding:11px 14px">${inv.client}</td>
+            <td style="padding:11px 14px;font-size:12px;color:#666">${inv.date||''}</td>
+            <td style="padding:11px 14px;font-size:12px;color:${s==='Overdue'?'#ef4444':'#666'};font-weight:${s==='Overdue'?'700':'400'}">${inv.due||''}</td>
+            <td style="padding:11px 14px;text-align:right;font-weight:700">${(inv.amount||0).toLocaleString()}</td>
+            <td style="padding:11px 14px;text-align:center">${badge}</td>
+            <td style="padding:11px 14px;text-align:right;white-space:nowrap">${actions}</td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    var listEl = document.getElementById('invoices-list');
+    if(listEl) listEl.innerHTML = html;
 }
 
 async function markInvoicePaid(id, num, client, amount) {
-    if(!confirm('Mark Invoice ' + num + ' as paid?')) return;
-    await fetch('/api/finance_invoices/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'Paid', paidDate: new Date().toISOString().split('T')[0] }) });
-    
-    // Auto-post to GL (Cash increases, AR decreases)
-    await postJournalEntry('Payment Received for Invoice ' + num + ' (' + client + ')', new Date().toISOString().split('T')[0], [
+    if(!confirm('Mark Invoice ' + num + ' as PAID? This will post a GL entry and allow receipt printing.')) return;
+    var paidDate = new Date().toISOString().split('T')[0];
+    await fetch('/api/finance_invoices/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'Paid', paidDate }) });
+    await postJournalEntry('Payment Received - Invoice ' + num + ' (' + client + ')', paidDate, [
         { accountName: 'Cash', debit: amount },
         { accountName: 'Accounts Receivable', credit: amount }
     ]);
-    renderFinanceInvoices();
+    await refreshInvoicesList();
 }
+
+async function printInvoice(id) {
+    var res = await fetch('/api/finance_invoices/' + id);
+    var inv = await res.json();
+    var companyRes = await fetch('/api/company_settings');
+    var companyArr = await companyRes.json();
+    var company = Array.isArray(companyArr) ? (companyArr[0]||{}) : (companyArr||{});
+    var cName = company.name || 'WokManeja';
+    var cAddress = company.address || 'Vanuatu';
+    var cPhone = company.phone || '';
+    var cEmail = company.email || '';
+    var lineItemsHtml = '';
+    if(inv.lineItems && inv.lineItems.length > 0) {
+        inv.lineItems.forEach(l => {
+            lineItemsHtml += `<tr><td style="padding:10px 12px;border-bottom:1px solid #f0f0f0">${l.desc}</td><td style="padding:10px 12px;text-align:center;border-bottom:1px solid #f0f0f0">${l.qty}</td><td style="padding:10px 12px;text-align:right;border-bottom:1px solid #f0f0f0">${(l.price||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td><td style="padding:10px 12px;text-align:right;border-bottom:1px solid #f0f0f0;font-weight:700">${(l.total||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr>`;
+        });
+    } else {
+        lineItemsHtml = `<tr><td colspan="4" style="padding:10px 12px">Services rendered</td></tr>`;
+    }
+    var statusBadge = inv.status === 'Paid' ? '<span style="background:#dcfce7;color:#166534;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:700">✓ PAID</span>' : '<span style="background:#fef3c7;color:#92400e;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:700">UNPAID</span>';
+    var win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${inv.num}</title>
+    <style>*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}body{background:#eee;padding:30px}
+    .page{background:#fff;max-width:820px;margin:0 auto;padding:50px;box-shadow:0 4px 20px rgba(0,0,0,.12);border-radius:10px}
+    .hdr{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #0a0a0a;padding-bottom:28px;margin-bottom:35px}
+    .logo{height:55px;margin-bottom:8px}
+    .co h1{font-size:22px;font-weight:800;color:#0a0a0a}.co p{font-size:12px;color:#666;margin-top:2px}
+    .inv-id h2{font-size:34px;font-weight:900;text-transform:uppercase;letter-spacing:3px;color:#0a0a0a;text-align:right}
+    .inv-id .num{font-size:13px;font-family:monospace;color:#555;text-align:right;margin-top:6px}
+    .meta{display:grid;grid-template-columns:1fr 1fr;gap:25px;margin-bottom:32px}
+    .meta-block h4{font-size:10px;font-weight:700;text-transform:uppercase;color:#888;letter-spacing:1px;margin-bottom:8px}
+    .meta-block p{font-size:14px;line-height:1.7;color:#222}
+    table{width:100%;border-collapse:collapse}
+    thead tr{background:#0a0a0a}
+    thead th{padding:12px 14px;color:#fff;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px}
+    .total-row td{background:#0a0a0a;color:#fff;font-weight:800;font-size:18px}
+    .notes{background:#f8f9fb;border-left:4px solid #10b981;border-radius:0 8px 8px 0;padding:14px;font-size:12px;color:#444;margin-top:28px;line-height:1.7}
+    .footer{margin-top:32px;border-top:1px solid #eee;padding-top:18px;display:flex;justify-content:space-between;font-size:11px;color:#999}
+    @media print{body{background:#fff;padding:0}.page{box-shadow:none;border-radius:0;padding:30px}.no-print{display:none}@page{margin:1cm}}
+    </style></head><body>
+    <div class="page">
+        <div class="hdr">
+            <div class="co">
+                <img src="logo.png" class="logo" alt="${cName}" onerror="this.style.display='none'">
+                <h1>${cName}</h1>
+                <p>${cAddress}</p>
+                ${cPhone?'<p>'+cPhone+'</p>':''}
+                ${cEmail?'<p>'+cEmail+'</p>':''}
+            </div>
+            <div class="inv-id">
+                <h2>Invoice</h2>
+                <div class="num">${inv.num}</div>
+                <div style="margin-top:12px">${statusBadge}</div>
+            </div>
+        </div>
+        <div class="meta">
+            <div class="meta-block">
+                <h4>Bill To</h4>
+                <p><strong>${inv.client}</strong></p>
+            </div>
+            <div class="meta-block" style="text-align:right">
+                <h4>Details</h4>
+                <p>Invoice Date: <strong>${inv.date||''}</strong><br>Due Date: <strong>${inv.due||''}</strong>${inv.paidDate?'<br>Paid On: <strong>'+inv.paidDate+'</strong>':''}</p>
+            </div>
+        </div>
+        <table style="margin-bottom:0">
+            <thead><tr><th>Description</th><th style="width:60px;text-align:center">Qty</th><th style="width:140px;text-align:right">Unit Price</th><th style="width:140px;text-align:right">Amount (VUV)</th></tr></thead>
+            <tbody>${lineItemsHtml}</tbody>
+            <tfoot><tr class="total-row"><td colspan="3" style="padding:14px 14px;text-align:right">TOTAL DUE (VUV)</td><td style="padding:14px 14px;text-align:right">${(inv.amount||0).toLocaleString(undefined,{minimumFractionDigits:2})}</td></tr></tfoot>
+        </table>
+        ${inv.notes?'<div class="notes"><strong>Notes / Payment Terms:</strong><br>'+inv.notes+'</div>':''}
+        <div class="footer">
+            <span>Thank you for your business!</span>
+            <span>Generated by WokManeja &bull; ${new Date().toLocaleDateString()}</span>
+        </div>
+    </div>
+    <div class="no-print" style="text-align:center;margin-top:20px">
+        <button onclick="window.print()" style="padding:11px 28px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🖨️ Print / Save as PDF</button>
+    </div></body></html>`);
+    win.document.close();
+}
+
+async function printReceipt(id) {
+    var res = await fetch('/api/finance_invoices/' + id);
+    var inv = await res.json();
+    var companyRes = await fetch('/api/company_settings');
+    var companyArr = await companyRes.json();
+    var company = Array.isArray(companyArr) ? (companyArr[0]||{}) : (companyArr||{});
+    var cName = company.name || 'WokManeja';
+    var cAddress = company.address || 'Vanuatu';
+    var rcptNum = 'RCPT-' + (inv.num||'').replace('INV-', '');
+    var lineDesc = (inv.lineItems && inv.lineItems.length > 0) ? inv.lineItems.map(l => l.desc).join(', ') : 'Services rendered';
+    var win = window.open('', '_blank');
+    win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${rcptNum} - Receipt</title>
+    <style>*{box-sizing:border-box;margin:0;padding:0;font-family:'Segoe UI',Arial,sans-serif}body{background:#eee;padding:40px}
+    .page{background:#fff;max-width:520px;margin:0 auto;padding:45px;box-shadow:0 4px 20px rgba(0,0,0,.12);border-radius:10px}
+    .hdr{text-align:center;border-bottom:2px solid #0a0a0a;margin-bottom:28px;padding-bottom:22px}
+    .hdr img{height:52px;margin-bottom:10px}
+    .hdr h1{font-size:20px;font-weight:800}.hdr p{font-size:12px;color:#888;margin-top:3px}
+    .badge{font-size:24px;font-weight:900;text-align:center;text-transform:uppercase;letter-spacing:2px;background:#f8f8f8;padding:12px;border-radius:8px;margin:18px 0}
+    .row{display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f5f5f5;font-size:13px}
+    .row:last-child{border-bottom:none}
+    .row span:first-child{color:#888;font-weight:600}
+    .row span:last-child{font-weight:700}
+    .amount-box{background:#0a0a0a;color:#fff;border-radius:10px;padding:18px 20px;display:flex;justify-content:space-between;align-items:center;margin:22px 0}
+    .amount-box .lbl{font-size:12px;font-weight:700;opacity:.8}
+    .amount-box .amt{font-size:24px;font-weight:900}
+    .stamp{text-align:center;margin:20px 0}
+    .stamp span{display:inline-block;background:#dcfce7;color:#166534;padding:9px 32px;border-radius:30px;font-size:22px;font-weight:900;letter-spacing:2px;border:3px solid #16a34a}
+    .foot{text-align:center;margin-top:28px;font-size:11px;color:#bbb;line-height:1.8}
+    @media print{body{background:#fff;padding:0}.page{box-shadow:none;border-radius:0;padding:25px}.no-print{display:none}@page{margin:0.5cm}}
+    </style></head><body>
+    <div class="page">
+        <div class="hdr">
+            <img src="logo.png" alt="${cName}" onerror="this.style.display='none'">
+            <h1>${cName}</h1>
+            <p>${cAddress}</p>
+        </div>
+        <div class="badge">Payment Receipt</div>
+        <div style="margin:20px 0">
+            <div class="row"><span>Receipt No.</span><span>${rcptNum}</span></div>
+            <div class="row"><span>Invoice Ref.</span><span>${inv.num}</span></div>
+            <div class="row"><span>Received From</span><span>${inv.client}</span></div>
+            <div class="row"><span>Invoice Date</span><span>${inv.date||''}</span></div>
+            <div class="row"><span>Payment Date</span><span>${inv.paidDate||new Date().toLocaleDateString()}</span></div>
+            <div class="row"><span>Description</span><span style="max-width:240px;text-align:right;word-break:break-word">${lineDesc}</span></div>
+        </div>
+        <div class="amount-box">
+            <div class="lbl">AMOUNT RECEIVED (VUV)</div>
+            <div class="amt">${(inv.amount||0).toLocaleString(undefined,{minimumFractionDigits:2})}</div>
+        </div>
+        <div class="stamp"><span>✓ PAID IN FULL</span></div>
+        <div class="foot">
+            <p>This is your official receipt. Thank you for your payment.</p>
+            <p>Generated by WokManeja &bull; ${new Date().toLocaleString()}</p>
+        </div>
+    </div>
+    <div class="no-print" style="text-align:center;margin-top:20px">
+        <button onclick="window.print()" style="padding:11px 28px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-size:14px;font-weight:700">🖨️ Print Receipt</button>
+    </div></body></html>`);
+    win.document.close();
+}
+
+// ==========================================
+// VENDOR BILLS (Accounts Payable)
+// ==========================================
 
 async function renderFinanceBills() {
     var c = document.getElementById('section-finance-bills');
-    var res = await fetch('/api/finance_contacts');
-    var contacts = await res.json();
+    var [cRes, accRes] = await Promise.all([fetch('/api/finance_contacts'), fetch('/api/finance_accounts')]);
+    var contacts = await cRes.json();
+    var accounts = await accRes.json();
     var vendorOptions = contacts.filter(x => x.type && (x.type.toLowerCase() === 'vendor' || x.type.toLowerCase() === 'both')).map(x => `<option value="${x.name}">${x.name}</option>`).join('');
-    
-    var coaRes = await fetch('/api/finance_accounts');
-    var accounts = await coaRes.json();
     var expOptions = accounts.filter(x => x.type === 'Expense').map(x => `<option value="${x.name}">${x.name}</option>`).join('');
-    
-    c.innerHTML = `<div style="padding:20px"><h2 style="margin:0 0 15px 0">Vendor Bills (Accounts Payable)</h2><div style="background:#fff;padding:20px;border-radius:8px;box-shadow:0 1px 3px rgba(0,0,0,0.1);margin-bottom:20px"><h3 style="margin-top:0">Log New Vendor Bill</h3><div style="display:flex;gap:10px;margin-bottom:10px"><select id="bill-vendor" style="padding:8px;width:200px"><option value="">-- Select Vendor --</option>${vendorOptions}</select><input type="text" id="bill-desc" placeholder="Description" style="padding:8px;flex:1"><select id="bill-expense" style="padding:8px;width:180px"><option value="">-- Expense Account --</option>${expOptions}</select><input type="number" id="bill-amount" placeholder="Amount" style="padding:8px;width:120px"><input type="date" id="bill-due" style="padding:8px;width:150px"><input type="file" id="bill-file" accept="image/*,.pdf" style="padding:8px;width:150px"></div><button onclick="saveBill()" class="btn-primary" style="padding:8px 15px;background:#000;color:#fff;border:none;border-radius:4px;cursor:pointer">Log Bill</button></div><div id="bills-list"></div></div>`;
+
+    c.innerHTML = `
+    <div style="padding:20px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
+            <div>
+                <p class="section-title"><i class="ti ti-receipt-2" style="color:var(--gold)"></i> <span>Vendor Bills (Accounts Payable)</span></p>
+                <p style="font-size:13px;color:var(--text2);margin:0">Log and track bills from vendors and suppliers</p>
+            </div>
+            <button onclick="openBillModal()" style="display:flex;align-items:center;gap:7px;padding:10px 18px;background:#0a0a0a;color:#fff;border:none;border-radius:8px;cursor:pointer;font-weight:600;font-size:13px">
+                <i class="ti ti-plus"></i> New Bill
+            </button>
+        </div>
+        <div style="display:flex;gap:10px;margin-bottom:1rem;align-items:center;flex-wrap:wrap">
+            <input type="text" id="bill-search" placeholder="Search bills..." oninput="filterBills()" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px;width:220px">
+            <select id="bill-filter-status" onchange="filterBills()" style="padding:8px 12px;border:1px solid var(--border);border-radius:7px;font-size:13px">
+                <option value="">All Statuses</option>
+                <option value="Unpaid">Unpaid</option>
+                <option value="Paid">Paid</option>
+                <option value="Overdue">Overdue</option>
+            </select>
+            <div style="margin-left:auto;display:flex;gap:6px;flex-wrap:wrap" id="bill-summary-pills"></div>
+        </div>
+        <div id="bills-list"></div>
+    </div>
+    <div id="modal-bill" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.55);z-index:9999;align-items:flex-start;justify-content:center;overflow-y:auto;padding:30px 15px">
+        <div style="background:#fff;border-radius:14px;width:100%;max-width:680px;padding:30px;box-shadow:0 20px 60px rgba(0,0,0,0.25);margin:auto">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.5rem">
+                <h2 style="margin:0;font-size:20px;font-weight:800">Log Vendor Bill</h2>
+                <button onclick="document.getElementById('modal-bill').style.display='none'" style="background:none;border:none;font-size:24px;cursor:pointer;color:#888">&times;</button>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:1.2rem">
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Vendor *</label>
+                    <select id="bill-vendor" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px"><option value="">-- Select Vendor --</option>${vendorOptions}</select>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Expense Account *</label>
+                    <select id="bill-expense" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px"><option value="">-- Select Account --</option>${expOptions}</select>
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Bill Date *</label>
+                    <input type="date" id="bill-date" value="${new Date().toISOString().split('T')[0]}" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Due Date *</label>
+                    <input type="date" id="bill-due" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                </div>
+                <div style="grid-column:1/-1">
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Description *</label>
+                    <input type="text" id="bill-desc" placeholder="What is this bill for?" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Amount (VUV) *</label>
+                    <input type="number" id="bill-amount" placeholder="0.00" min="0" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px">
+                </div>
+                <div>
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Attachment (Optional)</label>
+                    <input type="file" id="bill-file" accept="image/*,.pdf" style="width:100%;padding:7px;border:1px solid #e0e0e0;border-radius:7px;font-size:12px">
+                </div>
+                <div style="grid-column:1/-1">
+                    <label style="font-size:11px;font-weight:700;display:block;margin-bottom:5px;text-transform:uppercase;color:#888">Notes</label>
+                    <textarea id="bill-notes" placeholder="Additional notes or reference numbers..." rows="2" style="width:100%;padding:9px 12px;border:1px solid #e0e0e0;border-radius:7px;font-size:13px;resize:vertical"></textarea>
+                </div>
+            </div>
+            <div style="display:flex;gap:10px;justify-content:flex-end">
+                <button onclick="document.getElementById('modal-bill').style.display='none'" style="padding:10px 20px;background:#f0f0f0;border:none;border-radius:7px;cursor:pointer;font-weight:600">Cancel</button>
+                <button onclick="saveBill()" style="padding:10px 20px;background:#0a0a0a;color:#fff;border:none;border-radius:7px;cursor:pointer;font-weight:600">Log Bill</button>
+            </div>
+        </div>
+    </div>`;
     await refreshBillsList();
+}
+
+function openBillModal() {
+    document.getElementById('modal-bill').style.display = 'flex';
+    ['bill-desc','bill-amount','bill-notes'].forEach(id => { var el = document.getElementById(id); if(el) el.value = ''; });
 }
 
 async function saveBill() {
@@ -1043,45 +1450,94 @@ async function saveBill() {
     var expenseAcct = document.getElementById('bill-expense').value;
     var amount = parseFloat(document.getElementById('bill-amount').value);
     var due = document.getElementById('bill-due').value;
-    if(!vendor || !desc || !expenseAcct || isNaN(amount) || !due) return alert('Fill all fields');
-    
-    var billNum = 'BILL-' + Date.now().toString().slice(-6);
-    var doc = { num: billNum, vendor, desc, expenseAcct, amount, due, status: 'Unpaid', date: new Date().toISOString().split('T')[0] };
+    var date = document.getElementById('bill-date').value;
+    var notes = document.getElementById('bill-notes').value.trim();
+    if(!vendor || !desc || !expenseAcct || isNaN(amount) || !due) return alert('Please fill all required fields');
+    var yr = new Date().getFullYear();
+    var billNum = 'BILL-' + yr + '-' + String(Date.now()).slice(-5);
+    var doc = { num: billNum, vendor, desc, expenseAcct, amount, due, date, notes, status: 'Unpaid' };
     await fetch('/api/finance_bills', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(doc) });
-    
-    // Auto-post to GL (Expense increases, AP increases)
-    await postJournalEntry('Bill ' + billNum + ' from ' + vendor, doc.date, [
+    await postJournalEntry('Bill ' + billNum + ' from ' + vendor, date, [
         { accountName: expenseAcct, debit: amount },
         { accountName: 'Accounts Payable', credit: amount }
     ]);
-    renderFinanceBills();
+    document.getElementById('modal-bill').style.display = 'none';
+    await refreshBillsList();
 }
 
 async function refreshBillsList() {
     var res = await fetch('/api/finance_bills');
     var bills = await res.json();
-    var html = '<table style="width:100%;border-collapse:collapse;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,0.1);border-radius:8px;overflow:hidden"><thead><tr style="background:#f4f4f4;text-align:left"><th style="padding:10px">Bill #</th><th style="padding:10px">Vendor</th><th style="padding:10px">Description</th><th style="padding:10px">Expense Acct</th><th style="padding:10px">Amount</th><th style="padding:10px">Due Date</th><th style="padding:10px">Status</th><th style="padding:10px">Action</th></tr></thead><tbody>';
+    var today = new Date(); today.setHours(0,0,0,0);
     bills.forEach(b => {
-        var s = b.status;
-        var badge = s === 'Paid' ? '<span style="color:#2a2;background:#eef6ee;padding:2px 6px;border-radius:4px;font-size:12px">Paid</span>' : '<span style="color:#e24b4a;background:#fdecec;padding:2px 6px;border-radius:4px;font-size:12px">Unpaid</span>';
-        var action = s === 'Unpaid' ? `<button onclick="markBillPaid('${b.id}', '${b.num}', '${b.vendor}', ${b.amount})" style="padding:4px 8px;background:#2a2;color:#fff;border:none;border-radius:4px;cursor:pointer;font-size:12px">Pay Bill</button>` : '';
-        var viewBtn = b.receipt ? `<a href="${b.receipt}" target="_blank" class="btn-outline" style="padding:3px 6px;margin-right:5px;font-size:12px;border:1px solid #ccc;border-radius:4px;color:#333;text-decoration:none"><i class="ti ti-paperclip"></i></a>` : '';
-        html += `<tr style="border-top:1px solid #eee"><td style="padding:10px">${b.num}</td><td style="padding:10px">${b.vendor}</td><td style="padding:10px">${b.desc}</td><td style="padding:10px">${b.expenseAcct}</td><td style="padding:10px">${b.amount.toLocaleString()}</td><td style="padding:10px">${b.due}</td><td style="padding:10px">${badge}</td><td style="padding:10px">${viewBtn}${action}</td></tr>`;
+        if(b.status !== 'Paid' && b.due) { var d = new Date(b.due); d.setHours(0,0,0,0); b._computed = d < today ? 'Overdue' : 'Unpaid'; }
+        else b._computed = b.status;
     });
-    html += '</tbody></table>';
-    document.getElementById('bills-list').innerHTML = html;
+    var paid = bills.filter(b => b._computed === 'Paid').length;
+    var overdue = bills.filter(b => b._computed === 'Overdue').length;
+    var totalUnpaid = bills.filter(b => b._computed !== 'Paid').reduce((s,b) => s+(b.amount||0), 0);
+    var pillsHtml = `<span style="background:#dcfce7;color:#166534;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${paid} Paid</span><span style="background:#fee2e2;color:#991b1b;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${overdue} Overdue</span><span style="background:#f0f0f0;color:#444;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">Outstanding: VUV ${totalUnpaid.toLocaleString()}</span>`;
+    var pillEl = document.getElementById('bill-summary-pills');
+    if(pillEl) pillEl.innerHTML = pillsHtml;
+    window._allBills = bills;
+    renderBillTable(bills);
+}
+
+function filterBills() {
+    var q = (document.getElementById('bill-search').value || '').toLowerCase();
+    var st = (document.getElementById('bill-filter-status').value || '').toLowerCase();
+    var list = (window._allBills || []).filter(b => {
+        var matchQ = !q || (b.num||'').toLowerCase().includes(q) || (b.vendor||'').toLowerCase().includes(q) || (b.desc||'').toLowerCase().includes(q);
+        var matchS = !st || (b._computed||'').toLowerCase() === st;
+        return matchQ && matchS;
+    });
+    renderBillTable(list);
+}
+
+function renderBillTable(bills) {
+    var statusColors = { Paid:'background:#dcfce7;color:#166534', Unpaid:'background:#fef3c7;color:#92400e', Overdue:'background:#fee2e2;color:#991b1b' };
+    var html = `<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;background:#fff;border-radius:10px;overflow:hidden;box-shadow:0 1px 6px rgba(0,0,0,0.08)">
+        <thead><tr style="background:#f8f8f8">
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Bill #</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Vendor</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Description</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Expense Acct</th>
+            <th style="padding:11px 14px;text-align:left;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Due</th>
+            <th style="padding:11px 14px;text-align:right;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Amount (VUV)</th>
+            <th style="padding:11px 14px;text-align:center;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Status</th>
+            <th style="padding:11px 14px;text-align:right;font-size:11px;font-weight:700;color:#888;text-transform:uppercase">Action</th>
+        </tr></thead><tbody>`;
+    if(bills.length === 0) html += '<tr><td colspan="8" style="padding:35px;text-align:center;color:#aaa;font-size:14px">No bills found. Click <strong>New Bill</strong> to log one.</td></tr>';
+    bills.forEach(b => {
+        var s = b._computed || b.status;
+        var st = statusColors[s] || statusColors['Unpaid'];
+        var badge = `<span style="${st};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${s}</span>`;
+        var action = s !== 'Paid' ? `<button onclick="markBillPaid('${b._id}', '${b.num}', '${b.vendor}', ${b.amount})" style="padding:5px 9px;background:#0a0a0a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px"><i class="ti ti-check"></i> Pay Bill</button>` : `<span style="font-size:12px;color:#888">Paid ${b.paidDate||''}</span>`;
+        html += `<tr style="border-top:1px solid #f0f0f0">
+            <td style="padding:11px 14px;font-weight:700;font-family:monospace;font-size:12px">${b.num}</td>
+            <td style="padding:11px 14px">${b.vendor}</td>
+            <td style="padding:11px 14px;color:#555">${b.desc}</td>
+            <td style="padding:11px 14px;font-size:12px;color:#666">${b.expenseAcct}</td>
+            <td style="padding:11px 14px;font-size:12px;color:${s==='Overdue'?'#ef4444':'#666'};font-weight:${s==='Overdue'?'700':'400'}">${b.due||''}</td>
+            <td style="padding:11px 14px;text-align:right;font-weight:700">${(b.amount||0).toLocaleString()}</td>
+            <td style="padding:11px 14px;text-align:center">${badge}</td>
+            <td style="padding:11px 14px;text-align:right">${action}</td>
+        </tr>`;
+    });
+    html += '</tbody></table></div>';
+    var listEl = document.getElementById('bills-list');
+    if(listEl) listEl.innerHTML = html;
 }
 
 async function markBillPaid(id, num, vendor, amount) {
-    if(!confirm('Record payment for Bill ' + num + '?')) return;
-    await fetch('/api/finance_bills/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'Paid', paidDate: new Date().toISOString().split('T')[0] }) });
-    
-    // Auto-post to GL (AP decreases, Cash decreases)
-    await postJournalEntry('Payment made for Bill ' + num + ' (' + vendor + ')', new Date().toISOString().split('T')[0], [
+    if(!confirm('Record payment for Bill ' + num + '? This will post a GL entry.')) return;
+    var paidDate = new Date().toISOString().split('T')[0];
+    await fetch('/api/finance_bills/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'Paid', paidDate }) });
+    await postJournalEntry('Payment made for Bill ' + num + ' (' + vendor + ')', paidDate, [
         { accountName: 'Accounts Payable', debit: amount },
         { accountName: 'Cash', credit: amount }
     ]);
-    renderFinanceBills();
+    await refreshBillsList();
 }
 
 // ==========================================
