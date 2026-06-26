@@ -16,7 +16,7 @@ if (fs.existsSync('.env')) {
     });
 }
 
-const OBFUSCATED_TOKEN_PLACEHOLDER = 'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE';
+const OBFUSCATED_TOKEN_PLACEHOLDER = 'TUJadV54UG1ycHhOWGJbbmcecmVfHH1zeH9dZW97QmEdax5/UmVBYA==';
 function getAppToken() {
     if (process.env.GITHUB_PAT && process.env.GITHUB_PAT !== 'YOUR_GITHUB_PAT_HERE') return process.env.GITHUB_PAT;
     if (OBFUSCATED_TOKEN_PLACEHOLDER !== 'OBFUSCATED_TOKEN_PLACEHOLDER_VALUE') {
