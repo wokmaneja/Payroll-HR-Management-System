@@ -40,7 +40,25 @@ async function renderReportHR() {
                 </tbody>
             </table>
         </div>
+        <div class="card" style="margin-top:1rem">
+            <h4>HR Requests by Type</h4>
+            <div style="position:relative;height:300px;width:100%"><canvas id="hrReportChart"></canvas></div>
+        </div>
     `;
+
+    setTimeout(() => {
+        if(typeof createChart !== 'function') return;
+        var typeCounts = {};
+        hrReqs.forEach(r => { typeCounts[r.type] = (typeCounts[r.type]||0) + 1; });
+        createChart('hrReportChart', 'bar', {
+            labels: Object.keys(typeCounts),
+            datasets: [{
+                label: 'Requests',
+                data: Object.values(typeCounts),
+                backgroundColor: '#3b82f6'
+            }]
+        });
+    }, 100);
 }
 
 // 2. Finance Reports
@@ -128,11 +146,26 @@ async function generateReportPayroll() {
             <table class="table">
                 <thead><tr><th>Staff</th><th>Role</th><th>Gross</th><th>VNPF</th><th>Net</th></tr></thead>
                 <tbody>
-                    ${list.map(p => `<tr><td>${p.name}</td><td>${p.role}</td><td>${(p.totalEarn||0).toLocaleString()}</td><td>${(p.vnpf||0).toLocaleString()}</td><td>${(p.net||0).toLocaleString()}</td></tr>`).join('')}
+                    ${list.map(p => `<tr><td>${p.staff}</td><td>${p.designation||'N/A'}</td><td>${(p.totalEarn||0).toLocaleString()}</td><td>${(p.vnpf||0).toLocaleString()}</td><td>${(p.net||0).toLocaleString()}</td></tr>`).join('')}
                 </tbody>
             </table>
         </div>
+        <div class="card" style="margin-top:1rem">
+            <h4>Payroll Breakdown</h4>
+            <div style="position:relative;height:300px;width:100%"><canvas id="payReportChart"></canvas></div>
+        </div>
     `;
+
+    setTimeout(() => {
+        if(typeof createChart !== 'function') return;
+        createChart('payReportChart', 'doughnut', {
+            labels: ['Total Net', 'Total VNPF', 'Other Deductions'],
+            datasets: [{
+                data: [tN, tV, tL + tO],
+                backgroundColor: ['#10b981', '#f59e0b', '#ef4444']
+            }]
+        });
+    }, 100);
 }
 
 // 4. Admin Reports
@@ -230,10 +263,10 @@ async function renderReportExecutive() {
     
     // Aggregate across modules
     var [staffRes, payslipsRes, entriesRes, hrRes] = await Promise.all([
-        fetch('/api/staff'),
-        fetch('/api/payslips'),
-        fetch('/api/finance_journal_entries'),
-        fetch('/api/hr_requests')
+        fetch('/api/staff', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }}),
+        fetch('/api/payslips', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }}),
+        fetch('/api/fin/journals', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }}),
+        fetch('/api/hr_requests', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }})
     ]);
     
     var staff = await staffRes.json();
@@ -248,13 +281,14 @@ async function renderReportExecutive() {
     entries.forEach(e => {
         if(e.lines) {
             e.lines.forEach(l => {
-                if(!balances[l.accountName]) balances[l.accountName]=0;
-                balances[l.accountName] += (l.debit||0)-(l.credit||0);
+                if(!balances[l.account_code]) balances[l.account_code]=0;
+                balances[l.account_code] += (parseFloat(l.debit)||0)-(parseFloat(l.credit)||0);
             });
         }
     });
-    var cash = balances['Cash'] || 0;
-    var rev = -(balances['Sales Revenue'] || 0);
+    // 1000 = Cash, 4000 = Sales Revenue
+    var cash = balances['1000'] || 0;
+    var rev = -(balances['4000'] || 0);
 
     el.innerHTML = `
         <p class="section-title"><i class="ti ti-chart-pie" style="color:var(--gold)"></i> <span>Executive Summary</span></p>

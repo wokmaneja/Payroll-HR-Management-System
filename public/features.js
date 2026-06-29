@@ -144,7 +144,7 @@ function addDocType() {
     document.getElementById('doc-type-modal').classList.remove('hidden'); // keep type modal open
 }
 
-function deleteDocType(id) {
+async function deleteDocType(id) {
     if(await uiConfirm('Remove this document type?')) {
         DB.remove('doc_types', { _id: id });
         renderDocTypesList();
@@ -518,7 +518,7 @@ async function saveRecruit() {
     renderRecruitment();
 }
 
-function deleteRecruit(id) {
+async function deleteRecruit(id) {
     if(await uiConfirm('Delete candidate?')) {
         DB.remove('recruitment', { _id: id });
         renderRecruitment();

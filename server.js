@@ -1,6 +1,8 @@
 const express = require('express');
 const cors = require('cors');
 const sqlite3 = require('sqlite3').verbose();
+
+
 const path = require('path');
 const fs = require('fs');
 const http = require('http');
@@ -567,116 +569,129 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
         console.error('Error opening database', err.message);
     } else {
         console.log('Connected to the SQLite database.');
-        db.run(`CREATE TABLE IF NOT EXISTS docs (
-            id TEXT,
-            collection TEXT,
-            data TEXT,
-            PRIMARY KEY (id, collection)
-        )`, () => {
+        db.serialize(() => {
+            db.run(`CREATE TABLE IF NOT EXISTS docs (
+                id TEXT,
+                collection TEXT,
+                data TEXT,
+                PRIMARY KEY (id, collection)
+            )`);
+            
+            // Petty Cash Relational Tables
+            db.run(`CREATE TABLE IF NOT EXISTS pc_settings (
+                key TEXT PRIMARY KEY,
+                value TEXT
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS pc_categories (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT,
+                name TEXT
+            )`);
+
+            db.run(`CREATE TABLE IF NOT EXISTS pc_vouchers (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                voucher_no TEXT,
+                date TEXT,
+                payee TEXT,
+                staff_name TEXT,
+                amount REAL,
+                category_id INTEGER,
+                department TEXT,
+                description TEXT,
+                status TEXT
+            )`);
+            // Migration: add staff_name column if it doesn't exist yet
+            db.run(`ALTER TABLE pc_vouchers ADD COLUMN staff_name TEXT`, [], () => {});
+            db.run(`CREATE TABLE IF NOT EXISTS pc_register (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entry_date TEXT,
+                entry_type TEXT,
+                cash_out REAL,
+                cash_in REAL,
+                balance REAL,
+                voucher_id INTEGER
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS pc_reconciliations (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                period TEXT,
+                float_amount REAL,
+                cash_remaining REAL,
+                is_balanced INTEGER
+            )`);
+            
+            // Unified Finance GL Tables
+            db.run(`CREATE TABLE IF NOT EXISTS fin_accounts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                code TEXT UNIQUE,
+                name TEXT,
+                type TEXT -- Asset, Liability, Equity, Revenue, Expense
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS fin_journal_entries (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                date TEXT,
+                reference TEXT,
+                description TEXT,
+                created_by TEXT,
+                created_at TEXT
+            )`);
+            db.run(`CREATE TABLE IF NOT EXISTS fin_journal_lines (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                entry_id INTEGER,
+                account_id INTEGER,
+                debit REAL DEFAULT 0,
+                credit REAL DEFAULT 0,
+                FOREIGN KEY (entry_id) REFERENCES fin_journal_entries(id),
+                FOREIGN KEY (account_id) REFERENCES fin_accounts(id)
+            )`);
+
             if (typeof setupAutoBackup === 'function') setupAutoBackup();
             loadPersistedSessions().catch(e => console.error('[Sessions] Load error:', e));
             
-            // Install Telemetry
-            db.all("SELECT id FROM docs WHERE id = 'install_reported' AND collection = 'settings'", [], (err, rows) => {
-                if (!err && rows.length === 0) {
-                    try {
-                        const githubToken = getAppToken();
-                        if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
-                            const fetch = require('node-fetch') || global.fetch;
-                            fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues`, {
-                                method: 'POST',
-                                headers: {
-                                    'Authorization': `token ${githubToken}`,
-                                    'Accept': 'application/vnd.github.v3+json',
-                                    'Content-Type': 'application/json',
-                                    'User-Agent': 'WokManeja-App'
-                                },
-                                body: JSON.stringify({
-                                    title: `App Installed: v${APP_VERSION}`,
-                                    body: `**Machine ID:** ${MACHINE_ID}\n**Version:** ${APP_VERSION}\n**Time:** ${new Date().toISOString()}`,
-                                    labels: ['app-install']
-                                })
-                            }).then(r => {
-                                if (r.ok) {
-                                    db.run("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['install_reported', 'settings', JSON.stringify({ reported: true })]);
-                                }
-                            }).catch(() => {});
-                        }
-                    } catch(e) {}
+            // Seed PC Default Config & Categories if empty
+            db.get("SELECT key FROM pc_settings WHERE key = 'float'", (err, row) => {
+                if (!err && !row) {
+                    db.run("INSERT INTO pc_settings (key, value) VALUES ('float', '100000')");
+                    db.run("INSERT INTO pc_settings (key, value) VALUES ('limit_super', '2000')");
+                    db.run("INSERT INTO pc_settings (key, value) VALUES ('limit_mgr', '10000')");
+                    db.run("INSERT INTO pc_settings (key, value) VALUES ('currency', 'VT')");
+                    
+                    const cats = [
+                        ['PC01', 'Office Supplies'], ['PC02', 'Transport'], 
+                        ['PC03', 'Meals & Entertainment'], ['PC04', 'Repairs & Maintenance'],
+                        ['PC05', 'Postage & Courier'], ['PC06', 'Miscellaneous']
+                    ];
+                    cats.forEach(c => {
+                        db.run("INSERT INTO pc_categories (code, name) VALUES (?, ?)", [c[0], c[1]]);
+                    });
+                    console.log('Seeded Petty Cash defaults and categories.');
                 }
             });
 
-            // Telemetry Heartbeat
-            const githubTokenForHeartbeat = getAppToken();
-            if (githubTokenForHeartbeat !== 'YOUR_GITHUB_PAT_HERE') {
-                const fetch = require('node-fetch') || global.fetch;
-                
-                const pingOnline = async () => {
-                    try {
-                        let issueNum = null;
-                        
-                        // Check if we already saved the issue number
-                        const issueDoc = await new Promise(res => db.get("SELECT data FROM docs WHERE id = 'install_issue' AND collection = 'settings'", [], (err, row) => res(row)));
-                        if (issueDoc && issueDoc.data) {
-                            issueNum = JSON.parse(issueDoc.data).issueNumber;
-                        }
-
-                        if (!issueNum) {
-                            // Find it via API
-                            const searchRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues?labels=app-install&state=all`, {
-                                headers: {
-                                    'Authorization': `token ${githubTokenForHeartbeat}`,
-                                    'User-Agent': 'WokManeja-App'
-                                }
-                            });
-                            if (searchRes.ok) {
-                                const issues = await searchRes.json();
-                                const myIssue = issues.find(i => i.body && i.body.includes(MACHINE_ID));
-                                if (myIssue) {
-                                    issueNum = myIssue.number;
-                                    db.run("INSERT OR REPLACE INTO docs (id, collection, data) VALUES (?, ?, ?)", ['install_issue', 'settings', JSON.stringify({ issueNumber: issueNum })]);
-                                }
-                            }
-                        }
-
-                        if (issueNum) {
-                            // Fetch existing body to preserve it
-                            const issueRes = await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNum}`, {
-                                headers: {
-                                    'Authorization': `token ${githubTokenForHeartbeat}`,
-                                    'User-Agent': 'WokManeja-App'
-                                }
-                            });
-                            if (issueRes.ok) {
-                                const issue = await issueRes.json();
-                                let body = issue.body || '';
-                                if (body.includes('**Last Online:**')) {
-                                    body = body.replace(/\*\*Last Online:\*\* .*/, `**Last Online:** ${new Date().toISOString()}`);
-                                } else {
-                                    body += `\n**Last Online:** ${new Date().toISOString()}`;
-                                }
-                                
-                                await fetch(`https://api.github.com/repos/${GITHUB_OWNER}/${GITHUB_REPO}/issues/${issueNum}`, {
-                                    method: 'PATCH',
-                                    headers: {
-                                        'Authorization': `token ${githubTokenForHeartbeat}`,
-                                        'Accept': 'application/vnd.github.v3+json',
-                                        'Content-Type': 'application/json',
-                                        'User-Agent': 'WokManeja-App'
-                                    },
-                                    body: JSON.stringify({ body })
-                                });
-                            }
-                        }
-                    } catch (e) {
-                        console.error("Heartbeat error", e);
-                    }
-                };
-                
-                // Ping immediately, then every 5 minutes
-                setTimeout(pingOnline, 5000);
-                setInterval(pingOnline, 5 * 60 * 1000);
-            }
+            // Seed Finance Accounts if empty
+            db.get("SELECT id FROM fin_accounts LIMIT 1", (err, row) => {
+                if (!err && !row) {
+                    const accs = [
+                        ['1000', 'Cash / Bank', 'Asset'],
+                        ['1010', 'Petty Cash', 'Asset'],
+                        ['1020', 'Employee Advances', 'Asset'],
+                        ['2000', 'Accounts Payable', 'Liability'],
+                        ['2010', 'VNPF Payable', 'Liability'],
+                        ['3000', 'Owner Equity', 'Equity'],
+                        ['4000', 'Sales Revenue', 'Revenue'],
+                        ['5000', 'Salary Expense', 'Expense'],
+                        ['5010', 'VNPF Employer Expense', 'Expense'],
+                        ['5020', 'Office Supplies Expense', 'Expense'],
+                        ['5030', 'Transport Expense', 'Expense'],
+                        ['5040', 'Meals & Entertainment Expense', 'Expense'],
+                        ['5050', 'Repairs & Maintenance Expense', 'Expense'],
+                        ['5060', 'Miscellaneous Expense', 'Expense']
+                    ];
+                    accs.forEach(c => {
+                        db.run("INSERT INTO fin_accounts (code, name, type) VALUES (?, ?, ?)", [c[0], c[1], c[2]]);
+                    });
+                    console.log("Seeded default Chart of Accounts.");
+                }
+            });
 
             // Seed default admin user if database is completely empty
             db.all("SELECT id FROM docs WHERE collection = 'users'", [], (err, rows) => {
@@ -717,6 +732,130 @@ const runExec = (sql, params = []) => {
     });
 };
 
+// --- GL Automation Functions ---
+const getFinAccount = (code) => {
+    return new Promise((resolve) => {
+        db.get("SELECT id FROM fin_accounts WHERE code = ?", [code], (err, row) => {
+            resolve(row ? row.id : null);
+        });
+    });
+};
+
+const insertJournalEntry = async (date, ref, desc, lines, user) => {
+    return new Promise((resolve, reject) => {
+        db.serialize(() => {
+            db.run("BEGIN TRANSACTION");
+            db.run("INSERT INTO fin_journal_entries (date, reference, description, created_by, created_at) VALUES (?, ?, ?, ?, ?)", 
+                [date, ref, desc, user, new Date().toISOString()], function(err) {
+                if (err) { db.run("ROLLBACK"); return reject(err); }
+                const entryId = this.lastID;
+                const stmt = db.prepare("INSERT INTO fin_journal_lines (entry_id, account_id, debit, credit) VALUES (?, ?, ?, ?)");
+                for (let line of lines) {
+                    stmt.run(entryId, line.account_id, line.debit, line.credit);
+                }
+                stmt.finalize(err => {
+                    if (err) { db.run("ROLLBACK"); return reject(err); }
+                    db.run("COMMIT", err => {
+                        if (err) return reject(err);
+                        resolve(entryId);
+                    });
+                });
+            });
+        });
+    });
+};
+
+const autoPostPayslip = async (doc, user) => {
+    try {
+        const cashAcc = await getFinAccount('1000');
+        const vnpfPayableAcc = await getFinAccount('2010');
+        const salaryExpAcc = await getFinAccount('5000');
+        const vnpfExpAcc = await getFinAccount('5010');
+        if (!cashAcc || !vnpfPayableAcc || !salaryExpAcc || !vnpfExpAcc) return;
+
+        const gross = parseFloat(doc.gross) || 0;
+        const net = parseFloat(doc.net) || 0;
+        const vnpf = parseFloat(doc.vnpf) || 0; 
+        const employerVnpf = vnpf; 
+        const totalVnpfPayable = vnpf + employerVnpf;
+        
+        const lines = [
+            { account_id: salaryExpAcc, debit: gross, credit: 0 },
+            { account_id: vnpfExpAcc, debit: employerVnpf, credit: 0 },
+            { account_id: vnpfPayableAcc, debit: 0, credit: totalVnpfPayable },
+            { account_id: cashAcc, debit: 0, credit: net }
+        ];
+        
+        await insertJournalEntry(new Date().toISOString().split('T')[0], `PAYSLIP-${doc._id}`, `Payslip for ${doc.staff}`, lines, user);
+    } catch (e) {
+        console.error("Auto post payslip error:", e);
+    }
+};
+
+const autoPostHRAdvance = async (doc, user) => {
+    try {
+        const advAcc = await getFinAccount('1020');
+        const cashAcc = await getFinAccount('1000');
+        if (!advAcc || !cashAcc) return;
+        
+        const amount = parseFloat(doc.amount) || 0;
+        const lines = [
+            { account_id: advAcc, debit: amount, credit: 0 },
+            { account_id: cashAcc, debit: 0, credit: amount }
+        ];
+        await insertJournalEntry(new Date().toISOString().split('T')[0], `HR-ADV-${doc._id}`, `Payment Advance to ${doc.staff}`, lines, user);
+    } catch(e) {
+        console.error("Auto post HR advance error:", e);
+    }
+};
+
+const autoPostPettyCash = async (vid, amount, category_id, date, payee, user) => {
+    try {
+        const pcAssetAcc = await getFinAccount('1010'); // Petty Cash account
+        if (!pcAssetAcc) return;
+        
+        // Let's get the category code to map to expense account
+        db.get("SELECT code FROM pc_categories WHERE id = ?", [category_id], async (err, row) => {
+            if (err || !row) return;
+            const code = row.code;
+            let expCode = '5060'; // Default to Misc
+            if (code === 'PC01') expCode = '5020'; // Office Supplies
+            if (code === 'PC02') expCode = '5030'; // Transport
+            if (code === 'PC03') expCode = '5040'; // Meals & Entertainment
+            if (code === 'PC04') expCode = '5050'; // Repairs & Maint
+            if (code === 'PC05') expCode = '5020'; // Postage -> mapped to Office Supplies for simplicity
+            
+            const expAcc = await getFinAccount(expCode);
+            if (!expAcc) return;
+
+            const lines = [
+                { account_id: expAcc, debit: parseFloat(amount), credit: 0 },
+                { account_id: pcAssetAcc, debit: 0, credit: parseFloat(amount) }
+            ];
+            await insertJournalEntry(date, `PC-VOUCHER-${vid}`, `PC Voucher to ${payee}`, lines, user);
+        });
+    } catch(e) {
+        console.error("Auto post Petty Cash error:", e);
+    }
+};
+
+const autoPostPettyCashReplenish = async (amount, date, user) => {
+    try {
+        const pcAssetAcc = await getFinAccount('1010'); // Petty Cash account
+        const cashAcc = await getFinAccount('1000'); // Main Bank Account
+        if (!pcAssetAcc || !cashAcc) return;
+        
+        const lines = [
+            { account_id: pcAssetAcc, debit: parseFloat(amount), credit: 0 },
+            { account_id: cashAcc, debit: 0, credit: parseFloat(amount) }
+        ];
+        await insertJournalEntry(date, `PC-REPLENISH-${Date.now().toString().slice(-6)}`, `Petty Cash Float Replenishment`, lines, user);
+    } catch(e) {
+        console.error("Auto post Petty Cash Replenish error:", e);
+    }
+};
+// -----------------------------
+
 // API: Insert
 app.post('/api/:collection', async (req, res) => {
     try {
@@ -731,6 +870,15 @@ app.post('/api/:collection', async (req, res) => {
         }
         
         await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [doc._id, collection, JSON.stringify(doc)]);
+        
+        // Automation Hooks
+        const user = req.user ? req.user.username : 'system';
+        if (collection === 'payslips') {
+            await autoPostPayslip(doc, user);
+        } else if (collection === 'hr_requests' && doc.type === 'Payment Advance' && doc.status === 'Approved') {
+            await autoPostHRAdvance(doc, user);
+        }
+
         res.json(doc);
     } catch (err) {
         console.error(err);
@@ -775,6 +923,15 @@ app.put('/api/:collection', async (req, res) => {
                 Object.assign(doc, update);
                 doc._updated = new Date().toISOString();
                 await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
+                
+                // Automation Hook
+                if (collection === 'hr_requests' && doc.type === 'Payment Advance' && doc.status === 'Approved' && !doc._gl_posted) {
+                    const user = req.user ? req.user.username : 'system';
+                    await autoPostHRAdvance(doc, user);
+                    doc._gl_posted = true;
+                    await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
+                }
+                
                 updatedCount++;
             }
         }
@@ -1149,7 +1306,255 @@ app.post('/api/admin/apply-update', async (req, res) => {
     }
 });
 
+// ─── Petty Cash API ────────────────────────────────────────────────────────────
+
+app.get('/api/pc/settings', (req, res) => {
+    db.all("SELECT key, value FROM pc_settings", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        const settings = {};
+        rows.forEach(r => settings[r.key] = r.value);
+        res.json(settings);
+    });
+});
+
+app.post('/api/pc/settings', (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') return res.status(403).json({error: 'Unauthorized'});
+    const data = req.body;
+    db.serialize(() => {
+        const stmt = db.prepare("INSERT INTO pc_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
+        for (const [k, v] of Object.entries(data)) {
+            stmt.run([k, String(v)]);
+        }
+        stmt.finalize();
+        res.json({ success: true });
+    });
+});
+
+app.get('/api/pc/categories', (req, res) => {
+    db.all("SELECT * FROM pc_categories ORDER BY code ASC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.get('/api/pc/balance', (req, res) => {
+    db.get("SELECT value FROM pc_settings WHERE key = 'float'", [], (err, floatRow) => {
+        const floatAmount = floatRow ? parseFloat(floatRow.value) || 0 : 0;
+        db.get("SELECT balance FROM pc_register ORDER BY id DESC LIMIT 1", [], (err, regRow) => {
+            const currentBalance = regRow ? parseFloat(regRow.balance) : floatAmount;
+            res.json({
+                openingBalance: floatAmount,
+                currentBalance: currentBalance,
+                replenishAmount: floatAmount - currentBalance,
+                floatUsedPct: floatAmount > 0 ? ((floatAmount - currentBalance) / floatAmount) * 100 : 0
+            });
+        });
+    });
+});
+
+app.get('/api/pc/register', (req, res) => {
+    db.all("SELECT r.*, v.voucher_no, v.payee, v.description, c.name as category_name FROM pc_register r LEFT JOIN pc_vouchers v ON r.voucher_id = v.id LEFT JOIN pc_categories c ON v.category_id = c.id ORDER BY r.id ASC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.get('/api/pc/vouchers', (req, res) => {
+    db.all("SELECT v.*, c.name as category_name, c.code as category_code FROM pc_vouchers v LEFT JOIN pc_categories c ON v.category_id = c.id ORDER BY v.id DESC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/pc/vouchers', (req, res) => {
+    if (req.user.role === 'viewer') return res.status(403).json({error: 'Unauthorized'});
+    const { date, payee, staff_name, amount, category_id, department, description } = req.body;
+    
+    db.get("SELECT value FROM pc_settings WHERE key = 'float'", [], (err, floatRow) => {
+        const floatAmount = floatRow ? parseFloat(floatRow.value) || 0 : 0;
+        
+        db.get("SELECT balance FROM pc_register ORDER BY id DESC LIMIT 1", [], (err, regRow) => {
+            let currentBalance = 0;
+            if (regRow) {
+                currentBalance = parseFloat(regRow.balance);
+            } else {
+                if (floatAmount > 0) {
+                    currentBalance = floatAmount;
+                } else {
+                    return res.status(400).json({ error: 'Float not initialized. Please set opening balance.' });
+                }
+            }
+            
+            if (amount > currentBalance) return res.status(400).json({ error: 'Insufficient funds in Petty Cash float.' });
+
+            const newBalance = currentBalance - parseFloat(amount);
+        const vNo = 'PC' + Date.now().toString().slice(-6);
+        
+        db.run("INSERT INTO pc_vouchers (voucher_no, date, payee, staff_name, amount, category_id, department, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Approved')", 
+        [vNo, date, payee, staff_name || null, amount, category_id, department, description], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            const vid = this.lastID;
+            db.run("INSERT INTO pc_register (entry_date, entry_type, cash_out, cash_in, balance, voucher_id) VALUES (?, 'Expense', ?, 0, ?, ?)",
+            [date, amount, newBalance, vid], function(err) {
+                if (err) return res.status(500).json({ error: err.message });
+                
+                // GL Automation
+                const user = req.user ? req.user.username : 'system';
+                autoPostPettyCash(vid, amount, category_id, date, payee, user);
+
+                res.json({ success: true, voucher_id: vid });
+            });
+        });
+        });
+    });
+});
+
+app.post('/api/pc/register/replenish', (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') return res.status(403).json({error: 'Unauthorized'});
+    const { amount, date } = req.body;
+    db.get("SELECT balance FROM pc_register ORDER BY id DESC LIMIT 1", [], (err, regRow) => {
+        const currentBalance = regRow ? parseFloat(regRow.balance) : 0;
+        const newBalance = currentBalance + parseFloat(amount);
+        
+        db.run("INSERT INTO pc_register (entry_date, entry_type, cash_out, cash_in, balance, voucher_id) VALUES (?, 'Replenishment', 0, ?, ?, NULL)",
+        [date, amount, newBalance], function(err) {
+            if (err) return res.status(500).json({ error: err.message });
+            
+            // GL Automation
+            const user = req.user ? req.user.username : 'system';
+            autoPostPettyCashReplenish(amount, date, user);
+
+            res.json({ success: true });
+        });
+    });
+});
+
+app.get('/api/pc/summary', (req, res) => {
+    db.all("SELECT c.name, SUM(v.amount) as total FROM pc_vouchers v JOIN pc_categories c ON v.category_id = c.id GROUP BY c.id", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+// ─── Finance GL API ────────────────────────────────────────────────────────────
+
+app.get('/api/fin/accounts', (req, res) => {
+    db.all("SELECT * FROM fin_accounts ORDER BY code ASC", [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json(rows);
+    });
+});
+
+app.post('/api/fin/accounts', (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') return res.status(403).json({error: 'Unauthorized'});
+    const { code, name, type } = req.body;
+    db.run("INSERT INTO fin_accounts (code, name, type) VALUES (?, ?, ?)", [code, name, type], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true, id: this.lastID });
+    });
+});
+
+app.get('/api/fin/journals', (req, res) => {
+    const query = `
+        SELECT j.id, j.date, j.reference, j.description, j.created_by, j.created_at,
+               l.id as line_id, l.debit, l.credit, a.code, a.name as account_name, a.type as account_type
+        FROM fin_journal_entries j
+        JOIN fin_journal_lines l ON j.id = l.entry_id
+        JOIN fin_accounts a ON l.account_id = a.id
+        ORDER BY j.date DESC, j.id DESC
+    `;
+    db.all(query, [], (err, rows) => {
+        if (err) return res.status(500).json({ error: err.message });
+        // Format them as nested entries
+        const entriesMap = {};
+        rows.forEach(r => {
+            if (!entriesMap[r.id]) {
+                entriesMap[r.id] = {
+                    id: r.id, date: r.date, reference: r.reference, 
+                    description: r.description, created_by: r.created_by,
+                    lines: []
+                };
+            }
+            entriesMap[r.id].lines.push({
+                id: r.line_id, debit: r.debit, credit: r.credit,
+                account_code: r.code, account_name: r.account_name, account_type: r.account_type
+            });
+        });
+        res.json(Object.values(entriesMap));
+    });
+});
+
 // ─────────────────────────────────────────────────────────────────────────────
+
+app.post('/api/fin/journals', async (req, res) => {
+    if (!['admin', 'manager', 'it', 'viewer'].includes(req.user.role)) return res.status(403).json({error: 'Unauthorized'});
+    if (req.user.role === 'viewer') return res.status(403).json({error: 'Unauthorized'});
+    const { reference, description, date, lines } = req.body;
+    
+    try {
+        // Resolve account names to IDs if needed
+        for (let line of lines) {
+            if (!line.account_id && line.account_name) {
+                let acc = await new Promise(resolve => db.get("SELECT id FROM fin_accounts WHERE name = ? OR name = ? OR code = ?", [line.account_name, line.account_name + ' Expense', line.account_name], (err, row) => resolve(row ? row.id : null)));
+                if (!acc) {
+                    // Fallback to Miscellaneous Expense
+                    acc = await new Promise(resolve => db.get("SELECT id FROM fin_accounts WHERE code = '5060'", [], (err, row) => resolve(row ? row.id : null)));
+                }
+                if (!acc) throw new Error(`Account not found: ${line.account_name}`);
+                line.account_id = acc;
+            }
+        }
+        
+        const entryId = await insertJournalEntry(date, reference, description, lines, req.user.username);
+        res.json({ success: true, id: entryId });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// Dedicated endpoint to mark a medical claim as paid and auto-post GL
+app.post('/api/fin/mark-paid', async (req, res) => {
+    if (req.user.role === 'viewer') return res.status(403).json({error: 'Unauthorized'});
+    const { hrId } = req.body;
+    if (!hrId) return res.status(400).json({ error: 'hrId required' });
+    try {
+        const rows = await runQuery('SELECT data FROM docs WHERE collection = ? AND id = ?', ['hr_requests', hrId]);
+        if (!rows.length) return res.status(404).json({ error: 'HR request not found' });
+        const doc = JSON.parse(rows[0].data);
+        if (doc.type !== 'Medical Claim') return res.status(400).json({ error: 'Not a Medical Claim' });
+        const amount = parseFloat(doc.amount) || 0;
+        
+        // Mark as finance paid
+        doc.financePaid = true;
+        doc.financePaidDate = new Date().toISOString();
+        doc._updated = new Date().toISOString();
+        await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), hrId, 'hr_requests']);
+        
+        // Post to GL
+        if (amount > 0) {
+            const miscAcc = await getFinAccount('5060'); // Miscellaneous Expense
+            const cashAcc = await getFinAccount('1000'); // Cash / Bank
+            if (miscAcc && cashAcc) {
+                const lines = [
+                    { account_id: miscAcc, debit: amount, credit: 0 },
+                    { account_id: cashAcc, debit: 0, credit: amount }
+                ];
+                await insertJournalEntry(
+                    new Date().toISOString().split('T')[0],
+                    `MED-CLAIM-${hrId.slice(-6)}`,
+                    `Medical Claim Reimbursement - ${doc.staff}`,
+                    lines,
+                    req.user.username
+                );
+            }
+        }
+        
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: err.message });
+    }
+});
 
 app.listen(port, host, () => {
     console.log(`WokManeja v${APP_VERSION} running at http://${host}:${port}`);
