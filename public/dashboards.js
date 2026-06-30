@@ -85,10 +85,10 @@ function renderHRDashboard() {
         var typeCounts = {};
         allHR.forEach(r => { typeCounts[r.type] = (typeCounts[r.type]||0) + 1; });
         if (Object.keys(typeCounts).length) {
-            createChart('hrChart1', 'doughnut', {
+            createChart('hrChart1', 'bar', {
                 labels: Object.keys(typeCounts),
-                datasets: [{ data: Object.values(typeCounts), backgroundColor: PALETTE, borderWidth: 2 }]
-            });
+                datasets: [{ label: 'Requests', data: Object.values(typeCounts), backgroundColor: PALETTE, borderWidth: 2 }]
+            }, { indexAxis: 'y' });
         }
         // Chart 2: Status bar
         createChart('hrChart2', 'bar', {
@@ -157,15 +157,16 @@ function renderPayrollDashboard() {
                 pointRadius: 5
             }]
         });
-        // Chart 2: Gross vs Net vs VNPF doughnut
-        createChart('payChart2', 'doughnut', {
+        // Chart 2: Gross vs Net vs VNPF horizontal bar
+        createChart('payChart2', 'bar', {
             labels: ['Net Pay', 'VNPF', 'Other Deductions'],
             datasets: [{
+                label: 'Amount',
                 data: [totalNet, totalVNPF, Math.max(0, totalGross - totalNet - totalVNPF)],
                 backgroundColor: ['#10b981','#f59e0b','#ef4444'],
                 borderWidth: 2
             }]
-        });
+        }, { indexAxis: 'y' });
     }, 120);
 }
 
@@ -246,10 +247,10 @@ function renderAdminDashboard() {
         var roles = {};
         users.forEach(u => { roles[u.role] = (roles[u.role]||0) + 1; });
         if (Object.keys(roles).length) {
-            createChart('adminChart1', 'pie', {
+            createChart('adminChart1', 'bar', {
                 labels: Object.keys(roles),
-                datasets: [{ data: Object.values(roles), backgroundColor: PALETTE, borderWidth: 2 }]
-            });
+                datasets: [{ label: 'Users', data: Object.values(roles), backgroundColor: PALETTE, borderWidth: 2 }]
+            }, { indexAxis: 'y' });
         }
         // Chart 2: Staff by department (real data)
         var depts = {};

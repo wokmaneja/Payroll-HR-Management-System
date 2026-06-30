@@ -164,16 +164,21 @@ async function renderFinanceDashboard() {
         if(window.finPieChart) window.finPieChart.destroy();
         var ctxPie = document.getElementById('fin-pie-chart').getContext('2d');
         window.finPieChart = new Chart(ctxPie, {
-            type: 'doughnut',
+            type: 'bar',
             data: {
                 labels: expLabels.length > 0 ? expLabels : ['No Expenses'],
                 datasets: [{
+                    label: 'Expenses',
                     data: expData.length > 0 ? expData : [1],
                     backgroundColor: ['#3b82f6', '#f59e0b', '#8b5cf6', '#ec4899', '#14b8a6', '#f43f5e', '#64748b', '#eab308', '#d946ef', '#06b6d4'],
                     borderWidth: 0
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, cutout: '65%' }
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false
+            }
         });
     }, 100);
 }
@@ -1898,11 +1903,11 @@ function renderInvoiceTable(invoices) {
         var s = inv._computed || inv.status;
         var style = statusColors[s] || statusColors['Sent'];
         var badge = `<span style="${style};padding:3px 10px;border-radius:20px;font-size:11px;font-weight:700">${s}</span>`;
-        var actions = `<button onclick="printInvoice('${inv._id}')" title="Print/PDF Invoice" style="padding:5px 9px;background:#f0f0f0;border:none;border-radius:6px;cursor:pointer;font-size:12px;margin-right:4px"><i class="ti ti-printer"></i> Print</button>`;
+        var actions = `<button onclick="printInvoice('${inv._id}')" title="View Invoice" style="padding:5px 9px;background:#f0f0f0;border:none;border-radius:6px;cursor:pointer;font-size:12px;margin-right:4px"><i class="ti ti-eye"></i> View</button>`;
         if(s !== 'Paid') {
             actions += `<button onclick="markInvoicePaid('${inv._id}', '${inv.num}', '${inv.client}', ${inv.amount})" title="Mark Paid" style="padding:5px 9px;background:#10b981;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px"><i class="ti ti-check"></i> Mark Paid</button>`;
         } else {
-            actions += `<button onclick="printReceipt('${inv._id}')" title="Print Receipt" style="padding:5px 9px;background:#0a0a0a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px"><i class="ti ti-receipt"></i> Receipt</button>`;
+            actions += `<button onclick="printReceipt('${inv._id}')" title="View Receipt" style="padding:5px 9px;background:#0a0a0a;color:#fff;border:none;border-radius:6px;cursor:pointer;font-size:12px"><i class="ti ti-eye"></i> Receipt</button>`;
         }
         html += `<tr style="border-top:1px solid #f0f0f0">
             <td style="padding:11px 14px;font-weight:700;font-family:monospace;font-size:12px">${inv.num}</td>
@@ -2241,7 +2246,9 @@ async function renderFinanceReconciliation() {
 }
 
 async function refreshReconList() {
-    var res = await fetch('/api/finance_journal_entries');
+    var res = await fetch('/api/fin/journals', {
+        headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }
+    });
     var entries = await res.json();
     
     var sysBalance = 0;
@@ -2249,7 +2256,7 @@ async function refreshReconList() {
     
     entries.forEach(e => {
         if(!e.lines) return;
-        var cashLine = e.lines.find(l => l.accountName === 'Cash');
+        var cashLine = e.lines.find(l => l.account_name === 'Cash / Bank');
         if(cashLine) {
             var amount = (cashLine.debit || 0) - (cashLine.credit || 0);
             sysBalance += amount;
@@ -2257,7 +2264,7 @@ async function refreshReconList() {
             if(!e.cleared) {
                 var amtStr = amount > 0 ? '+ ' + amount.toLocaleString() : '- ' + Math.abs(amount).toLocaleString();
                 var color = amount > 0 ? '#10b981' : '#ef4444';
-                unclearedHtml += `<tr style="border-top:1px solid #eee"><td style="padding:10px;text-align:center"><input type="checkbox" onchange="toggleClear('${e.id}', this.checked)" style="transform:scale(1.2);cursor:pointer"></td><td style="padding:10px">${e.date}</td><td style="padding:10px">${e.desc}</td><td style="padding:10px;text-align:right;color:${color}">${amtStr}</td></tr>`;
+                unclearedHtml += `<tr style="border-top:1px solid #eee"><td style="padding:10px;text-align:center"><input type="checkbox" onchange="toggleClear('${e.id}', this.checked)" style="transform:scale(1.2);cursor:pointer"></td><td style="padding:10px">${e.date}</td><td style="padding:10px">${e.description}</td><td style="padding:10px;text-align:right;color:${color}">${amtStr}</td></tr>`;
             }
         }
     });
@@ -2270,10 +2277,14 @@ async function refreshReconList() {
 }
 
 async function toggleClear(id, isCleared) {
-    var res = await fetch('/api/finance_journal_entries/' + id);
-    var doc = await res.json();
-    doc.cleared = isCleared;
-    await fetch('/api/finance_journal_entries/' + id, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify(doc) });
+    await fetch('/api/fin/journals/' + id + '/clear', { 
+        method: 'PUT', 
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + sessionStorage.getItem('api_token')
+        }, 
+        body: JSON.stringify({ cleared: isCleared }) 
+    });
     // We don't refresh the whole list immediately so the user doesn't lose context while checking boxes.
     // The visual row will stay, but the math changes.
 }
@@ -2406,6 +2417,8 @@ function handleBankCSV(e) {
 window.currentEditJEId = null;
 
 function editJournalEntry(id) {
+    alert("Manual editing of posted Journal Entries has been disabled for compliance with strict accounting practices. If an entry is incorrect, please post a manual reversing entry instead.");
+    return;
     window.currentEditJEId = id;
     var entry = DB.findOne('finance_journal_entries', {_id: id});
     if(!entry) return;

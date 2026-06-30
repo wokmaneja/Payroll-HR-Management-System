@@ -632,7 +632,8 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
                 reference TEXT,
                 description TEXT,
                 created_by TEXT,
-                created_at TEXT
+                created_at TEXT,
+                cleared INTEGER DEFAULT 0
             )`);
             db.run(`CREATE TABLE IF NOT EXISTS fin_journal_lines (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -1456,7 +1457,7 @@ app.post('/api/fin/accounts', (req, res) => {
 
 app.get('/api/fin/journals', (req, res) => {
     const query = `
-        SELECT j.id, j.date, j.reference, j.description, j.created_by, j.created_at,
+        SELECT j.id, j.date, j.reference, j.description, j.created_by, j.created_at, j.cleared,
                l.id as line_id, l.debit, l.credit, a.code, a.name as account_name, a.type as account_type
         FROM fin_journal_entries j
         JOIN fin_journal_lines l ON j.id = l.entry_id
@@ -1472,6 +1473,7 @@ app.get('/api/fin/journals', (req, res) => {
                 entriesMap[r.id] = {
                     id: r.id, date: r.date, reference: r.reference, 
                     description: r.description, created_by: r.created_by,
+                    cleared: !!r.cleared,
                     lines: []
                 };
             }
@@ -1510,6 +1512,15 @@ app.post('/api/fin/journals', async (req, res) => {
     } catch (err) {
         res.status(500).json({ error: err.message });
     }
+});
+
+app.put('/api/fin/journals/:id/clear', (req, res) => {
+    if (req.user.role !== 'admin' && req.user.role !== 'manager') return res.status(403).json({error: 'Unauthorized'});
+    const { cleared } = req.body;
+    db.run("UPDATE fin_journal_entries SET cleared = ? WHERE id = ?", [cleared ? 1 : 0, req.params.id], function(err) {
+        if (err) return res.status(500).json({ error: err.message });
+        res.json({ success: true });
+    });
 });
 
 // Dedicated endpoint to mark a medical claim as paid and auto-post GL

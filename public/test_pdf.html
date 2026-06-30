@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Test html2pdf</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+<button onclick="runTest()">Test html2pdf</button>
+<script>
+function runTest() {
+  try {
+    var pdfContent = '<div><h1>Test</h1><p>This is a test.</p></div>';
+    html2pdf().set({filename: 'Test.pdf', margin: 0.5}).from(pdfContent).save();
+    console.log("Success");
+  } catch(e) {
+    console.error("Error in html2pdf:", e);
+    document.body.innerHTML += '<p style="color:red">' + e.toString() + '</p>';
+  }
+}
+</script>
+</body>
+</html>
