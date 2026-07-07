@@ -91,7 +91,9 @@ function App() {
 
   const toggleModule = (code) => {
     setGenModules(prev => {
-      if (code === 'ALL') return ['ALL'];
+      if (code === 'ALL') {
+        return prev.includes('ALL') ? [] : ['ALL'];
+      }
       const withoutAll = prev.filter(c => c !== 'ALL');
       if (withoutAll.includes(code)) {
         const next = withoutAll.filter(c => c !== code);
@@ -103,7 +105,7 @@ function App() {
 
   const handleGenerateKey = () => {
     const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
-    const moduleSegment = genModules.includes('ALL') ? 'ALL' : genModules.join('-');
+    const moduleSegment = genModules.includes('ALL') || genModules.length === 0 ? 'ALL' : genModules.join('-');
     const staffSegment = genStaffCap === 'UNL' ? 'SUNL' : `S${genStaffCap || '1'}`;
     const key = `WM-${genPlan}-${genDur}-${moduleSegment}-${staffSegment}-${randomHex}`;
     setGeneratedKey(key);
