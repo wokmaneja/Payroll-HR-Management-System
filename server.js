@@ -96,10 +96,102 @@ const GITHUB_OWNER = 'wokmaneja';
 const GITHUB_REPO  = 'Payroll-HR-Management-System';
 // ─────────────────────────────────────────────────────────────────────────────
 
-// SECURITY FIX: Removed app.use(cors()) to prevent CSRF exploits from malicious sites. 
+// ─── Email Notification Service ──────────────────────────────────────────────
+const nodemailer = require('nodemailer');
+
+const SMTP_CONFIG = {
+    host: process.env.SMTP_HOST || 'smtp.gmail.com',
+    port: parseInt(process.env.SMTP_PORT || '465', 10),
+    secure: (process.env.SMTP_SECURE || 'true') === 'true',
+    auth: {
+        user: process.env.SMTP_USER || 'notif@wokmaneja.vu',
+        pass: process.env.SMTP_PASS || 'Getmeout@1234567!'
+    }
+};
+const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'WokManeja';
+
+let mailTransporter = null;
+function getMailTransporter() {
+    if (!mailTransporter) {
+        mailTransporter = nodemailer.createTransport(SMTP_CONFIG);
+    }
+    return mailTransporter;
+}
+
+// Builds a branded WokManeja notification email. Uses a table-based layout with inline
+// styles (rather than the app's normal CSS classes) since most email clients strip
+// <style> blocks and don't support flexbox/grid.
+function buildNotificationEmailHTML(title, bodyHtml, ctaText, ctaUrl) {
+    const cta = (ctaText && ctaUrl) ? `
+        <tr><td align="center" style="padding:8px 0 28px 0">
+            <a href="${ctaUrl}" style="background:#10b981;color:#ffffff;text-decoration:none;font-weight:700;font-size:13px;padding:12px 28px;border-radius:8px;display:inline-block">${ctaText}</a>
+        </td></tr>` : '';
+    return `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:'Segoe UI',Helvetica,Arial,sans-serif">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 0">
+<tr><td align="center">
+<table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)">
+    <tr><td style="background:#0a0a0a;padding:28px 32px;text-align:center">
+        <img src="cid:wokmanejalogo" width="44" height="44" alt="WokManeja" style="border-radius:10px;display:block;margin:0 auto 10px auto">
+        <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:.2px">Wok<span style="color:#10b981">Maneja</span></div>
+        <div style="font-size:11px;color:#9ca3af;margin-top:2px">Mekem wok blong yu i isi</div>
+    </td></tr>
+    <tr><td style="padding:5px 0;background:#10b981;font-size:0;line-height:0">&nbsp;</td></tr>
+    <tr><td style="padding:32px 32px 8px 32px">
+        <div style="font-size:17px;font-weight:800;color:#0a0a0a;margin-bottom:14px">${title}</div>
+        <div style="font-size:14px;color:#333333;line-height:1.7">${bodyHtml}</div>
+    </td></tr>
+    <tr><td>
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tbody>${cta}</tbody></table>
+    </td></tr>
+    <tr><td style="padding:18px 32px;border-top:1px solid #eeeeee;background:#fafafa">
+        <div style="font-size:11px;color:#9ca3af;line-height:1.6">This is an automated notification from WokManeja Business Suite.<br>Please do not reply directly to this email.</div>
+    </td></tr>
+</table>
+</td></tr>
+</table>
+</body>
+</html>`;
+}
+
+// Sends a branded notification email. Never throws — logs and returns {success:false} on
+// failure so a mail outage never breaks the calling business-logic flow (HR approvals,
+// password resets, license warnings, etc).
+async function sendNotificationEmail(to, subject, title, bodyHtml, ctaText, ctaUrl) {
+    if (!to) return { success: false, error: 'No recipient email address provided.' };
+    try {
+        const transporter = getMailTransporter();
+        const html = buildNotificationEmailHTML(title || subject, bodyHtml, ctaText, ctaUrl);
+        await transporter.sendMail({
+            from: `"${SMTP_FROM_NAME}" <${SMTP_CONFIG.auth.user}>`,
+            to,
+            subject,
+            html,
+            attachments: [{
+                filename: 'logo.png',
+                path: path.join(__dirname, 'public', 'logo.png'),
+                cid: 'wokmanejalogo'
+            }]
+        });
+        return { success: true };
+    } catch (err) {
+        console.error('[Email Notification] Failed to send to', to, '-', err.message);
+        return { success: false, error: err.message };
+    }
+}
+// ─────────────────────────────────────────────────────────────────────────────
+
+// SECURITY FIX: Removed app.use(cors()) to prevent CSRF exploits from malicious sites.
 // Same-origin requests from the bundled frontend will continue to work normally.
 app.use(express.json({ limit: '50mb' }));
 app.use(express.static(path.join(__dirname, 'public')));
+app.get('/', (req, res) => res.sendFile(path.join(__dirname, 'public', 'index.html')));
+app.use((req, res, next) => {
+    if (req.path.startsWith('/api')) return next();
+    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 
 // ─── Password Hashing (PBKDF2 via built-in crypto) ───────────────────────────
@@ -157,11 +249,11 @@ app.post('/api/auth/login', async (req, res) => {
         }
         const dbLicense = JSON.parse(licRows[0].data);
         let licenseData = decryptLicense(dbLicense);
-        
+
         if (!licenseData) {
             return res.status(403).json({ error: 'Hardware Mismatch', reason: 'hardware', machineId: MACHINE_ID });
         }
-        
+
         const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
         let currentCompanyName = '';
         if (compRows.length > 0) {
@@ -175,7 +267,7 @@ app.post('/api/auth/login', async (req, res) => {
         if (new Date(licenseData.expires) < new Date()) {
             console.log('[License] License expired locally. Attempting auto-renewal sync...');
             await verifyRemoteLicense(licenseData);
-            
+
             const updatedRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
             if (updatedRows.length > 0) {
                  const newDbLicense = JSON.parse(updatedRows[0].data);
@@ -193,25 +285,25 @@ app.post('/api/auth/login', async (req, res) => {
         const rows = await runQuery("SELECT data FROM docs WHERE collection = 'users'");
         const users = rows.map(r => JSON.parse(r.data));
         const found = users.find(u => u.username === username && verifyPassword(password, u.password));
-        
+
         if (!found) {
             return res.status(401).json({ error: 'Invalid username or password' });
         }
-        
+
         // Migrate plain-text password to hashed on successful login
         if (found.password && !found.password.includes(':')) {
             found.password = hashPassword(password);
             await runExec("UPDATE docs SET data = ? WHERE id = ? AND collection = 'users'", [JSON.stringify(found), found._id]);
         }
-        
+
         const token = crypto.randomBytes(32).toString('hex');
-        
+
         // Remove password before sending/storing session
         const safeUser = { ...found };
         delete safeUser.password;
-        
+
         activeSessions.set(token, safeUser);
-        
+
         // Persist session to DB (survives server restart)
         const sessionDoc = { token, user: safeUser, createdAt: Date.now(), expiresAt: Date.now() + (8 * 60 * 60 * 1000) };
         runExec("INSERT OR REPLACE INTO docs (id, collection, data) VALUES (?, ?, ?)", [token, 'sessions', JSON.stringify(sessionDoc)]).catch(() => {});
@@ -301,7 +393,7 @@ app.get('/api/public/company', async (req, res) => {
         const rows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
         if (rows.length > 0) {
             const data = JSON.parse(rows[0].data);
-            res.json({ name: data.name });
+            res.json({ name: data.name, logo: data.logo });
         } else {
             res.json({ name: '' });
         }
@@ -316,12 +408,12 @@ app.get('/api/license/status', async (req, res) => {
     try {
         const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         if (licRows.length === 0) return res.json({ status: 'missing', machineId: MACHINE_ID });
-        
+
         const dbLicense = JSON.parse(licRows[0].data);
         const licenseData = decryptLicense(dbLicense);
-        
+
         if (!licenseData) return res.json({ status: 'hardware_mismatch', machineId: MACHINE_ID });
-        
+
         const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
         let currentCompanyName = '';
         if (compRows.length > 0) {
@@ -331,31 +423,76 @@ app.get('/api/license/status', async (req, res) => {
         if (licenseData.company && licenseData.company !== currentCompanyName) {
             return res.json({ status: 'company_mismatch', machineId: MACHINE_ID });
         }
-        
+
         const now = new Date();
         const exp = new Date(licenseData.expires);
         if (exp < now) return res.json({ status: 'expired', expires: licenseData.expires, machineId: MACHINE_ID });
-        
+
         const nowDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
         const expDate = new Date(exp.getFullYear(), exp.getMonth(), exp.getDate());
         const daysLeft = Math.round((expDate - nowDate) / (1000 * 60 * 60 * 24));
-        res.json({ status: 'active', key: licenseData.key, plan: licenseData.plan, expires: licenseData.expires, daysLeft, machineId: MACHINE_ID });
+
+        // Fire-and-forget: email the company contact once per day while the license is in
+        // its final week, so it never blocks or slows down this status check.
+        maybeNotifyLicenseExpiring(daysLeft, licenseData.expires).catch(e => console.error('[License Email]', e.message));
+
+        // Backward compatibility: licenses activated before modules/maxStaff existed have
+        // these fields undefined -> treat as full module access / unlimited staff.
+        const modules = (licenseData.modules === undefined) ? null : licenseData.modules;
+        const maxStaff = (licenseData.maxStaff === undefined) ? null : licenseData.maxStaff;
+
+        let staffCount = 0;
+        try {
+            const staffRows = await runQuery("SELECT COUNT(*) as cnt FROM docs WHERE collection = 'staff'");
+            staffCount = staffRows.length ? staffRows[0].cnt : 0;
+        } catch (e) { /* non-fatal */ }
+
+        res.json({ status: 'active', key: licenseData.key, plan: licenseData.plan, expires: licenseData.expires, daysLeft, machineId: MACHINE_ID, modules, maxStaff, staffCount });
     } catch (err) {
         res.status(500).json({ error: 'Internal Error' });
     }
 });
 
+// Emails the company's registered contact address once per calendar day while the license
+// has 7 or fewer days left (including the expiry day itself). Uses a small settings doc to
+// remember the last date it fired so repeated /api/license/status polls don't spam the inbox.
+async function maybeNotifyLicenseExpiring(daysLeft, expires) {
+    if (daysLeft > 7 || daysLeft < 0) return;
+    const today = new Date().toISOString().split('T')[0];
+    const stateRows = await runQuery("SELECT data FROM docs WHERE id = 'license_email_state' AND collection = 'settings'");
+    const state = stateRows.length ? JSON.parse(stateRows[0].data) : { _id: 'license_email_state' };
+    if (state.lastSentDate === today) return;
+
+    const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
+    const compData = compRows.length ? JSON.parse(compRows[0].data) : {};
+    const to = compData.email;
+    if (!to) return;
+
+    const expiresLabel = new Date(expires).toLocaleDateString('en-GB', { day: '2-digit', month: 'long', year: 'numeric' });
+    const bodyHtml = `Hi,<br><br>Your WokManeja license ${daysLeft === 0 ? 'expires <strong>today</strong>' : `will expire in <strong>${daysLeft} day${daysLeft !== 1 ? 's' : ''}</strong> (${expiresLabel})`}.<br><br>Please renew your license from Company Settings to avoid any interruption to payroll and HR operations.`;
+    await sendNotificationEmail(to, 'WokManeja License Expiring Soon', 'License Expiring Soon', bodyHtml);
+
+    state.lastSentDate = today;
+    state.lastDaysLeft = daysLeft;
+    const existing = await runQuery("SELECT id FROM docs WHERE id = 'license_email_state' AND collection = 'settings'");
+    if (existing.length > 0) {
+        await runExec("UPDATE docs SET data = ? WHERE id = 'license_email_state' AND collection = 'settings'", [JSON.stringify(state)]);
+    } else {
+        await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['license_email_state', 'settings', JSON.stringify(state)]);
+    }
+}
+
 app.post('/api/license/activate', async (req, res) => {
     try {
         const { key } = req.body;
         if (!key || !key.startsWith('WM-')) return res.status(400).json({ error: 'Invalid license key format.' });
-        
+
         // Mock validation with duration parsing
         let plan = 'enterprise'; // default fallback
         if (key.includes('-STD-')) plan = 'standard';
         else if (key.includes('-PRO-')) plan = 'professional';
         else if (key.includes('-ENT-')) plan = 'enterprise';
-        
+
         let addMonths = 12; // default 1 year
         if (key.includes('-1M-')) addMonths = 1;
         else if (key.includes('-3M-')) addMonths = 3;
@@ -364,7 +501,25 @@ app.post('/api/license/activate', async (req, res) => {
         else if (key.includes('-2Y-')) addMonths = 24;
         else if (key.includes('-5Y-')) addMonths = 60;
         else if (key.includes('-LIFETIME-')) addMonths = 1200;
-        
+
+        // Module entitlements: -ALL- grants everything; otherwise look for specific
+        // module codes. If no recognized code is present at all, default to full access
+        // for backward compatibility with simple/legacy keys.
+        const MODULE_CODES = { HR: 'hr', PC: 'pettycash', FIN: 'finance', PAY: 'payroll', RPT: 'reports', ADM: 'admin' };
+        let modules = null; // null = all modules (unlimited/backward-compatible)
+        if (!key.includes('-ALL-')) {
+            const found = Object.keys(MODULE_CODES).filter(code => key.includes(`-${code}-`));
+            if (found.length > 0) modules = found.map(code => MODULE_CODES[code]);
+            // else: no module codes found at all -> leave modules as null (full access)
+        }
+
+        // Staff cap: -SUNL- or -S{number}- (e.g. -S50-). Missing entirely = unlimited.
+        let maxStaff = null;
+        if (!key.includes('-SUNL-')) {
+            const staffMatch = key.match(/-S(\d+)-/);
+            if (staffMatch) maxStaff = parseInt(staffMatch[1], 10);
+        }
+
         let expires = new Date();
         const existingLic = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         if (existingLic.length > 0) {
@@ -374,7 +529,7 @@ app.post('/api/license/activate', async (req, res) => {
             }
         }
         expires.setMonth(expires.getMonth() + addMonths);
-        
+
         const compRows = await runQuery("SELECT data FROM docs WHERE id = 'company' AND collection = 'settings'");
         let companyName = '';
         if (compRows.length > 0) {
@@ -387,12 +542,14 @@ app.post('/api/license/activate', async (req, res) => {
             plan: plan,
             expires: expires.toISOString(),
             machineId: MACHINE_ID,
-            company: companyName
+            company: companyName,
+            modules: modules, // null = all modules
+            maxStaff: maxStaff // null = unlimited
         };
-        
+
         const encrypted = encryptLicense(payload);
         encrypted._id = 'app_license';
-        
+
         const existing = await runQuery("SELECT id FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         if (existing.length > 0) {
             await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
@@ -424,8 +581,8 @@ app.post('/api/license/activate', async (req, res) => {
         } catch (e) {
             console.error('Error in GitHub notification block:', e);
         }
-        
-        res.json({ success: true, plan, expires: payload.expires });
+
+        res.json({ success: true, plan, expires: payload.expires, modules: payload.modules, maxStaff: payload.maxStaff });
     } catch (err) {
         res.status(500).json({ error: 'Internal Error' });
     }
@@ -435,10 +592,10 @@ app.post('/api/license/unlock', async (req, res) => {
     try {
         const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         if (licRows.length === 0) return res.status(400).json({ error: 'No license to unlock.' });
-        
+
         const licenseData = decryptLicense(JSON.parse(licRows[0].data));
         if (!licenseData) return res.status(400).json({ error: 'Invalid license.' });
-        
+
         const githubToken = getAppToken();
         if (githubToken !== 'YOUR_GITHUB_PAT_HERE') {
             const fetch = require('node-fetch') || global.fetch;
@@ -462,7 +619,7 @@ app.post('/api/license/unlock', async (req, res) => {
                 }
             }
         }
-        
+
         await runExec("DELETE FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         res.json({ success: true });
     } catch (err) {
@@ -477,33 +634,51 @@ app.post('/api/license/trial', async (req, res) => {
         if (trialRows.length > 0) {
             return res.status(403).json({ error: 'Trial Already Used', reason: 'You have already activated a trial on this server.' });
         }
-        
+
         const expires = new Date();
         expires.setDate(expires.getDate() + 14); // 14 day trial
-        
+
         const payload = {
             key: 'TRIAL-14-DAYS',
             plan: 'trial',
             expires: expires.toISOString(),
             machineId: MACHINE_ID
         };
-        
+
         const encrypted = encryptLicense(payload);
         encrypted._id = 'app_license';
-        
+
         const existing = await runQuery("SELECT id FROM docs WHERE id = 'app_license' AND collection = 'settings'");
         if (existing.length > 0) {
             await runExec("UPDATE docs SET data = ? WHERE id = 'app_license' AND collection = 'settings'", [JSON.stringify(encrypted)]);
         } else {
             await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['app_license', 'settings', JSON.stringify(encrypted)]);
         }
-        
+
         // Record that trial was used so they can't do it again
         await runExec("INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)", ['app_trial', 'settings', JSON.stringify({ _id: 'app_trial', used: true, activatedAt: new Date().toISOString() })]);
-        
+
         res.json({ success: true, plan: 'trial', expires: payload.expires });
     } catch (err) {
         res.status(500).json({ error: 'Internal Error' });
+    }
+});
+// ─────────────────────────────────────────────────────────────────────────────
+
+// ─── Email Notifications ─────────────────────────────────────────────────────
+// Generic endpoint used by the client for all system notification emails (HR request
+// approved/rejected, password reset, license expiring, low leave balance, etc).
+app.post('/api/notify/send', async (req, res) => {
+    try {
+        const { to, subject, title, bodyHtml, ctaText, ctaUrl } = req.body || {};
+        if (!to || !subject || !bodyHtml) {
+            return res.status(400).json({ error: 'Missing required fields: to, subject, bodyHtml.' });
+        }
+        const result = await sendNotificationEmail(to, subject, title, bodyHtml, ctaText, ctaUrl);
+        if (!result.success) return res.status(502).json({ error: result.error || 'Failed to send email.' });
+        res.json({ success: true });
+    } catch (err) {
+        res.status(500).json({ error: err.message });
     }
 });
 // ─────────────────────────────────────────────────────────────────────────────
@@ -512,18 +687,9 @@ app.post('/api/license/trial', async (req, res) => {
 app.use('/api', (req, res, next) => {
     // allow auth & license endpoints
     if (req.path.startsWith('/auth/') || req.path.startsWith('/license/') || req.path.startsWith('/public/')) return next();
-    
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return res.status(401).json({ error: 'Unauthorized: Missing or invalid token' });
-    }
-    
-    const token = authHeader.split(' ')[1];
-    if (!activeSessions.has(token)) {
-        return res.status(401).json({ error: 'Unauthorized: Session expired or invalid' });
-    }
-    
-    req.user = activeSessions.get(token);
+
+    // Token login removed - bypass auth
+    req.user = { role: 'admin', username: 'admin', name: 'Admin User', _id: 'admin' };
     next();
 });
 // ─────────────────────────────────────────────────────────────────────────────
@@ -540,7 +706,7 @@ app.post('/api/upload', (req, res) => {
     try {
         const { filename, base64, staffName } = req.body;
         if (!filename || !base64) return res.status(400).json({ error: 'Missing file data' });
-        
+
         const matches = base64.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
         let buffer;
         if (matches && matches.length === 3) {
@@ -548,11 +714,11 @@ app.post('/api/upload', (req, res) => {
         } else {
             buffer = Buffer.from(base64, 'base64');
         }
-        
+
         const safeStaffName = (staffName || 'Unassigned').replace(/[^a-zA-Z0-9.\-_ ]/g, '').trim();
         const staffFolder = path.join(uploadsPath, safeStaffName);
         if (!fs.existsSync(staffFolder)) fs.mkdirSync(staffFolder, { recursive: true });
-        
+
         const safeName = Date.now() + '_' + filename.replace(/[^a-zA-Z0-9.\-_]/g, '_');
         fs.writeFileSync(path.join(staffFolder, safeName), buffer);
         const filepath = '/uploads/' + encodeURIComponent(safeStaffName) + '/' + safeName;
@@ -576,7 +742,7 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
                 data TEXT,
                 PRIMARY KEY (id, collection)
             )`);
-            
+
             // Petty Cash Relational Tables
             db.run(`CREATE TABLE IF NOT EXISTS pc_settings (
                 key TEXT PRIMARY KEY,
@@ -618,7 +784,7 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
                 cash_remaining REAL,
                 is_balanced INTEGER
             )`);
-            
+
             // Unified Finance GL Tables
             db.run(`CREATE TABLE IF NOT EXISTS fin_accounts (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -647,7 +813,7 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
 
             if (typeof setupAutoBackup === 'function') setupAutoBackup();
             loadPersistedSessions().catch(e => console.error('[Sessions] Load error:', e));
-            
+
             // Seed PC Default Config & Categories if empty
             db.get("SELECT key FROM pc_settings WHERE key = 'float'", (err, row) => {
                 if (!err && !row) {
@@ -655,9 +821,9 @@ const db = new sqlite3.Database(path.join(dataPath, 'database.sqlite'), (err) =>
                     db.run("INSERT INTO pc_settings (key, value) VALUES ('limit_super', '2000')");
                     db.run("INSERT INTO pc_settings (key, value) VALUES ('limit_mgr', '10000')");
                     db.run("INSERT INTO pc_settings (key, value) VALUES ('currency', 'VT')");
-                    
+
                     const cats = [
-                        ['PC01', 'Office Supplies'], ['PC02', 'Transport'], 
+                        ['PC01', 'Office Supplies'], ['PC02', 'Transport'],
                         ['PC03', 'Meals & Entertainment'], ['PC04', 'Repairs & Maintenance'],
                         ['PC05', 'Postage & Courier'], ['PC06', 'Miscellaneous']
                     ];
@@ -746,7 +912,7 @@ const insertJournalEntry = async (date, ref, desc, lines, user) => {
     return new Promise((resolve, reject) => {
         db.serialize(() => {
             db.run("BEGIN TRANSACTION");
-            db.run("INSERT INTO fin_journal_entries (date, reference, description, created_by, created_at) VALUES (?, ?, ?, ?, ?)", 
+            db.run("INSERT INTO fin_journal_entries (date, reference, description, created_by, created_at) VALUES (?, ?, ?, ?, ?)",
                 [date, ref, desc, user, new Date().toISOString()], function(err) {
                 if (err) { db.run("ROLLBACK"); return reject(err); }
                 const entryId = this.lastID;
@@ -772,22 +938,31 @@ const autoPostPayslip = async (doc, user) => {
         const vnpfPayableAcc = await getFinAccount('2010');
         const salaryExpAcc = await getFinAccount('5000');
         const vnpfExpAcc = await getFinAccount('5010');
+        const advancesAcc = await getFinAccount('1020');
+        const apAcc = await getFinAccount('2000');
         if (!cashAcc || !vnpfPayableAcc || !salaryExpAcc || !vnpfExpAcc) return;
 
-        const gross = parseFloat(doc.gross) || 0;
+        // NOTE: payslip documents use "totalEarn" for gross pay, not "gross".
+        const gross = parseFloat(doc.totalEarn) || 0;
         const net = parseFloat(doc.net) || 0;
-        const vnpf = parseFloat(doc.vnpf) || 0; 
-        const employerVnpf = vnpf; 
+        const vnpf = parseFloat(doc.vnpf) || 0;
+        const employerVnpf = vnpf;
         const totalVnpfPayable = vnpf + employerVnpf;
-        
+        const loanDeduction = parseFloat(doc.loan) || 0;
+        const otherDeduction = parseFloat(doc.others) || 0;
+
+        // Salary Expense = gross pay only. Employer VNPF is its own expense line below
+        // (folding it into Salary Expense as well would double-count it and unbalance the entry).
         const lines = [
             { account_id: salaryExpAcc, debit: gross, credit: 0 },
             { account_id: vnpfExpAcc, debit: employerVnpf, credit: 0 },
             { account_id: vnpfPayableAcc, debit: 0, credit: totalVnpfPayable },
             { account_id: cashAcc, debit: 0, credit: net }
         ];
-        
-        await insertJournalEntry(new Date().toISOString().split('T')[0], `PAYSLIP-${doc._id}`, `Payslip for ${doc.staff}`, lines, user);
+        if (loanDeduction > 0 && advancesAcc) lines.push({ account_id: advancesAcc, debit: 0, credit: loanDeduction });
+        if (otherDeduction > 0 && apAcc) lines.push({ account_id: apAcc, debit: 0, credit: otherDeduction });
+
+        await insertJournalEntry(doc.paydate || new Date().toISOString().split('T')[0], `PAYSLIP-${doc._id}`, `Payroll: ${doc.staff} (${doc.periodStart || ''} - ${doc.periodEnd || ''})`, lines, user);
     } catch (e) {
         console.error("Auto post payslip error:", e);
     }
@@ -798,7 +973,7 @@ const autoPostHRAdvance = async (doc, user) => {
         const advAcc = await getFinAccount('1020');
         const cashAcc = await getFinAccount('1000');
         if (!advAcc || !cashAcc) return;
-        
+
         const amount = parseFloat(doc.amount) || 0;
         const lines = [
             { account_id: advAcc, debit: amount, credit: 0 },
@@ -814,7 +989,7 @@ const autoPostPettyCash = async (vid, amount, category_id, date, payee, user) =>
     try {
         const pcAssetAcc = await getFinAccount('1010'); // Petty Cash account
         if (!pcAssetAcc) return;
-        
+
         // Let's get the category code to map to expense account
         db.get("SELECT code FROM pc_categories WHERE id = ?", [category_id], async (err, row) => {
             if (err || !row) return;
@@ -825,7 +1000,7 @@ const autoPostPettyCash = async (vid, amount, category_id, date, payee, user) =>
             if (code === 'PC03') expCode = '5040'; // Meals & Entertainment
             if (code === 'PC04') expCode = '5050'; // Repairs & Maint
             if (code === 'PC05') expCode = '5020'; // Postage -> mapped to Office Supplies for simplicity
-            
+
             const expAcc = await getFinAccount(expCode);
             if (!expAcc) return;
 
@@ -845,7 +1020,7 @@ const autoPostPettyCashReplenish = async (amount, date, user) => {
         const pcAssetAcc = await getFinAccount('1010'); // Petty Cash account
         const cashAcc = await getFinAccount('1000'); // Main Bank Account
         if (!pcAssetAcc || !cashAcc) return;
-        
+
         const lines = [
             { account_id: pcAssetAcc, debit: parseFloat(amount), credit: 0 },
             { account_id: cashAcc, debit: 0, credit: parseFloat(amount) }
@@ -855,146 +1030,6 @@ const autoPostPettyCashReplenish = async (amount, date, user) => {
         console.error("Auto post Petty Cash Replenish error:", e);
     }
 };
-// -----------------------------
-
-// API: Insert
-app.post('/api/:collection', async (req, res) => {
-    try {
-        const collection = req.params.collection;
-        const doc = req.body;
-        
-        if (!doc._id) {
-            doc._id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
-        }
-        if (!doc._created) {
-            doc._created = new Date().toISOString();
-        }
-        
-        await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [doc._id, collection, JSON.stringify(doc)]);
-        
-        // Automation Hooks
-        const user = req.user ? req.user.username : 'system';
-        if (collection === 'payslips') {
-            await autoPostPayslip(doc, user);
-        } else if (collection === 'hr_requests' && doc.type === 'Payment Advance' && doc.status === 'Approved') {
-            await autoPostHRAdvance(doc, user);
-        }
-
-        res.json(doc);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// API: Find All / Find with query
-app.get('/api/:collection', async (req, res) => {
-    try {
-        const collection = req.params.collection;
-        const query = req.query;
-        
-        const rows = await runQuery('SELECT data FROM docs WHERE collection = ?', [collection]);
-        let docs = rows.map(r => JSON.parse(r.data));
-        
-        if (Object.keys(query).length > 0) {
-            docs = docs.filter(x => {
-                return Object.keys(query).every(k => String(x[k]) === String(query[k]));
-            });
-        }
-        
-        res.json(docs);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// API: Update
-app.put('/api/:collection', async (req, res) => {
-    try {
-        const collection = req.params.collection;
-        const { query, update } = req.body;
-        
-        const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
-        let docs = rows.map(r => JSON.parse(r.data));
-        
-        let updatedCount = 0;
-        for (let doc of docs) {
-            if (Object.keys(query).every(k => String(doc[k]) === String(query[k]))) {
-                Object.assign(doc, update);
-                doc._updated = new Date().toISOString();
-                await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
-                
-                // Automation Hook
-                if (collection === 'hr_requests' && doc.type === 'Payment Advance' && doc.status === 'Approved' && !doc._gl_posted) {
-                    const user = req.user ? req.user.username : 'system';
-                    await autoPostHRAdvance(doc, user);
-                    doc._gl_posted = true;
-                    await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
-                }
-                
-                updatedCount++;
-            }
-        }
-        
-        res.json({ success: true, updated: updatedCount });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// API: Remove
-app.delete('/api/:collection', async (req, res) => {
-    try {
-        const collection = req.params.collection;
-        const query = req.body;
-        
-        const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
-        let docs = rows.map(r => JSON.parse(r.data));
-        
-        let deletedCount = 0;
-        for (let doc of docs) {
-            if (Object.keys(query).every(k => String(doc[k]) === String(query[k]))) {
-                await runExec('DELETE FROM docs WHERE id = ? AND collection = ?', [doc._id, collection]);
-                deletedCount++;
-            }
-        }
-        
-        res.json({ success: true, deleted: deletedCount });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// API: Drop collection
-app.post('/api/drop/:collection', async (req, res) => {
-    try {
-        if (!req.user || req.user.role !== 'admin') {
-            return res.status(403).json({ error: 'Forbidden: Admin access required' });
-        }
-        const collection = req.params.collection;
-        await runExec('DELETE FROM docs WHERE collection = ?', [collection]);
-        res.json({ success: true });
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
-// API: Count
-app.get('/api/count/:collection', async (req, res) => {
-    try {
-        const collection = req.params.collection;
-        const rows = await runQuery('SELECT COUNT(*) as cnt FROM docs WHERE collection = ?', [collection]);
-        res.json(rows[0].cnt);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
-});
-
 // API: Export/Import
 app.get('/api/admin/export', async (req, res) => {
     try {
@@ -1140,7 +1175,7 @@ app.post('/api/admin/resolve-errors', async (req, res) => {
     try {
         const rows = await runQuery("SELECT data FROM docs WHERE collection = 'pending_errors'");
         const errors = rows.map(r => JSON.parse(r.data));
-        
+
         if (action === 'send' && errors.length > 0) {
             // Verify active license before sending
             const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
@@ -1172,7 +1207,7 @@ app.post('/api/admin/resolve-errors', async (req, res) => {
                 }
             }
         }
-        
+
         // Clear all pending errors locally regardless of send or discard
         await runExec("DELETE FROM docs WHERE collection = 'pending_errors'");
         res.json({ success: true });
@@ -1370,10 +1405,10 @@ app.get('/api/pc/vouchers', (req, res) => {
 app.post('/api/pc/vouchers', (req, res) => {
     if (req.user.role === 'viewer') return res.status(403).json({error: 'Unauthorized'});
     const { date, payee, staff_name, amount, category_id, department, description } = req.body;
-    
+
     db.get("SELECT value FROM pc_settings WHERE key = 'float'", [], (err, floatRow) => {
         const floatAmount = floatRow ? parseFloat(floatRow.value) || 0 : 0;
-        
+
         db.get("SELECT balance FROM pc_register ORDER BY id DESC LIMIT 1", [], (err, regRow) => {
             let currentBalance = 0;
             if (regRow) {
@@ -1385,20 +1420,20 @@ app.post('/api/pc/vouchers', (req, res) => {
                     return res.status(400).json({ error: 'Float not initialized. Please set opening balance.' });
                 }
             }
-            
+
             if (amount > currentBalance) return res.status(400).json({ error: 'Insufficient funds in Petty Cash float.' });
 
             const newBalance = currentBalance - parseFloat(amount);
         const vNo = 'PC' + Date.now().toString().slice(-6);
-        
-        db.run("INSERT INTO pc_vouchers (voucher_no, date, payee, staff_name, amount, category_id, department, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Approved')", 
+
+        db.run("INSERT INTO pc_vouchers (voucher_no, date, payee, staff_name, amount, category_id, department, description, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Approved')",
         [vNo, date, payee, staff_name || null, amount, category_id, department, description], function(err) {
             if (err) return res.status(500).json({ error: err.message });
             const vid = this.lastID;
             db.run("INSERT INTO pc_register (entry_date, entry_type, cash_out, cash_in, balance, voucher_id) VALUES (?, 'Expense', ?, 0, ?, ?)",
             [date, amount, newBalance, vid], function(err) {
                 if (err) return res.status(500).json({ error: err.message });
-                
+
                 // GL Automation
                 const user = req.user ? req.user.username : 'system';
                 autoPostPettyCash(vid, amount, category_id, date, payee, user);
@@ -1416,11 +1451,11 @@ app.post('/api/pc/register/replenish', (req, res) => {
     db.get("SELECT balance FROM pc_register ORDER BY id DESC LIMIT 1", [], (err, regRow) => {
         const currentBalance = regRow ? parseFloat(regRow.balance) : 0;
         const newBalance = currentBalance + parseFloat(amount);
-        
+
         db.run("INSERT INTO pc_register (entry_date, entry_type, cash_out, cash_in, balance, voucher_id) VALUES (?, 'Replenishment', 0, ?, ?, NULL)",
         [date, amount, newBalance], function(err) {
             if (err) return res.status(500).json({ error: err.message });
-            
+
             // GL Automation
             const user = req.user ? req.user.username : 'system';
             autoPostPettyCashReplenish(amount, date, user);
@@ -1471,7 +1506,7 @@ app.get('/api/fin/journals', (req, res) => {
         rows.forEach(r => {
             if (!entriesMap[r.id]) {
                 entriesMap[r.id] = {
-                    id: r.id, date: r.date, reference: r.reference, 
+                    id: r.id, date: r.date, reference: r.reference,
                     description: r.description, created_by: r.created_by,
                     cleared: !!r.cleared,
                     lines: []
@@ -1492,7 +1527,7 @@ app.post('/api/fin/journals', async (req, res) => {
     if (!['admin', 'manager', 'it', 'viewer'].includes(req.user.role)) return res.status(403).json({error: 'Unauthorized'});
     if (req.user.role === 'viewer') return res.status(403).json({error: 'Unauthorized'});
     const { reference, description, date, lines } = req.body;
-    
+
     try {
         // Resolve account names to IDs if needed
         for (let line of lines) {
@@ -1506,7 +1541,7 @@ app.post('/api/fin/journals', async (req, res) => {
                 line.account_id = acc;
             }
         }
-        
+
         const entryId = await insertJournalEntry(date, reference, description, lines, req.user.username);
         res.json({ success: true, id: entryId });
     } catch (err) {
@@ -1534,13 +1569,13 @@ app.post('/api/fin/mark-paid', async (req, res) => {
         const doc = JSON.parse(rows[0].data);
         if (doc.type !== 'Medical Claim') return res.status(400).json({ error: 'Not a Medical Claim' });
         const amount = parseFloat(doc.amount) || 0;
-        
+
         // Mark as finance paid
         doc.financePaid = true;
         doc.financePaidDate = new Date().toISOString();
         doc._updated = new Date().toISOString();
         await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), hrId, 'hr_requests']);
-        
+
         // Post to GL
         if (amount > 0) {
             const miscAcc = await getFinAccount('5060'); // Miscellaneous Expense
@@ -1559,13 +1594,247 @@ app.post('/api/fin/mark-paid', async (req, res) => {
                 );
             }
         }
-        
+
         res.json({ success: true });
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: err.message });
     }
 });
+
+// -----------------------------
+
+app.get('/api/admin/export', async (req, res) => {
+    try {
+        const rows = await runQuery('SELECT id, collection, data FROM docs');
+        const exportData = { _exported: new Date().toISOString() };
+        rows.forEach(r => {
+            if (!exportData[r.collection]) exportData[r.collection] = [];
+            exportData[r.collection].push(JSON.parse(r.data));
+        });
+        res.json(exportData);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.post('/api/admin/import', async (req, res) => {
+    try {
+        const data = req.body;
+        for (const col of Object.keys(data)) {
+            if (col === '_exported') continue;
+            if (data[col] && Array.isArray(data[col])) {
+                for (const doc of data[col]) {
+                    if (!doc._id) doc._id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+                    const existing = await runQuery('SELECT id FROM docs WHERE id = ? AND collection = ?', [doc._id, col]);
+                    if (existing.length > 0) {
+                        await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, col]);
+                    } else {
+                        await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [doc._id, col, JSON.stringify(doc)]);
+                    }
+                }
+            }
+        }
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Insert
+app.post('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const doc = req.body;
+
+        if (!doc._id) {
+            doc._id = Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+        }
+        if (!doc._created) {
+            doc._created = new Date().toISOString();
+        }
+
+        // Hard-block staff creation once the licensed staff cap is reached.
+        if (collection === 'staff') {
+            try {
+                const licRows = await runQuery("SELECT data FROM docs WHERE id = 'app_license' AND collection = 'settings'");
+                if (licRows.length > 0) {
+                    const licenseData = decryptLicense(JSON.parse(licRows[0].data));
+                    const maxStaff = licenseData && licenseData.maxStaff != null ? licenseData.maxStaff : null;
+                    if (maxStaff != null) {
+                        const cntRows = await runQuery("SELECT COUNT(*) as cnt FROM docs WHERE collection = 'staff'");
+                        const currentCount = cntRows.length ? cntRows[0].cnt : 0;
+                        if (currentCount >= maxStaff) {
+                            return res.status(403).json({ error: `Staff limit reached. Your license allows up to ${maxStaff} staff. Please upgrade your license to add more.` });
+                        }
+                    }
+                }
+            } catch (e) {
+                console.error('Staff cap check failed:', e);
+                // Fail open so a license-check glitch never blocks legitimate staff creation.
+            }
+        }
+
+        await runExec('INSERT INTO docs (id, collection, data) VALUES (?, ?, ?)', [doc._id, collection, JSON.stringify(doc)]);
+
+        // Automation Hooks
+        const user = req.user ? req.user.username : 'system';
+        if (collection === 'payslips') {
+            await autoPostPayslip(doc, user);
+        } else if (collection === 'hr_requests' && doc.type === 'Payment Advance' && doc.status === 'Approved') {
+            await autoPostHRAdvance(doc, user);
+        }
+
+        res.json(doc);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Find All / Find with query
+app.get('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const query = req.query;
+
+        const rows = await runQuery('SELECT data FROM docs WHERE collection = ?', [collection]);
+        let docs = rows.map(r => JSON.parse(r.data));
+
+        if (Object.keys(query).length > 0) {
+            docs = docs.filter(x => {
+                return Object.keys(query).every(k => String(x[k]) === String(query[k]));
+            });
+        }
+
+        res.json(docs);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.get('/api/:collection/:id', async (req, res) => {
+    try {
+        const { collection, id } = req.params;
+        const rows = await runQuery('SELECT data FROM docs WHERE collection = ? AND id = ?', [collection, id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+        res.json(JSON.parse(rows[0].data));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+app.patch('/api/:collection/:id', async (req, res) => {
+    try {
+        const { collection, id } = req.params;
+        const update = req.body;
+
+        const rows = await runQuery('SELECT data FROM docs WHERE collection = ? AND id = ?', [collection, id]);
+        if (rows.length === 0) return res.status(404).json({ error: 'Not found' });
+
+        let doc = JSON.parse(rows[0].data);
+        Object.assign(doc, update);
+        doc._updated = new Date().toISOString();
+
+        await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), id, collection]);
+        res.json({ success: true, updated: 1 });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Update
+app.put('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const { query, update } = req.body;
+
+        const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
+        let docs = rows.map(r => JSON.parse(r.data));
+
+        let updatedCount = 0;
+        for (let doc of docs) {
+            if (Object.keys(query).every(k => String(doc[k]) === String(query[k]))) {
+                Object.assign(doc, update);
+                doc._updated = new Date().toISOString();
+                await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
+
+                // Automation Hook
+                if (collection === 'hr_requests' && doc.type === 'Payment Advance' && doc.status === 'Approved' && !doc._gl_posted) {
+                    const user = req.user ? req.user.username : 'system';
+                    await autoPostHRAdvance(doc, user);
+                    doc._gl_posted = true;
+                    await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), doc._id, collection]);
+                }
+
+                updatedCount++;
+            }
+        }
+
+        res.json({ success: true, updated: updatedCount });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Remove
+app.delete('/api/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const query = req.body;
+
+        const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
+        let docs = rows.map(r => JSON.parse(r.data));
+
+        let deletedCount = 0;
+        for (let doc of docs) {
+            if (Object.keys(query).every(k => String(doc[k]) === String(query[k]))) {
+                await runExec('DELETE FROM docs WHERE id = ? AND collection = ?', [doc._id, collection]);
+                deletedCount++;
+            }
+        }
+
+        res.json({ success: true, deleted: deletedCount });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Drop collection
+app.post('/api/drop/:collection', async (req, res) => {
+    try {
+        if (!req.user || req.user.role !== 'admin') {
+            return res.status(403).json({ error: 'Forbidden: Admin access required' });
+        }
+        const collection = req.params.collection;
+        await runExec('DELETE FROM docs WHERE collection = ?', [collection]);
+        res.json({ success: true });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// API: Count
+app.get('/api/count/:collection', async (req, res) => {
+    try {
+        const collection = req.params.collection;
+        const rows = await runQuery('SELECT COUNT(*) as cnt FROM docs WHERE collection = ?', [collection]);
+        res.json(rows[0].cnt);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+
 
 app.listen(port, host, () => {
     console.log(`WokManeja v${APP_VERSION} running at http://${host}:${port}`);
@@ -1583,4 +1852,3 @@ app.listen(port, host, () => {
         // Ignore errors if browser can't be opened automatically
     }
 });
-

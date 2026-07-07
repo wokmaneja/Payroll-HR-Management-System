@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="en"><head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>WokManeja — Payroll &amp; HR System</title>
+<title>WokManeja Business Suite</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -43,8 +43,8 @@ tr:hover td{background:#fafafa}
 .db-dot{width:8px;height:8px;border-radius:50%;background:#4caf50;flex-shrink:0}
 .hr-summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
 .hr-summary-card{background:#fff;border-radius:14px;padding:1.25rem;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;align-items:center;gap:1rem;border:1px solid var(--border)}
-.hr-icon{width:52px;height:52px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0}
-.hr-icon.annual{background:var(--navy)}.hr-icon.sick{background:var(--gold)}.hr-icon.unpaid{background:var(--navy)}.hr-icon.advance{background:var(--gold)}
+.hr-icon{width:52px;height:52px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:20px;color:#fff;flex-shrink:0;box-shadow:0 3px 8px rgba(0,0,0,.12)}
+.hr-icon.annual{background:linear-gradient(135deg,#3b82f6,#2563eb)}.hr-icon.sick{background:linear-gradient(135deg,#f87171,#dc2626)}.hr-icon.unpaid{background:linear-gradient(135deg,#f59e0b,#d97706)}.hr-icon.advance{background:linear-gradient(135deg,#10b981,#059669)}.hr-icon.medical{background:linear-gradient(135deg,#22d3ee,#0891b2)}
 .hr-card-info p{font-size:11px;color:var(--text3);margin-bottom:2px;text-transform:uppercase;letter-spacing:.4px;font-weight:600}
 .hr-card-info h3{font-size:20px;font-weight:800;color:var(--navy)}
 .status-pill{display:inline-block;padding:4px 12px;border-radius:20px;font-size:11px;font-weight:700}
@@ -107,7 +107,7 @@ tr:hover td{background:#fafafa}
   @page{margin:0.4cm;size:A4 portrait}
   body{margin:0;padding:0;background:#fff!important}
   #page-login,#db-indicator,#page-main,.db-indicator{display:none!important}
-  #print-overlay{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
+  #print-overlay[style*="flex"]{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
   #print-overlay>div{width:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;padding:0.6cm 0.8cm!important;border:none!important;overflow:visible!important}
   .btn{display:none!important}
   * {-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
@@ -156,6 +156,38 @@ window.generatePDF = function(content, filename) {
     alert('PDF Generation Error: ' + e);
   }
 };
+
+// Shared "Email Report" helper: saves the PDF (same as generatePDF), then opens the
+// user's default mail client with a pre-filled subject/body so they can attach the
+// just-downloaded file. WokManeja is offline-first and has no SMTP server of its own,
+// so this hands off to whatever mail app is already configured on the machine rather
+// than sending silently in the background.
+window.emailReportPDF = function(content, filename, subject) {
+  try {
+    if(typeof html2pdf === 'undefined') {
+      alert('html2pdf library is not loaded. Please ensure you are connected to the internet or that the local file exists.');
+      return;
+    }
+    var fname = filename || 'Report.pdf';
+    var subj = subject || 'WokManeja Report';
+    var opt = {
+      margin: 0.5,
+      filename: fname,
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true },
+      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+    };
+    html2pdf().set(opt).from(content).save().then(function() {
+      var body = 'Hi,\n\nPlease find attached the ' + subj + ' from WokManeja.\n\n' +
+                 '(The file "' + fname + '" has just been downloaded to your computer -- please attach it to this email before sending.)\n\nRegards';
+      window.location.href = 'mailto:?subject=' + encodeURIComponent(subj) + '&body=' + encodeURIComponent(body);
+    }).catch(function(err) {
+      alert('PDF Save Error: ' + err);
+    });
+  } catch(e) {
+    alert('PDF Generation Error: ' + e);
+  }
+};
 </script>
 </head>
 
@@ -166,12 +198,10 @@ window.generatePDF = function(content, filename) {
 <!-- LOGIN -->
 <div id="page-login" style="min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:2rem 1rem;background:#d6d6d6">
   <div style="width:100%;max-width:320px;flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center">
-    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:1rem">
-      <img src="logo.png" style="width:140px; height:auto; margin-bottom:12px; margin-right:15px" />
-      <div style="font-family:'Quicksand', system-ui, sans-serif; font-weight:700; font-size:48px; color:#23272A; line-height:1; letter-spacing:-1px">Wok<span style="color:#10B981">Maneja</span></div>
-      <div style="font-family:'Quicksand', system-ui, sans-serif; font-weight:500; font-size:18px; color:#555E6B; margin-top:6px">Mekem wok blong yu i isi</div>
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:1.25rem">
+      <img id="login-company-logo" src="" alt="Company Logo" style="width:96px; height:96px; object-fit:cover; border-radius:16px; margin-bottom:12px; display:none; box-shadow:0 2px 10px rgba(0,0,0,.15)" />
+      <div id="login-company-name" style="font-family: Montserrat, sans-serif;font-size:26px;font-weight:800;color:var(--navy);text-align:center;letter-spacing:-0.5px"></div>
     </div>
-    <div id="login-company-name" style="font-family: Montserrat, sans-serif;font-size:26px;font-weight:800;color:var(--navy);margin-bottom:1.25rem;text-align:center;letter-spacing:-0.5px"></div>
     <div class="card" style="padding:2rem;width:100%">
       <div style="margin-bottom:1.25rem"><label><span data-i18n="lbl_username">Username</span></label><input id="login-user" type="text" placeholder="Enter username" autocomplete="username" data-i18n-placeholder="ph_enter_username"></div>
       <div style="margin-bottom:1.25rem"><label><span data-i18n="lbl_password">Password</span></label><input id="login-pass" type="password" placeholder="Enter password" autocomplete="current-password" data-i18n-placeholder="ph_enter_password"></div>
@@ -181,9 +211,14 @@ window.generatePDF = function(content, filename) {
   </div>
   <!-- MeleTech Footer -->
   <div style="width:100%;max-width:320px;margin-top:1.5rem;padding-top:1.25rem;border-top:1px solid rgba(0,0,0,.12)">
+    <div style="display:flex; flex-direction:column; align-items:center; margin-bottom:1rem; opacity:.8">
+      <img src="logo.png" style="width:48px; height:auto; margin-bottom:6px" />
+      <div style="font-family:'Quicksand', system-ui, sans-serif; font-weight:700; font-size:18px; color:#23272A; line-height:1">Wok<span style="color:#10B981">Maneja</span></div>
+      <div style="font-family:'Quicksand', system-ui, sans-serif; font-weight:500; font-size:11px; color:#555E6B; margin-top:5px">Mekem wok blong yu i isi</div>
+    </div>
     <p style="text-align:center;font-size:12px;color:#666;margin-bottom:.85rem"><span data-i18n="txt_copyright">© 2026 WokManeja. All rights reserved.</span><br><span data-i18n="txt_support">Support: </span><a href="mailto:help@wokmaneja.vu" style="color:var(--navy);font-weight:600;text-decoration:none">help@wokmaneja.vu</a></p>
-    
-    
+
+
   </div>
 </div>
 <!-- MAIN APP -->
@@ -455,7 +490,8 @@ window.generatePDF = function(content, filename) {
       <!-- RECORDS -->
       <div id="section-records" class="hidden"><p class="section-title"><i class="ti ti-files" style="color:var(--gold)"></i> <span data-i18n="menu_records">Payslip Records</span></p><div id="records-list"></div></div>
       <!-- STAFF -->
-      <div id="section-staff" class="hidden"><p class="section-title"><i class="ti ti-users" style="color:var(--gold)"></i> <span data-i18n="menu_staff">Staff Management</span></p><div style="display:grid;grid-template-columns:450px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="staff-form-title"><span data-i18n="lbl_add_staff">Add New Staff</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="sf-name" type="text" placeholder="e.g. John Smith" data-i18n-placeholder="ph_john_smith"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_emp_id">Employee ID </span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa"><span data-i18n="lbl_auto_gen">(auto-generated)</span></span></label><input id="sf-id" type="text" readonly=""><p class="hint"><span data-i18n="txt_next_id">Next available ID auto-filled</span></p></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_job_title">Designation / Job Title</span></label><input id="sf-designation" type="text" placeholder="e.g. Accountant" data-i18n-placeholder="ph_accountant"></div><div style="margin-bottom:.85rem"><label style="display:flex;justify-content:space-between;align-items:center"><span><span data-i18n="lbl_department">Department</span></span><button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:#e2e8f0;color:#333;border:none" onclick="openDeptModal()"><i class="ti ti-settings"></i><span data-i18n="btn_manage"> Manage</span></button></label><select id="sf-department"><option value="" data-i18n="opt_select_dept">-- Select Department --</option></select></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_email">Email Address</span></label><input id="sf-email" type="email" placeholder="staff@email.com" data-i18n-placeholder="ph_email"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_phone">Phone Number</span></label><input id="sf-phone" type="text" placeholder="+678 000000" data-i18n-placeholder="ph_phone"></div><div><label>VNPF Number</label><input id="sf-vnpfno" type="text" placeholder="e.g. 123456"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label>Pay Type</label><select id="sf-paytype" onchange="togglePayType()"><option value="Salary">Fixed Salary</option><option value="Hourly">Hourly Rate</option></select></div><div id="sf-salary-wrap"><label>Fixed Salary (VUV)</label><input id="sf-fixedsalary" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div><div id="sf-hourly-wrap" style="display:none"><label><span data-i18n="lbl_hourly_rate">Hourly Rate (VUV)</span></label><input id="sf-hourly" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_bank_name">Bank Name</span></label><input id="sf-bank" type="text" placeholder="e.g. BSP" data-i18n-placeholder="ph_bsp"></div><div><label><span data-i18n="lbl_account_num">Account Number</span></label><input id="sf-account" type="text" placeholder="e.g. 12345678" data-i18n-placeholder="ph_account"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_annual_leave">Annual Leave (days)</span></label><input id="sf-annual" type="number" value="21"></div><div><label><span data-i18n="lbl_sick_leave">Sick Leave (days)</span></label><input id="sf-sick" type="number" value="10"></div><div><label><span data-i18n="lbl_medical_ins">Medical Ins (VT)</span></label><input id="sf-medical" type="number" value="50000"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem"><div style="margin-bottom:0"><label><span data-i18n="lbl_pay_cycle">Pay Cycle</span></label><select id="sf-paycycle"><option value="Weekly" data-i18n="opt_weekly">Weekly</option><option value="Fortnightly" data-i18n="opt_fortnightly">Fortnightly</option><option value="Monthly" selected="" data-i18n="opt_monthly">Monthly</option></select></div><div style="margin-bottom:0"><label><span data-i18n="lbl_status">Status</span></label><select id="sf-status"><option data-i18n="opt_active">Active</option><option data-i18n="opt_inactive">Inactive</option></select></div></div><div style="margin-bottom:1rem; border:1px solid var(--border); padding:1rem; border-radius:6px; background:#f8f9fa;"><div style="margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem"><input type="checkbox" id="sf-create-user" style="width:auto;margin:0" onchange="document.getElementById('sf-user-fields').style.display=this.checked?'block':'none'"><label for="sf-create-user" style="margin-bottom:0;font-weight:700;color:var(--navy)"><span data-i18n="lbl_enable_portal">Enable Staff Portal Access</span></label></div><div id="sf-user-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem"><div><label><span data-i18n="lbl_username">Username</span></label><input id="sf-username" type="text" placeholder="e.g. jsmith" data-i18n-placeholder="ph_jsmith"></div><div><label><span data-i18n="lbl_password">Password</span></label><input id="sf-password" type="password" placeholder="Leave blank to keep same" data-i18n-placeholder="ph_leave_blank"></div></div><p class="hint" style="margin-top:5px;font-size:10px"><span data-i18n="txt_create_user">Creates/Updates a user account with the 'Staff' role.</span></p></div></div><div style="display:flex;gap:.5rem"><button class="btn btn-primary" onclick="saveStaff()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_staff"> Save Staff</span></button><button class="btn btn-outline" onclick="clearStaffForm()"><i class="ti ti-x"></i><span data-i18n="btn_clear"> Clear</span></button></div><div id="sf-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_staff_dir">Staff Directory</span></p><input type="text" id="staff-search" placeholder="Search staff..." oninput="renderStaffTable()" style="max-width:280px;margin-bottom:1rem" data-i18n-placeholder="ph_search_staff"><div id="staff-table-wrap" style="overflow:auto"></div></div></div></div>
+      <div id="section-staff-add" class="hidden"><p class="section-title"><i class="ti ti-user-plus" style="color:var(--gold)"></i> <span data-i18n="menu_staff-add">Add/Edit Staff</span></p><div style="display:grid;grid-template-columns:minmax(0,650px);gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="staff-form-title"><span data-i18n="lbl_add_staff">Add New Staff</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="sf-name" type="text" placeholder="e.g. John Smith" data-i18n-placeholder="ph_john_smith"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_emp_id">Employee ID </span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa"><span data-i18n="lbl_auto_gen">(auto-generated)</span></span></label><input id="sf-id" type="text" readonly=""><p class="hint"><span data-i18n="txt_next_id">Next available ID auto-filled</span></p></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_job_title">Designation / Job Title</span></label><input id="sf-designation" type="text" placeholder="e.g. Accountant" data-i18n-placeholder="ph_accountant"></div><div style="margin-bottom:.85rem"><label style="display:flex;justify-content:space-between;align-items:center"><span><span data-i18n="lbl_department">Department</span></span><button class="btn btn-sm" style="padding:2px 6px;font-size:10px;background:#e2e8f0;color:#333;border:none" onclick="openDeptModal()"><i class="ti ti-settings"></i><span data-i18n="btn_manage"> Manage</span></button></label><select id="sf-department"><option value="" data-i18n="opt_select_dept">-- Select Department --</option></select></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_email">Email Address</span></label><input id="sf-email" type="email" placeholder="staff@email.com" data-i18n-placeholder="ph_email"></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_phone">Phone Number</span></label><input id="sf-phone" type="text" placeholder="+678 000000" data-i18n-placeholder="ph_phone"></div><div><label>VNPF Number</label><input id="sf-vnpf" type="text" placeholder="e.g. 123456"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label>Pay Type</label><select id="sf-paytype" onchange="togglePayType()"><option value="Salary">Fixed Salary</option><option value="Hourly">Hourly Rate</option></select></div><div id="sf-salary-wrap"><label>Fixed Salary (VUV)</label><input id="sf-fixedsalary" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div><div id="sf-hourly-wrap" style="display:none"><label><span data-i18n="lbl_hourly_rate">Hourly Rate (VUV)</span></label><input id="sf-hourly" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_bank_name">Bank Name</span></label><input id="sf-bank" type="text" placeholder="e.g. BSP" data-i18n-placeholder="ph_bsp"></div><div><label><span data-i18n="lbl_account_num">Account Number</span></label><input id="sf-account" type="text" placeholder="e.g. 12345678" data-i18n-placeholder="ph_account"></div></div><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.5rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_annual_leave">Annual Leave (days)</span></label><input id="sf-annual" type="number" value="21"></div><div><label><span data-i18n="lbl_sick_leave">Sick Leave (days)</span></label><input id="sf-sick" type="number" value="10"></div><div><label><span data-i18n="lbl_medical_ins">Medical Ins (VT)</span></label><input id="sf-medical" type="number" value="50000"></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1rem"><div style="margin-bottom:0"><label><span data-i18n="lbl_pay_cycle">Pay Cycle</span></label><select id="sf-paycycle"><option value="Weekly" data-i18n="opt_weekly">Weekly</option><option value="Fortnightly" data-i18n="opt_fortnightly">Fortnightly</option><option value="Monthly" selected="" data-i18n="opt_monthly">Monthly</option></select></div><div style="margin-bottom:0"><label><span data-i18n="lbl_status">Status</span></label><select id="sf-status"><option data-i18n="opt_active">Active</option><option data-i18n="opt_inactive">Inactive</option></select></div></div><div style="margin-bottom:1rem; border:1px solid var(--border); padding:1rem; border-radius:6px; background:#f8f9fa;"><div style="margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem"><input type="checkbox" id="sf-create-user" style="width:auto;margin:0" onchange="document.getElementById('sf-user-fields').style.display=this.checked?'block':'none'"><label for="sf-create-user" style="margin-bottom:0;font-weight:700;color:var(--navy)"><span data-i18n="lbl_enable_portal">Enable Staff Portal Access</span></label></div><div id="sf-user-fields" style="display:none"><div style="display:grid;grid-template-columns:1fr 1fr;gap:.5rem"><div><label><span data-i18n="lbl_username">Username</span></label><input id="sf-username" type="text" placeholder="e.g. jsmith" data-i18n-placeholder="ph_jsmith"></div><div><label><span data-i18n="lbl_password">Password</span></label><input id="sf-password" type="password" placeholder="Leave blank to keep same" data-i18n-placeholder="ph_leave_blank"></div></div><p class="hint" style="margin-top:5px;font-size:10px"><span data-i18n="txt_create_user">Creates/Updates a user account with the 'Staff' role.</span></p></div></div><div style="display:flex;gap:.5rem"><button class="btn btn-primary" onclick="saveStaff()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_staff"> Save Staff</span></button><button class="btn btn-outline" onclick="clearStaffForm()"><i class="ti ti-x"></i><span data-i18n="btn_clear"> Clear</span></button></div><div id="sf-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div></div></div>
+      <div id="section-staff-directory" class="hidden"><p class="section-title"><i class="ti ti-users" style="color:var(--gold)"></i> <span data-i18n="menu_staff-directory">Staff Directory</span></p><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_staff_dir">Staff Directory</span></p><input type="text" id="staff-search" placeholder="Search staff..." oninput="renderStaffTable()" style="max-width:280px;margin-bottom:1rem" data-i18n-placeholder="ph_search_staff"><div id="staff-table-wrap" style="overflow:auto"></div></div></div>
       <div id="section-finance-reconciliation" class="hidden"></div>
       <!-- HR -->
       <div id="section-hr" class="hidden"><p class="section-title"><i class="fa-solid fa-plane-departure" style="color:var(--gold)"></i> <span data-i18n="menu_hr">HR Leave &amp; Advance</span></p><div class="hr-summary-grid"><div class="hr-summary-card"><div class="hr-icon annual"><i class="fa-solid fa-plane-departure"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_annual_l">Annual Leave</span></p><h3 id="hr-count-annual"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon sick"><i class="fa-solid fa-notes-medical"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_sick_l">Sick Leave</span></p><h3 id="hr-count-sick"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon unpaid"><i class="fa-solid fa-calendar-xmark"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_lwp">Leave Without Pay</span></p><h3 id="hr-count-unpaid"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon advance"><i class="fa-solid fa-money-bill-wave"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_advances">Advances Issued</span></p><h3 id="hr-total-advance"><span data-i18n="txt_vuv_0">VUV 0</span></h3></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem"><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="hr-form-title"><i class="fa-solid fa-paper-plane" style="color:var(--gold)"></i><span data-i18n="lbl_submit_req"> Submit Leave / Advance Request</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_employee">Employee</span></label><select id="hr-staff"><option value="" data-i18n="opt_select_staff">-- Select Staff --</option></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_req_type">Request Type</span></label><select id="hr-type" onchange="toggleAdvanceAmount()"><option value="Annual Leave" data-i18n="opt_annual_leave">Annual Leave</option><option value="Sick Leave" data-i18n="opt_sick_leave">Sick Leave</option><option value="Leave Without Pay" data-i18n="opt_leave_without_pay">Leave Without Pay</option><option value="Payment Advance" data-i18n="opt_payment_advance">Payment Advance</option><option value="Medical Claim" data-i18n="opt_medical_claim">Medical Claim</option></select></div><div id="hr-advance-wrap" style="visibility:hidden"><label><span data-i18n="lbl_adv_amount">Advance Amount (VUV)</span></label><input id="hr-amount" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div id="hr-medical-wrap" style="display:none;margin-bottom:.85rem;background:#f8f9fa;padding:10px;border-radius:6px;border:1px solid var(--border)"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;"><div><label><span data-i18n="lbl_supplier">Supplier</span></label><select id="hr-supplier"><option>Clinic</option><option>Hospital</option><option>Private Hospital</option><option>Pharmacy</option></select></div><div><label><span data-i18n="lbl_claim_amount">Claim Amount (VUV)</span></label><input id="hr-medical-amount" type="number" placeholder="0"></div><div><label><span data-i18n="lbl_receipt">Medical Receipt</span></label><input id="hr-receipt" type="file" accept="image/*,.pdf" style="padding:4px;font-size:12px;width:100%"></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_start_date">Start Date</span></label><input id="hr-start" type="date"></div><div><label><span data-i18n="lbl_end_date">End Date</span></label><input id="hr-end" type="date"></div></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_reason">Reason / Notes</span></label><textarea id="hr-notes" placeholder="Enter reason here..." style="min-height:80px;resize:none" data-i18n-placeholder="ph_reason"></textarea></div><div style="display:flex;gap:.5rem;align-items:center"><button class="btn btn-primary" onclick="saveHRRequest()"><i class="fa-solid fa-paper-plane"></i><span data-i18n="btn_submit_req"> Submit Request</span></button><button class="btn btn-outline" onclick="clearHRForm()"><i class="ti ti-refresh"></i><span data-i18n="btn_clear"> Clear</span></button><span id="hr-save-msg" style="font-size:12px;color:#27500a;background:#ddf0dd;padding:6px 12px;border-radius:6px;display:none"><i class="ti ti-check"></i><span data-i18n="msg_saved"> Saved.</span></span></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold)"></i><span data-i18n="lbl_recent_req"> Recent Requests</span></p><select id="hr-filter-status" onchange="renderHRTable()" style="width:auto;font-size:12px;padding:5px 8px"><option value="" data-i18n="opt_all_status">All Status</option><option value="Pending" data-i18n="opt_pending">Pending</option><option value="Approved" data-i18n="opt_approved">Approved</option><option value="Rejected" data-i18n="opt_rejected">Rejected</option></select></div><div id="hr-recent-wrap" style="overflow:auto;max-height:380px"></div></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><i class="ti ti-table" style="color:var(--gold)"></i><span data-i18n="lbl_all_records"> All Leave &amp; Advance Records</span></p><select id="hr-filter-type" onchange="renderHRTable()" style="width:auto;font-size:12px;padding:5px 8px"><option value="" data-i18n="opt_all_types">All Types</option><option value="Annual Leave" data-i18n="opt_annual_leave">Annual Leave</option><option value="Sick Leave" data-i18n="opt_sick_leave">Sick Leave</option><option value="Leave Without Pay" data-i18n="opt_leave_without_pay">Leave Without Pay</option><option value="Payment Advance" data-i18n="opt_payment_advance">Payment Advance</option></select></div><div id="hr-table-wrap" style="overflow:auto"></div></div></div>
@@ -510,8 +546,6 @@ window.generatePDF = function(content, filename) {
     </div>
   </div>
 </div>
-      <!-- COMPLIANCE -->
-      <div id="section-compliance" class="hidden"><p class="section-title"><i class="ti ti-report-analytics" style="color:var(--gold)"></i> <span data-i18n="menu_compliance">Compliance Report</span></p><div class="card" style="margin-bottom:1rem"><div style="display:flex;gap:1rem;align-items:flex-end;flex-wrap:wrap"><div style="flex:1;min-width:140px"><label><span data-i18n="lbl_month">Month</span></label><select id="cr-month"><option value="" data-i18n="opt_all_months">All Months</option><option data-i18n="opt_jan">January</option><option data-i18n="opt_feb">February</option><option data-i18n="opt_mar">March</option><option data-i18n="opt_apr">April</option><option data-i18n="opt_may">May</option><option data-i18n="opt_jun">June</option><option data-i18n="opt_jul">July</option><option data-i18n="opt_aug">August</option><option data-i18n="opt_sep">September</option><option data-i18n="opt_oct">October</option><option data-i18n="opt_nov">November</option><option data-i18n="opt_dec">December</option></select></div><div style="flex:1;min-width:100px"><label><span data-i18n="lbl_year">Year</span></label><input id="cr-year" type="number" value="2026"></div><button class="btn btn-primary" onclick="renderCompliance()"><i class="ti ti-search"></i><span data-i18n="btn_gen_payroll"> Gen. Payroll Report</span></button><button class="btn btn-gold" id="cr-pdf-btn" onclick="downloadCompliancePDF()" style="display:none"><i class="ti ti-file-download"></i><span data-i18n="btn_pdf"> PDF</span></button><button class="btn btn-primary" style="background:#185fa5" onclick="renderVNPF()"><i class="ti ti-search"></i><span data-i18n="btn_gen_vnpf"> Gen. VNPF & Bank</span></button><button class="btn btn-gold" id="cr-vnpf-btn" onclick="downloadVNPFPDF()" style="display:none"><i class="ti ti-file-download"></i><span data-i18n="btn_pdf"> PDF</span></button></div></div><div id="cr-loading" style="display:none;text-align:center;padding:2rem;color:#888"><i class="ti ti-loader-2" style="font-size:28px;animation:spin 1s linear infinite;display:block;margin-bottom:.5rem"></i><span data-i18n="msg_gen_report">Generating report...</span></div><div id="compliance-output"></div></div>
       <!-- UPDATES -->
       <div id="section-updates" class="hidden"><p class="section-title"><i class="ti ti-cloud-download" style="color:var(--gold)"></i> <span data-i18n="menu_updates">App Updates</span></p><div style="display:grid;grid-template-columns:320px 1fr;gap:1rem;align-items:start"><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:none;align-items:center;gap:10px;margin-bottom:1rem;padding-bottom:.85rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-brand-github" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_wokmaneja">WokManeja</span></p><p style="font-size:11px;color:#888;margin:0" id="upd-repo"><span data-i18n="lbl_repo">wokmaneja/Payroll-HR-Management-System</span></p></div></div><div style="background:#f8f9fb;border-radius:8px;padding:12px;margin-bottom:1rem"><p style="font-size:11px;color:#888;margin-bottom:4px;font-weight:600;text-transform:uppercase"><span data-i18n="lbl_installed_ver">Installed Version</span></p><p style="font-size:22px;font-weight:800;color:#0a0a0a;margin:0" id="upd-current"><span data-i18n="lbl_v100">v1.0.0</span></p></div><button class="btn btn-primary" onclick="loadReleases()" style="width:100%;justify-content:center"><i class="ti ti-refresh"></i><span data-i18n="btn_check_upd"> Check for Updates</span></button><div id="upd-check-msg" style="margin-top:.75rem;font-size:12px;display:none"></div></div><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy);margin:0"><span data-i18n="lbl_avail_releases">Available Releases</span></p><span id="upd-badge" style="font-size:11px;font-weight:600;color:#888"><span data-i18n="txt_click_check">Click "Check for Updates" to load</span></span></div><div id="upd-releases-wrap"><div style="padding:2rem;text-align:center;color:#aaa;font-size:13px"><i class="ti ti-cloud-off" style="font-size:36px;display:block;margin-bottom:.75rem"></i><span data-i18n="txt_not_checked">Not checked yet</span></div></div></div></div></div>
       <!-- DATABASE -->
@@ -519,7 +553,7 @@ window.generatePDF = function(content, filename) {
       <!-- AUDIT LOGS -->
       <div id="section-audit" class="hidden"><p class="section-title"><i class="ti ti-history" style="color:var(--gold)"></i> <span data-i18n="menu_audit">Audit Logs</span></p><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><span data-i18n="lbl_sys_activity">System Activity</span></p><button class="btn btn-sm btn-outline" onclick="renderAuditLogs()"><i class="ti ti-refresh"></i><span data-i18n="btn_refresh"> Refresh</span></button></div><div id="audit-table-wrap" style="overflow:auto;max-height:600px"></div></div></div>
       <!-- COMPANY SETTINGS -->
-      <div id="section-company" class="hidden"><p class="section-title"><i class="ti ti-building" style="color:var(--gold)"></i> <span data-i18n="menu_company">Company Settings</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start"><div class="card"><div style="margin-bottom:1rem"><label><span data-i18n="lbl_company_name">Company Name</span></label><input type="text" id="cs-name" placeholder="Triple K Company" data-i18n-placeholder="ph_triple_k"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_address">Address</span></label><input type="text" id="cs-address" placeholder="Port Vila, Vanuatu" data-i18n-placeholder="ph_port_vila"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_phone">Phone Number</span></label><input type="text" id="cs-phone" placeholder="+678 12345" data-i18n-placeholder="ph_phone_12345"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_email">Email Address</span></label><input type="email" id="cs-email" placeholder="info@triplek.vu" data-i18n-placeholder="ph_email_info"></div><div style="margin-bottom:1.5rem"><label><span data-i18n="lbl_bus_license">Business License</span></label><input type="text" id="cs-license" placeholder="e.g. BL-123456" data-i18n-placeholder="ph_bl_123456"></div><button class="btn btn-primary" onclick="saveCompanySettings()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_settings"> Save Settings</span></button><div id="cs-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-license" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_soft_license">Software License</span></p><p style="font-size:12px;color:#888;margin:0"><span data-i18n="lbl_wm_sys">WokManeja Payroll System</span></p></div></div><div id="lic-status-card" style="padding:10px 14px;border-radius:8px;margin-bottom:1.25rem;font-size:13px;font-weight:600"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_license_key">License Key</span></label><input type="text" id="cs-appkey" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:14px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()" data-i18n-placeholder="ph_wm_key"><p class="hint" style="margin-top:4px"><i class="ti ti-info-circle"></i><span data-i18n="txt_enter_key"> Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key</span></p></div><button class="btn btn-primary" onclick="activateLicense()" style="width:100%;justify-content:center"><i class="ti ti-key"></i><span data-i18n="btn_activate_lic"> Activate License</span></button><div id="lic-msg" style="margin-top:.75rem;font-size:12px;padding:7px 12px;border-radius:6px;display:none"></div><hr style="margin:1.25rem 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><span data-i18n="txt_need_lic">Need a license? Contact </span><a href="mailto:help@wokmaneja.vu" style="color:#0a0a0a;font-weight:700">help@wokmaneja.vu</a></p></div></div></div>
+      <div id="section-company" class="hidden"><p class="section-title"><i class="ti ti-building" style="color:var(--gold)"></i> <span data-i18n="menu_company">Company Settings</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start"><div class="card"><div style="margin-bottom:1rem"><label><span data-i18n="lbl_company_name">Company Name</span></label><input type="text" id="cs-name" placeholder="Triple K Company" data-i18n-placeholder="ph_triple_k"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_address">Address</span></label><input type="text" id="cs-address" placeholder="Port Vila, Vanuatu" data-i18n-placeholder="ph_port_vila"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_phone">Phone Number</span></label><input type="text" id="cs-phone" placeholder="+678 12345" data-i18n-placeholder="ph_phone_12345"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_email">Email Address</span></label><input type="email" id="cs-email" placeholder="info@triplek.vu" data-i18n-placeholder="ph_email_info"></div><div style="margin-bottom:1rem"><label>VNPF Employer Contribution (%)</label><input type="number" id="cs-vnpf-percent" placeholder="6" step="0.1" min="0"></div><div style="margin-bottom:1.5rem"><label><span data-i18n="lbl_bus_license">Business License</span></label><input type="text" id="cs-license" placeholder="e.g. BL-123456" data-i18n-placeholder="ph_bl_123456"></div><div style="margin-bottom:1.5rem"><label>Company Logo</label><div style="display:flex;align-items:center;gap:1rem"><img id="cs-logo-preview" src="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none;background:#f5f5f5"><div id="cs-logo-placeholder" style="width:64px;height:64px;border-radius:10px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;text-align:center;flex-shrink:0">No Logo</div><div><input type="file" id="cs-logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)"><button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('cs-logo-file').click()"><i class="ti ti-upload"></i> Upload</button> <button type="button" class="btn btn-outline btn-sm" style="color:#c0392b" onclick="removeCompanyLogo()"><i class="ti ti-trash"></i> Remove</button><p class="hint" style="margin-top:4px">Square image recommended (shown on the sign-in page). Auto-cropped to fit.</p></div></div><input type="hidden" id="cs-logo-data" value=""></div><button class="btn btn-primary" onclick="saveCompanySettings()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_settings"> Save Settings</span></button><div id="cs-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-license" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_soft_license">Software License</span></p><p style="font-size:12px;color:#888;margin:0"><span data-i18n="lbl_wm_sys">WokManeja Payroll System</span></p></div></div><div id="lic-status-card" style="padding:10px 14px;border-radius:8px;margin-bottom:1.25rem;font-size:13px;font-weight:600"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_license_key">License Key</span></label><input type="text" id="cs-appkey" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:14px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()" data-i18n-placeholder="ph_wm_key"><p class="hint" style="margin-top:4px"><i class="ti ti-info-circle"></i><span data-i18n="txt_enter_key"> Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key</span></p></div><button class="btn btn-primary" onclick="activateLicense()" style="width:100%;justify-content:center"><i class="ti ti-key"></i><span data-i18n="btn_activate_lic"> Activate License</span></button><div id="lic-msg" style="margin-top:.75rem;font-size:12px;padding:7px 12px;border-radius:6px;display:none"></div><hr style="margin:1.25rem 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><span data-i18n="txt_need_lic">Need a license? Contact </span><a href="mailto:help@wokmaneja.vu" style="color:#0a0a0a;font-weight:700">help@wokmaneja.vu</a></p></div></div></div>
       <!-- ARCHIVE -->
       <div id="section-docs" class="hidden">
         <p class="section-title"><i class="ti ti-book" style="color:var(--gold)"></i> <span data-i18n="menu_guides">User Guides & Documentation</span></p>
@@ -965,9 +999,7 @@ var I18N_DICT = {
   "lbl_manager": { en: "Manager", fr: "Gérant", zh: "经理" },
   "lbl_it": { en: "IT", fr: "Informatique", zh: "IT" },
   "lbl_staff": { en: "Staff", fr: "Personnel", zh: "员工" },
-  "btn_gen_payroll": { en: "Gen. Payroll Report", fr: "Rapport de paie", zh: "生成工资单报告" },
   "btn_pdf": { en: "PDF", fr: "PDF", zh: "PDF" },
-  "btn_gen_vnpf": { en: "Gen. VNPF & Bank", fr: "Rapport VNPF & Banque", zh: "生成VNPF与银行报告" },
   "msg_gen_report": { en: "Generating report...", fr: "Génération du rapport...", zh: "正在生成报告..." },
   "lbl_wokmaneja": { en: "WokManeja", fr: "WokManeja", zh: "WokManeja" },
   "lbl_repo": { en: "wokmaneja/Payroll-HR-Management-System", fr: "wokmaneja/Payroll-HR-Management-System", zh: "wokmaneja/Payroll-HR-Management-System" },
@@ -1127,10 +1159,11 @@ var I18N_DICT = {
   "menu_records": { en: "Payslip Records", fr: "Registres de paie", zh: "工资单记录" },
   "menu_hr": { en: "Leave & Advance", fr: "Congés et Avances", zh: "请假与预支" },
   "menu_staff": { en: "Staff Management", fr: "Gestion du personnel", zh: "员工管理" },
+  "menu_staff-directory": { en: "Staff Directory", fr: "Annuaire du personnel", zh: "员工目录" },
+  "menu_staff-add": { en: "Add/Edit Staff", fr: "Ajouter/Modifier un employé", zh: "添加/编辑员工" },
   "menu_company": { en: "Company Settings", fr: "Paramètres de l'entreprise", zh: "公司设置" },
   "menu_users": { en: "User Management", fr: "Gestion des utilisateurs", zh: "用户管理" },
   "menu_roles": { en: "Roles & Permissions", fr: "Rôles et Permissions", zh: "角色与权限" },
-  "menu_compliance": { en: "Compliance Report", fr: "Rapport de conformité", zh: "合规报告" },
   "menu_updates": { en: "App Updates", fr: "Mises à jour de l'app", zh: "应用更新" },
   "menu_database": { en: "Database Manager", fr: "Gestionnaire de base", zh: "数据库管理" },
   "menu_audit": { en: "Audit Logs", fr: "Journaux d'audit", zh: "审计日志" },
@@ -1212,7 +1245,7 @@ document.addEventListener('DOMContentLoaded', function() {
     var sel = document.getElementById('lang-switcher');
     if(sel) { sel.value = savedLang; changeLang(); }
   }
-  // Always fetch public company name for the login page
+  // Always fetch public company name/logo for the login page
   fetch('/api/public/company')
     .then(r => r.json())
     .then(data => {
@@ -1221,6 +1254,10 @@ document.addEventListener('DOMContentLoaded', function() {
         if(el)el.textContent=data.name;
         var headerEl=document.getElementById('menu-company-name');
         if(headerEl)headerEl.textContent=data.name;
+      }
+      if(data && data.logo) {
+        var logoEl=document.getElementById('login-company-logo');
+        if(logoEl){ logoEl.src=data.logo; logoEl.style.display='block'; }
       }
     })
     .catch(e => console.log('Could not load company name', e));
@@ -1378,12 +1415,41 @@ function seedDB(){
   if(DB.count('departments')===0){['Finance','Operations','Administration','Executive','Support & Consultant'].forEach(function(d){DB.insert('departments',{name:d})});}
 }
 function updateDBIndicator(){}
-var APP={currentUser:null,editingStaffIdx:-1,editingHRId:null,editingUserId:null};
+var APP={currentUser:null,editingStaffIdx:-1,editingHRId:null,editingUserId:null,licensedModules:null,maxStaff:null,staffCount:0};
+// Maps each nav item id to the license module code that gates it. Items not listed here
+// (Dashboard, Staff Directory, Add/Edit Staff, User Management, Roles & Permissions, Help)
+// are always available regardless of license, per the always-on "core" set.
+var MODULE_ITEM_MAP={
+  hr:'hr',documents:'hr',kpi:'hr',discipline:'hr',recruitment:'hr',
+  'pc-dashboard':'pettycash','pc-register':'pettycash','pc-vouchers':'pettycash','pc-summary':'pettycash','pc-settings':'pettycash',
+  'finance-dashboard':'finance','finance-contacts':'finance','finance-invoices':'finance','finance-bills':'finance','finance-daily-income':'finance','finance-banking':'finance','finance-reconciliation':'finance','finance-expenses':'finance','finance-reimbursements':'finance','finance-coa':'finance','finance-gl':'finance','finance-budget':'finance',
+  payslip:'payroll',bulk:'payroll',records:'payroll',
+  'report-executive':'reports','report-hr':'reports','report-finance':'reports','report-payroll':'reports','report-vnpf':'reports','report-admin':'reports',
+  company:'admin',updates:'admin',database:'admin',audit:'admin',archive:'admin'
+};
+function isModuleLicensed(moduleCode){
+  if(!moduleCode)return true; // core, unlisted items are always allowed
+  if(APP.licensedModules===null)return true; // null = full access (all modules, or legacy/no-license-data-yet)
+  return APP.licensedModules.indexOf(moduleCode)!==-1;
+}
+async function refreshLicenseEntitlements(){
+  try{
+    const res=await fetch('/api/license/status');
+    const data=await res.json();
+    if(data.status==='active'){
+      APP.licensedModules=(data.modules===undefined)?null:data.modules;
+      APP.maxStaff=(data.maxStaff===undefined)?null:data.maxStaff;
+      APP.staffCount=data.staffCount||0;
+    }else{
+      APP.licensedModules=null;APP.maxStaff=null;APP.staffCount=0;
+    }
+  }catch(e){APP.licensedModules=null;APP.maxStaff=null;}
+}
 var STAFF_ID_MAP={};var HR_ID_MAP={};var REC_ID_MAP={};var USER_ID_MAP={};var NOTIF_ID_MAP={};
 var MENUS={
-  admin:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'PETTY CASH'},{id:'pc-dashboard',label:'Dashboard',icon:'ti-wallet'},{id:'pc-register',label:'Cash Register',icon:'ti-book'},{id:'pc-vouchers',label:'Vouchers',icon:'ti-receipt'},{id:'pc-summary',label:'Monthly Summary',icon:'ti-chart-bar'},{id:'pc-settings',label:'Settings',icon:'ti-settings'},{divider:'FINANCE'},{id:'finance-dashboard',label:'Finance Dashboard',icon:'ti-chart-bar'},{id:'finance-contacts',label:'Contacts (AR/AP)',icon:'ti-address-book'},{id:'finance-invoices',label:'Invoices (AR)',icon:'ti-file-invoice'},{id:'finance-bills',label:'Vendor Bills (AP)',icon:'ti-file-invoice'},{id:'finance-daily-income',label:'Daily Income',icon:'ti-trending-up'},{id:'finance-banking',label:'Banking',icon:'ti-building-bank'},{id:'finance-reconciliation',label:'Bank Recon.',icon:'ti-file-invoice'},{id:'finance-expenses',label:'Expense Management',icon:'ti-receipt'},{id:'finance-reimbursements',label:'Reimbursements',icon:'ti-cash'},{id:'finance-coa',label:'Chart of Accounts',icon:'ti-list-tree'},{id:'finance-gl',label:'General Ledger',icon:'ti-book-2'},{id:'finance-budget',label:'Budgeting',icon:'ti-target'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'REPORTS'},{id:'report-executive',label:'Executive Dashboard',icon:'ti-chart-line'},{id:'report-hr',label:'HR Reports',icon:'ti-chart-pie'},{id:'report-finance',label:'Finance Reports',icon:'ti-receipt-2'},{id:'report-payroll',label:'Payroll Reports',icon:'ti-report-money'},{id:'report-vnpf',label:'VNPF Reports',icon:'ti-file-certificate'},{id:'report-admin',label:'Admin Reports',icon:'ti-shield-lock'},{divider:'ADMIN'},{id:'company',label:'Company Settings',icon:'ti-building'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{id:'updates',label:'App Updates',icon:'ti-cloud-download'},{id:'database',label:'Database Manager',icon:'ti-database'},{id:'audit',label:'Audit Logs',icon:'ti-history'},{id:'archive',label:'Trash Bin',icon:'ti-trash'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
-  it:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'REPORTS'},{id:'report-executive',label:'Executive Dashboard',icon:'ti-chart-line'},{id:'report-hr',label:'HR Reports',icon:'ti-chart-pie'},{id:'report-finance',label:'Finance Reports',icon:'ti-receipt-2'},{id:'report-payroll',label:'Payroll Reports',icon:'ti-report-money'},{id:'report-vnpf',label:'VNPF Reports',icon:'ti-file-certificate'},{id:'report-admin',label:'Admin Reports',icon:'ti-shield-lock'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
-  manager:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff',label:'Staff Management',icon:'ti-users'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'PETTY CASH'},{id:'pc-dashboard',label:'Dashboard',icon:'ti-wallet'},{id:'pc-register',label:'Cash Register',icon:'ti-book'},{id:'pc-vouchers',label:'Vouchers',icon:'ti-receipt'},{id:'pc-summary',label:'Monthly Summary',icon:'ti-chart-bar'},{id:'pc-settings',label:'Settings',icon:'ti-settings'},{divider:'FINANCE'},{id:'finance-dashboard',label:'Finance Dashboard',icon:'ti-chart-bar'},{id:'finance-contacts',label:'Contacts (AR/AP)',icon:'ti-address-book'},{id:'finance-invoices',label:'Invoices (AR)',icon:'ti-file-invoice'},{id:'finance-bills',label:'Vendor Bills (AP)',icon:'ti-file-invoice'},{id:'finance-daily-income',label:'Daily Income',icon:'ti-trending-up'},{id:'finance-banking',label:'Banking',icon:'ti-building-bank'},{id:'finance-reconciliation',label:'Bank Recon.',icon:'ti-file-invoice'},{id:'finance-expenses',label:'Expense Management',icon:'ti-receipt'},{id:'finance-reimbursements',label:'Reimbursements',icon:'ti-cash'},{id:'finance-coa',label:'Chart of Accounts',icon:'ti-list-tree'},{id:'finance-gl',label:'General Ledger',icon:'ti-book-2'},{id:'finance-budget',label:'Budgeting',icon:'ti-target'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'REPORTS'},{id:'report-executive',label:'Executive Dashboard',icon:'ti-chart-line'},{id:'report-hr',label:'HR Reports',icon:'ti-chart-pie'},{id:'report-finance',label:'Finance Reports',icon:'ti-receipt-2'},{id:'report-payroll',label:'Payroll Reports',icon:'ti-report-money'},{id:'report-vnpf',label:'VNPF Reports',icon:'ti-file-certificate'},{divider:'MANAGEMENT'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'compliance',label:'Compliance Report',icon:'ti-report-analytics'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
+  admin:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff-directory',label:'Staff Directory',icon:'ti-users'},{id:'staff-add',label:'Add/Edit Staff',icon:'ti-user-plus'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'PETTY CASH'},{id:'pc-dashboard',label:'Dashboard',icon:'ti-wallet'},{id:'pc-register',label:'Cash Register',icon:'ti-book'},{id:'pc-vouchers',label:'Vouchers',icon:'ti-receipt'},{id:'pc-summary',label:'Monthly Summary',icon:'ti-chart-bar'},{id:'pc-settings',label:'Settings',icon:'ti-settings'},{divider:'FINANCE'},{id:'finance-dashboard',label:'Finance Dashboard',icon:'ti-chart-bar'},{id:'finance-contacts',label:'Contacts (AR/AP)',icon:'ti-address-book'},{id:'finance-invoices',label:'Invoices (AR)',icon:'ti-file-invoice'},{id:'finance-bills',label:'Vendor Bills (AP)',icon:'ti-file-invoice'},{id:'finance-daily-income',label:'Daily Income',icon:'ti-trending-up'},{id:'finance-banking',label:'Banking',icon:'ti-building-bank'},{id:'finance-reconciliation',label:'Bank Recon.',icon:'ti-file-invoice'},{id:'finance-expenses',label:'Expense Management',icon:'ti-receipt'},{id:'finance-reimbursements',label:'Reimbursements',icon:'ti-cash'},{id:'finance-coa',label:'Chart of Accounts',icon:'ti-list-tree'},{id:'finance-gl',label:'General Ledger',icon:'ti-book-2'},{id:'finance-budget',label:'Budgeting',icon:'ti-target'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'REPORTS'},{id:'report-executive',label:'Executive Dashboard',icon:'ti-chart-line'},{id:'report-hr',label:'HR Reports',icon:'ti-chart-pie'},{id:'report-finance',label:'Finance Reports',icon:'ti-receipt-2'},{id:'report-payroll',label:'Payroll Reports',icon:'ti-report-money'},{id:'report-vnpf',label:'VNPF Reports',icon:'ti-file-certificate'},{id:'report-admin',label:'Admin Reports',icon:'ti-shield-lock'},{divider:'ADMIN'},{id:'company',label:'Company Settings',icon:'ti-building'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{id:'updates',label:'App Updates',icon:'ti-cloud-download'},{id:'database',label:'Database Manager',icon:'ti-database'},{id:'audit',label:'Audit Logs',icon:'ti-history'},{id:'archive',label:'Trash Bin',icon:'ti-trash'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
+  it:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff-directory',label:'Staff Directory',icon:'ti-users'},{id:'staff-add',label:'Add/Edit Staff',icon:'ti-user-plus'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'REPORTS'},{id:'report-executive',label:'Executive Dashboard',icon:'ti-chart-line'},{id:'report-hr',label:'HR Reports',icon:'ti-chart-pie'},{id:'report-finance',label:'Finance Reports',icon:'ti-receipt-2'},{id:'report-payroll',label:'Payroll Reports',icon:'ti-report-money'},{id:'report-vnpf',label:'VNPF Reports',icon:'ti-file-certificate'},{id:'report-admin',label:'Admin Reports',icon:'ti-shield-lock'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
+  manager:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'staff-directory',label:'Staff Directory',icon:'ti-users'},{id:'staff-add',label:'Add/Edit Staff',icon:'ti-user-plus'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'PETTY CASH'},{id:'pc-dashboard',label:'Dashboard',icon:'ti-wallet'},{id:'pc-register',label:'Cash Register',icon:'ti-book'},{id:'pc-vouchers',label:'Vouchers',icon:'ti-receipt'},{id:'pc-summary',label:'Monthly Summary',icon:'ti-chart-bar'},{id:'pc-settings',label:'Settings',icon:'ti-settings'},{divider:'FINANCE'},{id:'finance-dashboard',label:'Finance Dashboard',icon:'ti-chart-bar'},{id:'finance-contacts',label:'Contacts (AR/AP)',icon:'ti-address-book'},{id:'finance-invoices',label:'Invoices (AR)',icon:'ti-file-invoice'},{id:'finance-bills',label:'Vendor Bills (AP)',icon:'ti-file-invoice'},{id:'finance-daily-income',label:'Daily Income',icon:'ti-trending-up'},{id:'finance-banking',label:'Banking',icon:'ti-building-bank'},{id:'finance-reconciliation',label:'Bank Recon.',icon:'ti-file-invoice'},{id:'finance-expenses',label:'Expense Management',icon:'ti-receipt'},{id:'finance-reimbursements',label:'Reimbursements',icon:'ti-cash'},{id:'finance-coa',label:'Chart of Accounts',icon:'ti-list-tree'},{id:'finance-gl',label:'General Ledger',icon:'ti-book-2'},{id:'finance-budget',label:'Budgeting',icon:'ti-target'},{divider:'PAYROLL'},{id:'payslip',label:'Create Payslip',icon:'ti-file-invoice'},{id:'bulk',label:'Bulk Payslip',icon:'ti-table'},{id:'records',label:'Payslip Records',icon:'ti-files'},{divider:'REPORTS'},{id:'report-executive',label:'Executive Dashboard',icon:'ti-chart-line'},{id:'report-hr',label:'HR Reports',icon:'ti-chart-pie'},{id:'report-finance',label:'Finance Reports',icon:'ti-receipt-2'},{id:'report-payroll',label:'Payroll Reports',icon:'ti-report-money'},{id:'report-vnpf',label:'VNPF Reports',icon:'ti-file-certificate'},{divider:'MANAGEMENT'},{id:'users',label:'User Management',icon:'ti-user-shield'},{id:'roles',label:'Roles & Permissions',icon:'ti-shield'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
   staff:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{id:'records',label:'My Payslips',icon:'ti-files'},{divider:'HR'},{id:'hr',label:'Leave & Advance',icon:'ti-calendar-event'},{id:'documents',label:'Document Center',icon:'ti-folders'},{id:'kpi',label:'Performance KPI',icon:'ti-target'},{id:'discipline',label:'Staff Discipline',icon:'ti-gavel'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}],
   cashier:[{id:'dashboard',label:'Dashboard',icon:'ti-layout-dashboard'},{divider:'PETTY CASH'},{id:'pc-dashboard',label:'Dashboard',icon:'ti-wallet'},{id:'pc-register',label:'Cash Register',icon:'ti-book'},{id:'pc-vouchers',label:'Vouchers',icon:'ti-receipt'},{divider:'HELP'},{id:'docs',label:'User Guides',icon:'ti-book'}]
 };
@@ -1408,9 +1474,29 @@ if(data.user.role.startsWith('custom_')) {
 }
 document.getElementById('nav-badge').textContent = dBadge;
 document.getElementById('nav-badge').className = 'badge badge-' + bClass;
+await refreshLicenseEntitlements();
 buildNav(buildRole);
 changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors(); if(typeof checkSystemAlerts==="function") checkSystemAlerts();if(data.user.mustChangePassword){setTimeout(function(){var pw=document.getElementById('modal-changepw');if(pw){pw.style.display='flex';var warn=document.createElement('p');warn.style.cssText='color:#e24b4a;font-size:12px;margin-bottom:12px;padding:8px 12px;background:#fff0f0;border-radius:6px;border:1px solid #f5c0c0;text-align:center';warn.innerHTML='<i class="ti ti-lock" style="margin-right:4px"></i>Please set a new password before continuing.';var inner=pw.querySelector('[style*="background:#fff"]')||pw;inner.insertBefore(warn,inner.firstChild);}},200);}}catch(e){document.getElementById('login-error').style.display='block';}}
 function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
+function filterMenuByLicense(items){
+  var result=[];
+  for(var i=0;i<items.length;i++){
+    var it=items[i];
+    if(it.divider){result.push(it);continue;}
+    if(!isModuleLicensed(MODULE_ITEM_MAP[it.id]))continue;
+    result.push(it);
+  }
+  var cleaned=[];
+  for(var i=0;i<result.length;i++){
+    if(result[i].divider){
+      var hasItem=(i+1<result.length)&&!result[i+1].divider;
+      if(hasItem)cleaned.push(result[i]);
+    }else{
+      cleaned.push(result[i]);
+    }
+  }
+  return cleaned;
+}
 function buildNav(role){
   var customMenuIds = null;
   if (role.startsWith('custom_')) {
@@ -1419,10 +1505,10 @@ function buildNav(role){
     role = cRole ? cRole.baseRole : 'staff';
   }
 var nav=document.getElementById('sidebar-nav');nav.innerHTML='';if(!MENUS[role])role='staff';var currentGroup=nav;
-  MENUS[role].forEach(function(item){
+  filterMenuByLicense(MENUS[role]).forEach(function(item){
     if (customMenuIds && item.id && customMenuIds.indexOf(item.id) === -1) return;
-if(item.divider){var groupDiv=document.createElement('div');groupDiv.className='nav-group';var headerBtn=document.createElement('button');headerBtn.className='nav-group-header';headerBtn.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span><i class="ti ti-chevron-down"></i>';var itemsContainer=document.createElement('div');itemsContainer.className='nav-group-items';headerBtn.onclick=function(){var isExpanded=itemsContainer.style.display==='flex';if(!isExpanded){itemsContainer.style.display='flex';headerBtn.querySelector('i').style.transform='rotate(-180deg)';}else{itemsContainer.style.display='none';headerBtn.querySelector('i').style.transform='rotate(0deg)';}var mod=item.divider.toLowerCase();if(mod==='hr'){showSection('hr-dashboard');if(typeof renderHRDashboard==='function')renderHRDashboard();}else if(mod==='finance'){showSection('finance-dashboard');if(typeof renderFinanceDashboard==='function')renderFinanceDashboard();}else if(mod==='petty cash'){showSection('pc-dashboard');if(typeof renderPCDashboard==='function')renderPCDashboard();}else if(mod==='payroll'){showSection('payroll-dashboard');if(typeof renderPayrollDashboard==='function')renderPayrollDashboard();}else if(mod==='reports'){showSection('reports-dashboard');if(typeof renderReportsDashboard==='function')renderReportsDashboard();}else if(mod==='admin'){showSection('admin-dashboard');if(typeof renderAdminDashboard==='function')renderAdminDashboard();}};groupDiv.appendChild(headerBtn);groupDiv.appendChild(itemsContainer);nav.appendChild(groupDiv);currentGroup=itemsContainer;return;}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button:not(.nav-group-header)').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}if(item.id==='documents'&&typeof renderDocuments==='function')renderDocuments();if(item.id==='kpi'&&typeof renderKPI==='function')renderKPI();if(item.id==='recruitment'&&typeof renderRecruitment==='function')renderRecruitment();if(item.id==='discipline'&&typeof renderDiscipline==='function')renderDiscipline();if(item.id==='finance-daily-income')renderFinanceDailyIncome();if(item.id==='finance-banking')renderFinanceBanking();if(item.id==='finance-reconciliation')renderFinanceReconciliation();if(item.id==='finance-dashboard')renderFinanceDashboard();if(item.id==='finance-contacts')renderFinanceContacts();if(item.id==='finance-invoices')renderFinanceInvoices();if(item.id==='finance-bills')renderFinanceBills();if(item.id==='finance-expenses')renderFinanceExpenses();if(item.id==='finance-reimbursements')renderFinanceReimbursements();if(item.id==='finance-coa')renderFinanceCOA();if(item.id==='finance-gl')renderFinanceGL();if(item.id==='finance-budget')renderFinanceBudget();if(item.id==='pc-dashboard'&&typeof renderPCDashboard==='function')renderPCDashboard();if(item.id==='pc-register'&&typeof renderPCRegister==='function')renderPCRegister();if(item.id==='pc-vouchers'&&typeof renderPCVouchers==='function')renderPCVouchers();if(item.id==='pc-summary'&&typeof renderPCSummary==='function')renderPCSummary();if(item.id==='pc-settings'&&typeof renderPCSettings==='function')renderPCSettings();if(item.id==='report-hr')renderReportHR();if(item.id==='report-finance')renderReportFinance();if(item.id==='report-payroll')renderReportPayroll();if(item.id==='report-admin')renderReportAdmin();if(item.id==='report-vnpf')renderReportVNPF();if(item.id==='report-executive')renderReportExecutive();};currentGroup.appendChild(a);});var firstBtn=nav.querySelector('button:not(.nav-group-header)');if(firstBtn)firstBtn.click();}
-var ALL_SECTIONS=['hr-dashboard','payroll-dashboard','reports-dashboard','admin-dashboard','payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs','documents','kpi','recruitment','discipline','finance-dashboard','finance-contacts','finance-invoices','finance-bills','finance-daily-income','finance-banking','finance-reconciliation','finance-expenses','finance-reimbursements','finance-coa','finance-gl','finance-budget','pc-dashboard','pc-register','pc-vouchers','pc-summary','pc-settings','report-hr','report-finance','report-payroll','report-admin','report-vnpf','report-executive'];
+if(item.divider){var groupDiv=document.createElement('div');groupDiv.className='nav-group';var headerBtn=document.createElement('button');headerBtn.className='nav-group-header';headerBtn.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span><i class="ti ti-chevron-down"></i>';var itemsContainer=document.createElement('div');itemsContainer.className='nav-group-items';headerBtn.onclick=function(){var isExpanded=itemsContainer.style.display==='flex';if(!isExpanded){itemsContainer.style.display='flex';headerBtn.querySelector('i').style.transform='rotate(-180deg)';}else{itemsContainer.style.display='none';headerBtn.querySelector('i').style.transform='rotate(0deg)';}var mod=item.divider.toLowerCase();if(mod==='hr'){showSection('hr-dashboard');if(typeof renderHRDashboard==='function')renderHRDashboard();}else if(mod==='finance'){showSection('finance-dashboard');if(typeof renderFinanceDashboard==='function')renderFinanceDashboard();}else if(mod==='petty cash'){showSection('pc-dashboard');if(typeof renderPCDashboard==='function')renderPCDashboard();}else if(mod==='payroll'){showSection('payroll-dashboard');if(typeof renderPayrollDashboard==='function')renderPayrollDashboard();}else if(mod==='reports'){showSection('reports-dashboard');if(typeof renderReportsDashboard==='function')renderReportsDashboard();}else if(mod==='admin'){showSection('admin-dashboard');if(typeof renderAdminDashboard==='function')renderAdminDashboard();}};groupDiv.appendChild(headerBtn);groupDiv.appendChild(itemsContainer);nav.appendChild(groupDiv);currentGroup=itemsContainer;return;}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button:not(.nav-group-header)').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff-directory'){renderStaffTable();}if(item.id==='staff-add'){setNextEmpId();refreshDeptDropdown();}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}if(item.id==='documents'&&typeof renderDocuments==='function')renderDocuments();if(item.id==='kpi'&&typeof renderKPI==='function')renderKPI();if(item.id==='recruitment'&&typeof renderRecruitment==='function')renderRecruitment();if(item.id==='discipline'&&typeof renderDiscipline==='function')renderDiscipline();if(item.id==='finance-daily-income')renderFinanceDailyIncome();if(item.id==='finance-banking')renderFinanceBanking();if(item.id==='finance-reconciliation')renderFinanceReconciliation();if(item.id==='finance-dashboard')renderFinanceDashboard();if(item.id==='finance-contacts')renderFinanceContacts();if(item.id==='finance-invoices')renderFinanceInvoices();if(item.id==='finance-bills')renderFinanceBills();if(item.id==='finance-expenses')renderFinanceExpenses();if(item.id==='finance-reimbursements')renderFinanceReimbursements();if(item.id==='finance-coa')renderFinanceCOA();if(item.id==='finance-gl')renderFinanceGL();if(item.id==='finance-budget')renderFinanceBudget();if(item.id==='pc-dashboard'&&typeof renderPCDashboard==='function')renderPCDashboard();if(item.id==='pc-register'&&typeof renderPCRegister==='function')renderPCRegister();if(item.id==='pc-vouchers'&&typeof renderPCVouchers==='function')renderPCVouchers();if(item.id==='pc-summary'&&typeof renderPCSummary==='function')renderPCSummary();if(item.id==='pc-settings'&&typeof renderPCSettings==='function')renderPCSettings();if(item.id==='report-hr')renderReportHR();if(item.id==='report-finance')renderReportFinance();if(item.id==='report-payroll')renderReportPayroll();if(item.id==='report-admin')renderReportAdmin();if(item.id==='report-vnpf')renderReportVNPF();if(item.id==='report-executive')renderReportExecutive();};currentGroup.appendChild(a);});var firstBtn=nav.querySelector('button:not(.nav-group-header)');if(firstBtn)firstBtn.click();}
+var ALL_SECTIONS=['hr-dashboard','payroll-dashboard','reports-dashboard','admin-dashboard','payslip','bulk','records','staff-directory','staff-add','hr','users','roles','dashboard','database','audit','company','archive','updates','docs','documents','kpi','recruitment','discipline','finance-dashboard','finance-contacts','finance-invoices','finance-bills','finance-daily-income','finance-banking','finance-reconciliation','finance-expenses','finance-reimbursements','finance-coa','finance-gl','finance-budget','pc-dashboard','pc-register','pc-vouchers','pc-summary','pc-settings','report-hr','report-finance','report-payroll','report-admin','report-vnpf','report-executive'];
 function showSection(id){ALL_SECTIONS.forEach(function(s){var el=document.getElementById('section-'+s);if(el)el.classList.add('hidden')});var target=document.getElementById('section-'+id);if(target)target.classList.remove('hidden');if(id==='payslip'){refreshStaffDropdown();setTodayPayDate()}if(id==='bulk'){setTodayBulkPayDate();renderBulkTemplates();}}
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function fmtDate(dateStr,opts){if(!dateStr)return'';return new Date(dateStr+'T00:00:00').toLocaleDateString('en-GB',opts||{day:'2-digit',month:'short',year:'numeric'});}
@@ -1459,6 +1545,18 @@ function refreshStaffDropdown(){
 }
 function fillStaffDetails(){var id=document.getElementById('ps-staff').value;var s=DB.findOne('staff',{_id:id});document.getElementById('ps-empid').value=s?s.empid:'';document.getElementById('ps-designation').value=s?s.designation:'';document.getElementById('ps-department').value=s?s.department:'';calcPayslip();}
 function vuvFmt(n){return 'VUV '+Math.round(Number(n)||0).toLocaleString()}
+// Fire-and-forget branded notification email (HR approvals, password resets, low leave
+// balance, license warnings, etc). Never blocks the UI — failures are logged, not surfaced,
+// since email delivery is a nice-to-have on top of the in-app notification bell.
+async function sendSystemNotificationEmail(to,subject,title,bodyHtml,ctaText,ctaUrl){
+  if(!to) return;
+  try{
+    var res = await fetch('/api/notify/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({to:to,subject:subject,title:title,bodyHtml:bodyHtml,ctaText:ctaText,ctaUrl:ctaUrl})});
+    if(!res.ok){var e=await res.json().catch(function(){return{}});console.warn('Notification email not sent:',e.error||res.status);}
+  }catch(e){
+    console.warn('Notification email failed:',e);
+  }
+}
 function calcPayslip(){var b=parseFloat(document.getElementById('earn-basic').value)||0;var o=parseFloat(document.getElementById('earn-overtime').value)||0;var sev=parseFloat(document.getElementById('earn-severance').value)||0;var a=parseFloat(document.getElementById('earn-allowances').value)||0;var bon=parseFloat(document.getElementById('earn-bonus').value)||0;var vnpf=Math.round(b*0.06);document.getElementById('ded-vnpf').value=vnpf;var l=parseFloat(document.getElementById('ded-loan').value)||0;var d=parseFloat(document.getElementById('ded-others').value)||0;var earn=b+o+sev+a+bon;var ded=vnpf+l+d;document.getElementById('ps-total-earn').textContent=vuvFmt(earn);document.getElementById('ps-total-ded').textContent=vuvFmt(ded);document.getElementById('ps-net-display').textContent=vuvFmt(earn-ded);}
 function savePayslip(){var staffId=document.getElementById('ps-staff').value;if(!staffId){alert('Please select a staff member.');return}var s=DB.findOne('staff',{_id:staffId});var b=parseFloat(document.getElementById('earn-basic').value)||0;var o=parseFloat(document.getElementById('earn-overtime').value)||0;var sev=parseFloat(document.getElementById('earn-severance').value)||0;var a=parseFloat(document.getElementById('earn-allowances').value)||0;var bon=parseFloat(document.getElementById('earn-bonus').value)||0;var vnpf=Math.round(b*0.06);var l=parseFloat(document.getElementById('ded-loan').value)||0;var d=parseFloat(document.getElementById('ded-others').value)||0;var othersNote=document.getElementById('ded-others-note').value.trim();var earn=b+o+sev+a+bon;var ded=vnpf+l+d;var cycle=document.getElementById('ps-paycycle').value;var periodStart=document.getElementById('ps-period-start')?document.getElementById('ps-period-start').value:'';var periodEnd=document.getElementById('ps-period-end')?document.getElementById('ps-period-end').value:'';var pType=document.getElementById('earn-type').value;var hRate=parseFloat(document.getElementById('earn-hourly-rate').value)||0;var hWork=parseFloat(document.getElementById('earn-hours').value)||0;var pDoc={staffId:staffId,staff:s?s.name:'',empid:document.getElementById('ps-empid').value,designation:document.getElementById('ps-designation').value,department:document.getElementById('ps-department').value,month:document.getElementById('ps-month').value,year:document.getElementById('ps-year').value,paydate:document.getElementById('ps-paydate').value,paycycle:cycle,periodStart:periodStart,periodEnd:periodEnd,paiddays:document.getElementById('ps-paiddays').value,totaldays:document.getElementById('ps-totaldays').value,payType:pType,hourlyRate:hRate,hoursWorked:hWork,basic:b,overtime:o,severance:sev,allowances:a,bonus:bon,vnpf:vnpf,loan:l,others:d,othersNote:othersNote,totalEarn:earn,totalDed:ded,net:earn-ded,createdBy:APP.currentUser.username};DB.insert('payslips',pDoc);if(typeof postPayrollGL==='function')postPayrollGL(pDoc);var m=document.getElementById('ps-save-msg');m.style.display='inline-flex';setTimeout(function(){m.style.display='none'},3000);}
 function onPayTypeChange(){var t=document.getElementById('earn-type').value;if(t==='hourly'){document.getElementById('hourly-wrap').style.display='grid';document.getElementById('earn-basic').readOnly=true;}else{document.getElementById('hourly-wrap').style.display='none';document.getElementById('earn-basic').readOnly=false;}calcPayslip();}
@@ -1475,7 +1573,7 @@ function saveBulkTemplate(){document.getElementById('modal-template').style.disp
 function confirmSaveBulkTemplate(){var name=document.getElementById('bp-template-name').value.trim();if(!name){alert('Please enter a name.');return}var data={};var all=DB.findAll('staff',{status:'Active'});var hasData=false;all.forEach(function(s){var basic=parseFloat(document.getElementById('bp-basic-'+s._id).value)||0;var o=parseFloat(document.getElementById('bp-ot-'+s._id).value)||0;var a=parseFloat(document.getElementById('bp-allow-'+s._id).value)||0;var bon=parseFloat(document.getElementById('bp-bonus-'+s._id).value)||0;var l=parseFloat(document.getElementById('bp-loan-'+s._id).value)||0;var d=parseFloat(document.getElementById('bp-other-'+s._id).value)||0;if(basic>0||o>0||a>0||bon>0||l>0||d>0){data[s._id]={basic:basic,ot:o,allow:a,bonus:bon,loan:l,other:d};hasData=true}});if(!hasData){alert('No input data found to save in template.');return}DB.insert('bulk_templates',{name:name,data:data});renderBulkTemplates();document.getElementById('modal-template').style.display='none';var m=document.getElementById('bp-save-msg');m.innerHTML='<i class="ti ti-check"></i> Template Saved.';m.style.display='inline-flex';setTimeout(function(){m.style.display='none';m.innerHTML='<i class="ti ti-check"></i> <span data-i18n="msg_bulk_saved"> Bulk Payslip Saved.</span>';translateUI();},3000);}
 function loadBulkTemplate(){var tid=document.getElementById('bp-template-select').value;if(!tid)return;var t=DB.findOne('bulk_templates',{_id:tid});if(!t)return;var data=t.data;for(var sid in data){if(document.getElementById('bp-basic-'+sid)){document.getElementById('bp-basic-'+sid).value=data[sid].basic||'';document.getElementById('bp-ot-'+sid).value=data[sid].ot||'';document.getElementById('bp-allow-'+sid).value=data[sid].allow||'';document.getElementById('bp-bonus-'+sid).value=data[sid].bonus||'';document.getElementById('bp-loan-'+sid).value=data[sid].loan||'';document.getElementById('bp-other-'+sid).value=data[sid].other||'';calcBulkRow(sid)}}var m=document.getElementById('bp-save-msg');m.innerHTML='<i class="ti ti-check"></i> Template Loaded.';m.style.display='inline-flex';setTimeout(function(){m.style.display='none';m.innerHTML='<i class="ti ti-check"></i> <span data-i18n="msg_bulk_saved"> Bulk Payslip Saved.</span>';translateUI();},3000);}
 function resetPayslip(){['ps-staff','ps-empid','ps-designation','ps-department','earn-hourly-rate','earn-hours','earn-basic','earn-overtime','earn-severance','earn-allowances','earn-bonus','ded-loan','ded-others','ded-others-note','ps-period-start','ps-period-end'].forEach(function(id){var el=document.getElementById(id);if(el)el.value=''});document.getElementById('ded-vnpf').value='';var lbl=document.getElementById('ps-period-label');if(lbl)lbl.style.display='none';var info=document.getElementById('ps-paydate-info');if(info)info.style.display='none';document.getElementById('earn-type').value='fixed';onPayTypeChange();calcPayslip();}
-function fillPrintOverlay(p){var pr=getPeriodRange(p);var cyc=(p.paycycle||'monthly').toLowerCase();var startFmt=fmtDate(pr.start,{day:'2-digit',month:'long',year:'numeric'});var endFmt=fmtDate(pr.end,{day:'2-digit',month:'long',year:'numeric'});var pdFmt=p.paydate?new Date(p.paydate+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}):'';var heading=(cyc==='fortnightly'?'Fortnightly':(cyc==='weekly'?'Weekly':'Monthly'))+' Pay – '+p.month+' '+p.year;if(cyc==='monthly') heading=p.month+' '+p.year;document.getElementById('pr-monthyear').textContent=heading;var prEl=document.getElementById('pr-period-range');if(prEl)prEl.textContent=(startFmt&&endFmt)?startFmt+' – '+endFmt:'';document.getElementById('pr-paydate').textContent=pdFmt;var cyEl=document.getElementById('pr-cycle');if(cyEl)cyEl.textContent=cyc==='fortnightly'?'Fortnightly':(cyc==='weekly'?'Weekly':'Monthly');document.getElementById('pr-name').textContent=p.staff;document.getElementById('pr-id').textContent=p.empid;var sRec=DB.findOne('staff',{empid:p.empid});var vnpfNum=sRec&&sRec.vnpfNumber?sRec.vnpfNumber:'N/A';if(document.getElementById('pr-vnpf-num')){document.getElementById('pr-vnpf-num').textContent=vnpfNum;}document.getElementById('pr-desig').textContent=p.designation;document.getElementById('pr-dept').textContent=p.department||'';document.getElementById('pr-net').textContent=vuvFmt(p.net);document.getElementById('pr-net2').textContent=vuvFmt(p.net);document.getElementById('pr-days').textContent=p.paiddays+' / '+p.totaldays;document.getElementById('pr-basic').textContent=vuvFmt(p.basic);document.getElementById('pr-overtime').textContent=vuvFmt(p.overtime);if(document.getElementById('pr-severance-row')){document.getElementById('pr-severance-row').style.display=(p.severance&&p.severance>0)?'table-row':'none';}if(document.getElementById('pr-severance')){document.getElementById('pr-severance').textContent=vuvFmt(p.severance||0);}document.getElementById('pr-allow').textContent=vuvFmt(p.allowances);if(document.getElementById('pr-bonus'))document.getElementById('pr-bonus').textContent=vuvFmt(p.bonus||0);document.getElementById('pr-tearn').textContent=vuvFmt(p.totalEarn);document.getElementById('pr-vnpf').textContent=vuvFmt(p.vnpf);document.getElementById('pr-loan').textContent=vuvFmt(p.loan);document.getElementById('pr-others').textContent=vuvFmt(p.others);document.getElementById('pr-tded').textContent=vuvFmt(p.totalDed);var noteEl=document.getElementById('pr-others-note-label');if(noteEl){noteEl.textContent=p.othersNote?'('+p.othersNote+')':'';noteEl.style.display=p.othersNote?'block':'none';}var s=DB.findOne('settings',{_id:'company'});if(s){if(s.name)document.getElementById('pr-company-name').textContent=s.name;if(s.address)document.getElementById('pr-company-address').textContent=s.address;}document.getElementById('print-overlay').style.display='flex';}
+function fillPrintOverlay(p){var pr=getPeriodRange(p);var cyc=(p.paycycle||'monthly').toLowerCase();var startFmt=fmtDate(pr.start,{day:'2-digit',month:'long',year:'numeric'});var endFmt=fmtDate(pr.end,{day:'2-digit',month:'long',year:'numeric'});var pdFmt=p.paydate?new Date(p.paydate+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'}):'';var heading=(cyc==='fortnightly'?'Fortnightly':(cyc==='weekly'?'Weekly':'Monthly'))+' Pay – '+p.month+' '+p.year;if(cyc==='monthly') heading=p.month+' '+p.year;document.getElementById('pr-monthyear').textContent=heading;var prEl=document.getElementById('pr-period-range');if(prEl)prEl.textContent=(startFmt&&endFmt)?startFmt+' – '+endFmt:'';document.getElementById('pr-paydate').textContent=pdFmt;var cyEl=document.getElementById('pr-cycle');if(cyEl)cyEl.textContent=cyc==='fortnightly'?'Fortnightly':(cyc==='weekly'?'Weekly':'Monthly');document.getElementById('pr-name').textContent=p.staff;document.getElementById('pr-id').textContent=p.empid;var sRec=DB.findOne('staff',{empid:p.empid});var vnpfNum=sRec&&sRec.vnpfNumber?sRec.vnpfNumber:'N/A';if(document.getElementById('pr-vnpf-num')){document.getElementById('pr-vnpf-num').textContent=vnpfNum;}document.getElementById('pr-desig').textContent=p.designation;document.getElementById('pr-dept').textContent=p.department||'';document.getElementById('pr-net').textContent=vuvFmt(p.net);document.getElementById('pr-net2').textContent=vuvFmt(p.net);document.getElementById('pr-days').textContent=p.paiddays+' / '+p.totaldays;document.getElementById('pr-basic').textContent=vuvFmt(p.basic);document.getElementById('pr-overtime').textContent=vuvFmt(p.overtime);if(document.getElementById('pr-severance-row')){document.getElementById('pr-severance-row').style.display=(p.severance&&p.severance>0)?'table-row':'none';}if(document.getElementById('pr-severance')){document.getElementById('pr-severance').textContent=vuvFmt(p.severance||0);}document.getElementById('pr-allow').textContent=vuvFmt(p.allowances);if(document.getElementById('pr-bonus'))document.getElementById('pr-bonus').textContent=vuvFmt(p.bonus||0);document.getElementById('pr-tearn').textContent=vuvFmt(p.totalEarn);document.getElementById('pr-vnpf').textContent=vuvFmt(p.vnpf);document.getElementById('pr-loan').textContent=vuvFmt(p.loan);document.getElementById('pr-others').textContent=vuvFmt(p.others);document.getElementById('pr-tded').textContent=vuvFmt(p.totalDed);var noteEl=document.getElementById('pr-others-note-label');if(noteEl){noteEl.textContent=p.othersNote?'('+p.othersNote+')':'';noteEl.style.display=p.othersNote?'block':'none';}var s=DB.findOne('settings',{_id:'company'});if(s){if(s.name)document.getElementById('pr-company-name').textContent=s.name;if(s.address)document.getElementById('pr-company-address').textContent=s.address;}var rcptOv=document.getElementById('receipt-print-overlay');if(rcptOv)rcptOv.style.display='none';document.getElementById('print-overlay').style.display='flex';}
 function printPayslip(){var staffId=document.getElementById('ps-staff').value;if(!staffId){alert('Please select a staff member first.');return}var b=parseFloat(document.getElementById('earn-basic').value)||0;var o=parseFloat(document.getElementById('earn-overtime').value)||0;var sev=parseFloat(document.getElementById('earn-severance').value)||0;var a=parseFloat(document.getElementById('earn-allowances').value)||0;var bon=parseFloat(document.getElementById('earn-bonus').value)||0;var vnpf=Math.round(b*0.06);var l=parseFloat(document.getElementById('ded-loan').value)||0;var d=parseFloat(document.getElementById('ded-others').value)||0;var earn=b+o+sev+a+bon;var ded=vnpf+l+d;var cycle=document.getElementById('ps-paycycle').value;var pStart=document.getElementById('ps-period-start')?document.getElementById('ps-period-start').value:'';var pEnd=document.getElementById('ps-period-end')?document.getElementById('ps-period-end').value:'';var sel=document.getElementById('ps-staff');var staffName=sel.options[sel.selectedIndex].textContent;var rec={staff:staffName,empid:document.getElementById('ps-empid').value,designation:document.getElementById('ps-designation').value,department:document.getElementById('ps-department').value,month:document.getElementById('ps-month').value,year:document.getElementById('ps-year').value,paydate:document.getElementById('ps-paydate').value,paycycle:cycle,periodStart:pStart,periodEnd:pEnd,paiddays:document.getElementById('ps-paiddays').value,totaldays:document.getElementById('ps-totaldays').value,basic:b,overtime:o,allowances:a,severance:sev,bonus:bon,vnpf:vnpf,loan:l,others:d,othersNote:document.getElementById('ded-others-note').value.trim(),totalEarn:earn,totalDed:ded,net:earn-ded};fillPrintOverlay(rec);}
 function viewPayslip(id){var p=DB.findOne('payslips',{_id:id});if(!p)return;fillPrintOverlay(p);}
 function deletePayslip(id){customConfirm('Delete this payslip?', function(){ DB.remove('payslips',{_id:id});renderRecords(); });}
@@ -1485,8 +1583,8 @@ function getNextEmpId(){var nums=DB.findAll('staff').map(function(s){var m=s.emp
 function setNextEmpId(){if(APP.editingStaffIdx===-1)document.getElementById('sf-id').value=getNextEmpId()}
 function renderStaffTable(){var wrap=document.getElementById('staff-table-wrap');var search=(document.getElementById('staff-search')||{}).value||'';var all=DB.findAll('staff').filter(function(s){return!search||(s.name||'').toLowerCase().includes(search.toLowerCase())||(s.empid||'').toLowerCase().includes(search.toLowerCase())||(s.department||'').toLowerCase().includes(search.toLowerCase())});if(!all.length){wrap.innerHTML='<p style="color:#888;font-size:13px;padding:1rem"><span data-i18n="msg_no_staff">No staff found.</span></p>';return}var rows='';all.forEach(function(s,idx){var sc=s.status==='Active'?'pill-active':'pill-inactive';var ls=getLeaveStats(s._id);var aCol=ls.annualLeft<=0?'color:#dc2626':ls.annualLeft<=5?'color:#f59e0b':'color:#16a34a';var sCol=ls.sickLeft<=0?'color:#dc2626':ls.sickLeft<=2?'color:#f59e0b':'color:#16a34a';var eid='stf'+idx;STAFF_ID_MAP[eid]=s._id;var hrStr=s.hourlyRate?'VUV '+s.hourlyRate+'/hr':'Salaried';var cycleStr=s.payCycle||'Monthly';var linkedUser = DB.findOne('users', {linkedStaffId: s._id});var resetBtn = '';if (linkedUser && (APP.currentUser.role==='admin'||APP.currentUser.role==='manager')) {    resetBtn = '<button class="btn btn-gold btn-sm" style="margin-right:4px" onclick="resetStaffPassword(\'' + linkedUser._id + '\')" title="Reset Password"><i class="ti ti-key"></i></button>';}var delBtn=(APP.currentUser.role==='admin'||APP.currentUser.role==='manager')? resetBtn + '<button class="btn btn-danger btn-sm" onclick="deleteStaff(STAFF_ID_MAP.stf'+idx+')" title="Delete"><i class="ti ti-trash"></i></button>':'';rows+=''+'<tr>'+'<td style="font-weight:600">'+s.name+'</td>'+'<td style="color:#888">'+s.empid+'</td>'+'<td>'+s.designation+'</td>'+'<td>'+s.department+'</td>'+'<td><span style="background:#f0f7ff;color:#000000;padding:2px 6px;border-radius:4px;font-size:11px;display:block;margin-bottom:2px">'+hrStr+'</span><span style="background:#f3e8ff;color:#6b21a8;padding:2px 6px;border-radius:4px;font-size:10px;display:block;text-align:center">'+cycleStr+'</span></td>'+'<td style="background:#f0f8ff;text-align:center">'+ls.annualAlloc+' Days</td>'+'<td style="background:#f0f8ff;text-align:center;color:#1565c0;font-weight:600">'+ls.annualTaken+' Days</td>'+'<td style="background:#f0f8ff;text-align:center;font-weight:700;'+aCol+'">'+ls.annualLeft+' Days</td>'+'<td style="background:#fff5f5;text-align:center">'+ls.sickAlloc+' Days</td>'+'<td style="background:#fff5f5;text-align:center;color:#c62828;font-weight:600">'+ls.sickTaken+' Days</td>'+'<td style="background:#fff5f5;text-align:center;font-weight:700;'+sCol+'">'+ls.sickLeft+' Days</td>'+'<td><span class="status-pill '+sc+'">'+s.status+'</span></td>'+'<td style="white-space:nowrap"><button class="btn btn-outline btn-sm" onclick="editStaff(STAFF_ID_MAP.stf'+idx+')" title="Edit"><i class="ti ti-edit"></i></button> '+delBtn+'</td>'+'</tr>'; setTimeout(translateUI, 10); });wrap.innerHTML='<div style="overflow:auto"><table><thead><tr><th><span data-i18n="tbl_name">Name</span></th><th><span data-i18n="tbl_id">ID</span></th><th><span data-i18n="tbl_designation">Designation</span></th><th><span data-i18n="tbl_dept">Dept</span></th><th><span data-i18n="tbl_pay_type">Pay Type</span></th><th style="background:#e8f4fd;color:#1565c0;text-align:center"><span data-i18n="tbl_annual_alloc">Annual<br>Allocated</span></th><th style="background:#e8f4fd;color:#1565c0;text-align:center"><span data-i18n="tbl_annual_taken">Annual<br>Taken</span></th><th style="background:#e8f4fd;color:#1565c0;text-align:center"><span data-i18n="tbl_annual_left">Annual<br>Left</span></th><th style="background:#fde8e8;color:#c62828;text-align:center"><span data-i18n="tbl_sick_alloc">Sick Leave<br>Allocated</span></th><th style="background:#fde8e8;color:#c62828;text-align:center"><span data-i18n="tbl_sick_taken">Sick Leave<br>Taken</span></th><th style="background:#fde8e8;color:#c62828;text-align:center"><span data-i18n="tbl_sick_left">Sick Leave<br>Left</span></th><th><span data-i18n="tbl_status">Status</span></th><th><span data-i18n="tbl_actions">Actions</span></th></tr></thead><tbody>'+rows+'</tbody></table></div>';}
 function clearStaffForm(){document.getElementById('sf-name').value='';setNextEmpId();document.getElementById('sf-vnpf').value='';document.getElementById('sf-designation').value='';document.getElementById('sf-department').value='';document.getElementById('sf-email').value='';document.getElementById('sf-phone').value='';document.getElementById('sf-hourly').value='';document.getElementById('sf-bank').value='';document.getElementById('sf-account').value='';document.getElementById('sf-annual').value='21';document.getElementById('sf-sick').value='10';document.getElementById('sf-medical').value='50000';document.getElementById('sf-status').value='Active';document.getElementById('sf-paycycle').value='Monthly';document.getElementById('sf-create-user').checked=false;document.getElementById('sf-user-fields').style.display='none';document.getElementById('sf-username').value='';document.getElementById('sf-password').value='';APP.editingStaffIdx=-1;document.getElementById('staff-form-title').textContent='Add New Staff';}
-function saveStaff(){var n=document.getElementById('sf-name').value.trim();var id=document.getElementById('sf-id').value.trim();var vnpfNum=document.getElementById('sf-vnpf').value.trim();var dsg=document.getElementById('sf-designation').value.trim();var dep=document.getElementById('sf-department').value;var email=document.getElementById('sf-email').value.trim();var phone=document.getElementById('sf-phone').value.trim();var hourlyRate=parseFloat(document.getElementById('sf-hourly').value)||0;var bank=document.getElementById('sf-bank').value.trim();var account=document.getElementById('sf-account').value.trim();var annual=parseInt(document.getElementById('sf-annual').value)||21;var sick=parseInt(document.getElementById('sf-sick').value)||10;var medical=parseInt(document.getElementById('sf-medical').value)||50000;var st=document.getElementById('sf-status').value;var pc=document.getElementById('sf-paycycle').value;if(!n){alert('Staff name is required.');return}if(!dep){alert('Please select a department.');return}var obj={name:n,empid:id,vnpfNumber:vnpfNum,designation:dsg,department:dep,email:email,phone:phone,hourlyRate:hourlyRate,bankName:bank,accountNumber:account,annualLeave:annual,sickLeave:sick,medicalInsurance:medical,status:st,payCycle:pc};var savedId='';if(APP.editingStaffIdx!==-1){DB.update('staff',{_id:APP.editingStaffIdx},obj);savedId=APP.editingStaffIdx;APP.editingStaffIdx=-1;document.getElementById('staff-form-title').textContent='Add New Staff';}else{var newDoc=DB.insert('staff',obj);savedId=newDoc._id;}var createUser=document.getElementById('sf-create-user').checked;var uname=document.getElementById('sf-username').value.trim();var pass=document.getElementById('sf-password').value.trim();if(createUser&&uname){var existingUser=DB.findOne('users',{linkedStaffId:savedId});if(!existingUser){existingUser=DB.findOne('users',{username:uname});}if(existingUser){var userObj={name:n,username:uname,role:'staff',linkedStaffId:savedId};if(pass)userObj.password=pass;DB.update('users',{_id:existingUser._id},userObj);}else{if(!pass)pass='staff123';DB.insert('users',{name:n,username:uname,password:pass,role:'staff',linkedStaffId:savedId});}}clearStaffForm();renderStaffTable();if(typeof renderUsersTable==='function')renderUsersTable();setNextEmpId();var m=document.getElementById('sf-msg');m.textContent='Staff saved to database.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
-function editStaff(dbId){var s=DB.findOne('staff',{_id:dbId});if(!s)return;APP.editingStaffIdx=dbId;document.getElementById('sf-name').value=s.name;document.getElementById('sf-id').value=s.empid;document.getElementById('sf-vnpf').value=s.vnpfNumber||'';document.getElementById('sf-designation').value=s.designation;document.getElementById('sf-department').value=s.department;document.getElementById('sf-email').value=s.email||'';document.getElementById('sf-phone').value=s.phone||'';document.getElementById('sf-hourly').value=s.hourlyRate||'';document.getElementById('sf-bank').value=s.bankName||'';document.getElementById('sf-account').value=s.accountNumber||'';document.getElementById('sf-annual').value=s.annualLeave||21;document.getElementById('sf-sick').value=s.sickLeave||10;document.getElementById('sf-medical').value=s.medicalInsurance||50000;document.getElementById('sf-status').value=s.status;document.getElementById('sf-paycycle').value=s.payCycle||'Monthly';var eu=DB.findOne('users',{linkedStaffId:dbId});if(eu){document.getElementById('sf-create-user').checked=true;document.getElementById('sf-user-fields').style.display='block';document.getElementById('sf-username').value=eu.username;document.getElementById('sf-password').value='';}else{document.getElementById('sf-create-user').checked=false;document.getElementById('sf-user-fields').style.display='none';document.getElementById('sf-username').value='';document.getElementById('sf-password').value='';}document.getElementById('staff-form-title').textContent='Edit Staff - '+s.name;}
+function saveStaff(){var n=document.getElementById('sf-name').value.trim();var id=document.getElementById('sf-id').value.trim();var vnpfNum=document.getElementById('sf-vnpf').value.trim();var dsg=document.getElementById('sf-designation').value.trim();var dep=document.getElementById('sf-department').value;var email=document.getElementById('sf-email').value.trim();var phone=document.getElementById('sf-phone').value.trim();var hourlyRate=parseFloat(document.getElementById('sf-hourly').value)||0;var bank=document.getElementById('sf-bank').value.trim();var account=document.getElementById('sf-account').value.trim();var annual=parseInt(document.getElementById('sf-annual').value)||21;var sick=parseInt(document.getElementById('sf-sick').value)||10;var medical=parseInt(document.getElementById('sf-medical').value)||50000;var st=document.getElementById('sf-status').value;var pc=document.getElementById('sf-paycycle').value;if(!n){alert('Staff name is required.');return}if(!dep){alert('Please select a department.');return}if(APP.editingStaffIdx===-1&&APP.maxStaff!=null&&DB.findAll('staff').length>=APP.maxStaff){alert('Staff limit reached. Your license allows up to '+APP.maxStaff+' staff. Please upgrade your license to add more.');return}var obj={name:n,empid:id,vnpfNumber:vnpfNum,designation:dsg,department:dep,email:email,phone:phone,hourlyRate:hourlyRate,bankName:bank,accountNumber:account,annualLeave:annual,sickLeave:sick,medicalInsurance:medical,status:st,payCycle:pc};var savedId='';if(APP.editingStaffIdx!==-1){DB.update('staff',{_id:APP.editingStaffIdx},obj);savedId=APP.editingStaffIdx;APP.editingStaffIdx=-1;document.getElementById('staff-form-title').textContent='Add New Staff';}else{var newDoc=DB.insert('staff',obj);savedId=newDoc._id;}var createUser=document.getElementById('sf-create-user').checked;var uname=document.getElementById('sf-username').value.trim();var pass=document.getElementById('sf-password').value.trim();if(createUser&&uname){var existingUser=DB.findOne('users',{linkedStaffId:savedId});if(!existingUser){existingUser=DB.findOne('users',{username:uname});}if(existingUser){var userObj={name:n,username:uname,role:'staff',linkedStaffId:savedId};if(pass)userObj.password=pass;DB.update('users',{_id:existingUser._id},userObj);}else{if(!pass)pass='staff123';DB.insert('users',{name:n,username:uname,password:pass,role:'staff',linkedStaffId:savedId});}}clearStaffForm();renderStaffTable();if(typeof renderUsersTable==='function')renderUsersTable();setNextEmpId();var m=document.getElementById('sf-msg');m.textContent='Staff saved to database.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
+function editStaff(dbId){var s=DB.findOne('staff',{_id:dbId});if(!s)return;showSection('staff-add');if(typeof refreshDeptDropdown==='function')refreshDeptDropdown();var navBtns=document.querySelectorAll('#sidebar-nav button:not(.nav-group-header)');navBtns.forEach(function(b){if(b.textContent.trim()==='Add/Edit Staff'){navBtns.forEach(function(x){x.style.background='transparent';x.style.color='#444';x.style.fontWeight='500';x.dataset.active='';});b.style.background='#0a0a0a';b.style.color='#fff';b.style.fontWeight='700';b.dataset.active='1';}});APP.editingStaffIdx=dbId;document.getElementById('sf-name').value=s.name;document.getElementById('sf-id').value=s.empid;document.getElementById('sf-vnpf').value=s.vnpfNumber||'';document.getElementById('sf-designation').value=s.designation;document.getElementById('sf-department').value=s.department;document.getElementById('sf-email').value=s.email||'';document.getElementById('sf-phone').value=s.phone||'';document.getElementById('sf-hourly').value=s.hourlyRate||'';document.getElementById('sf-bank').value=s.bankName||'';document.getElementById('sf-account').value=s.accountNumber||'';document.getElementById('sf-annual').value=s.annualLeave||21;document.getElementById('sf-sick').value=s.sickLeave||10;document.getElementById('sf-medical').value=s.medicalInsurance||50000;document.getElementById('sf-status').value=s.status;document.getElementById('sf-paycycle').value=s.payCycle||'Monthly';var eu=DB.findOne('users',{linkedStaffId:dbId});if(eu){document.getElementById('sf-create-user').checked=true;document.getElementById('sf-user-fields').style.display='block';document.getElementById('sf-username').value=eu.username;document.getElementById('sf-password').value='';}else{document.getElementById('sf-create-user').checked=false;document.getElementById('sf-user-fields').style.display='none';document.getElementById('sf-username').value='';document.getElementById('sf-password').value='';}document.getElementById('staff-form-title').textContent='Edit Staff - '+s.name;}
 function deleteStaff(dbId){var s=DB.findOne('staff',{_id:dbId});customConfirm('Delete '+(s?s.name:'this staff member')+'?', function(){ DB.remove('staff',{_id:dbId});renderStaffTable();setNextEmpId(); });}
 function refreshHRStaffDropdown(){
   var sel=document.getElementById('hr-staff');
@@ -1540,6 +1638,26 @@ function approveHR(id,status){
     }
     // Notify other admins/managers
     createNotification(rType,'Request '+status,(rec.staff||'Staff')+' '+rec.type+' has been '+status.toLowerCase()+' by '+APP.currentUser.name+'.',{section:'hr',recordId:id,submittedBy:submitter},['admin','manager','it']);
+
+    // Email the staff member directly, if they have an email address on file
+    var staffRec=DB.findOne('staff',{_id:rec.staffId});
+    if(staffRec&&staffRec.email){
+      var statusColor=status==='Approved'?'#10b981':'#dc2626';
+      var periodStr=rec.startDate?(fmtDate(rec.startDate)+((rec.endDate&&rec.endDate!==rec.startDate)?' &ndash; '+fmtDate(rec.endDate):'')):'';
+      var bodyHtml='Hi '+(staffRec.name||'')+',<br><br>Your <strong>'+rec.type+'</strong> request'+(periodStr?' for '+periodStr:'')+(rec.amount?' ('+vuvFmt(rec.amount)+')':'')+' has been <strong style="color:'+statusColor+'">'+status.toUpperCase()+'</strong> by '+APP.currentUser.name+'.'+(rec.notes?'<br><br><em>Notes: '+rec.notes+'</em>':'');
+      sendSystemNotificationEmail(staffRec.email,rec.type+' Request '+status,rec.type+' Request '+status,bodyHtml);
+
+      // Low leave balance warning, once the leave has actually been deducted (Approved only)
+      if(status==='Approved'&&(rec.type==='Annual Leave'||rec.type==='Sick Leave')){
+        var ls=getLeaveStats(rec.staffId);
+        if(rec.type==='Annual Leave'&&ls.annualLeft<=5){
+          sendSystemNotificationEmail(staffRec.email,'Low Annual Leave Balance','Low Annual Leave Balance','Hi '+staffRec.name+',<br><br>Your Annual Leave balance is now <strong>'+ls.annualLeft+' day'+(ls.annualLeft!==1?'s':'')+'</strong> out of '+ls.annualAlloc+' allocated for the year. Please plan any further leave accordingly.');
+        }
+        if(rec.type==='Sick Leave'&&ls.sickLeft<=2){
+          sendSystemNotificationEmail(staffRec.email,'Low Sick Leave Balance','Low Sick Leave Balance','Hi '+staffRec.name+',<br><br>Your Sick Leave balance is now <strong>'+ls.sickLeft+' day'+(ls.sickLeft!==1?'s':'')+'</strong> out of '+ls.sickAlloc+' allocated for the year.');
+        }
+      }
+    }
   }
   renderHRTable();renderHRSummary();renderStaffTable();
   var dash=document.getElementById('section-dashboard');
@@ -1623,326 +1741,6 @@ function cancelEditUser(){
   document.getElementById('uf-cancel-btn').style.display='none';
 }
 function deleteUser(dbId){customConfirm('Delete this user?', function(){ DB.remove('users',{_id:dbId});renderUsersTable(); }); setTimeout(translateUI, 10); }
-var LAST_COMPLIANCE_DATA=null;
-function renderCompliance(){
-  var filterM=document.getElementById('cr-month').value;
-  var filterY=document.getElementById('cr-year').value;
-  var list=DB.findAll('payslips').filter(function(p){return(!filterM||p.month===filterM)&&(!filterY||p.year==filterY)});
-  var out=document.getElementById('compliance-output');
-  var loading=document.getElementById('cr-loading');
-  var pdfBtn=document.getElementById('cr-pdf-btn');
-  if(!list.length){out.innerHTML='<div class="card" style="text-align:center;color:#888;padding:2rem">No records for this period.</div>';if(pdfBtn)pdfBtn.style.display='none';return;}
-  var tE=list.reduce(function(s,p){return s+p.totalEarn},0);
-  var tV=list.reduce(function(s,p){return s+p.vnpf},0);
-  var tL=list.reduce(function(s,p){return s+p.loan},0);
-  var tO=list.reduce(function(s,p){return s+p.others},0);
-  var tN=list.reduce(function(s,p){return s+p.net},0);
-  // HR data — all requests, filtered by period if month/year selected
-  var allHR=DB.findAll('hr_requests');
-  var hrFiltered=allHR.filter(function(r){
-    if(!filterM&&!filterY)return true;
-    var d=r.startDate||'';
-    if(filterY&&d.substr(0,4)!==filterY)return false;
-    if(filterM&&filterM!==''){var mIdx=MONTHS.indexOf(filterM);var mStr=String(mIdx+1).padStart(2,'0');if(d.substr(5,2)!==mStr)return false;}
-    return true;
-  });
-  // Staff data
-  var allStaff=DB.findAll('staff');
-  var periodLabel=filterM&&filterY?filterM+' '+filterY:filterY?'Year '+filterY:'All Periods';
-  var today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  LAST_COMPLIANCE_DATA={list:list,tE:tE,tV:tV,tL:tL,tO:tO,tN:tN,periodLabel:periodLabel,today:today,hrData:hrFiltered,staffData:allStaff};
-  if(loading)loading.style.display='block';
-  out.innerHTML='';
-  if(pdfBtn)pdfBtn.style.display='none';
-  generateComplianceNarrative(LAST_COMPLIANCE_DATA,function(narrative){
-    LAST_COMPLIANCE_DATA._narrative=narrative;
-    if(loading)loading.style.display='none';
-    renderComplianceReport(LAST_COMPLIANCE_DATA,narrative);
-    if(pdfBtn)pdfBtn.style.display='inline-flex';
-  });
-}
-function generateComplianceNarrative(data,callback){var bigOthers=data.list.filter(function(p){return p.others>0});var otherNotes=bigOthers.map(function(p){return p.staff+': '+vuvFmt(p.others)+(p.othersNote?' ('+p.othersNote+')':'')}).join(', ');var empCount=data.list.length;var hrData=data.hrData||[];
-  var annualLv=hrData.filter(function(r){return r.type==='Annual Leave'}).length;
-  var sickLv=hrData.filter(function(r){return r.type==='Sick Leave'}).length;
-  var unpaidLv=hrData.filter(function(r){return r.type==='Leave Without Pay'}).length;
-  var advTotal=hrData.filter(function(r){return r.type==='Payment Advance'&&r.status==='Approved'}).reduce(function(s,r){return s+(r.amount||0)},0);
-  var prompt='You are a payroll compliance officer for WokManeja in Vanuatu.\nGenerate a concise executive compliance narrative for the following payroll and HR data.\nReporting Period: '+data.periodLabel+'\nEmployees processed: '+empCount+'\nTotal Gross Payroll: '+vuvFmt(data.tE)+'\nTotal VNPF: '+vuvFmt(data.tV)+'\nTotal Loan Deductions: '+vuvFmt(data.tL)+'\nTotal Other Deductions: '+vuvFmt(data.tO)+(otherNotes?' ('+otherNotes+')':'')+'\nTotal Net Payroll: '+vuvFmt(data.tN)+'\nHR Leave Requests: Annual='+annualLv+', Sick='+sickLv+', Leave Without Pay='+unpaidLv+'\nPayment Advances Approved: '+vuvFmt(advTotal)+'\nTotal HR Requests: '+hrData.length+'\n\nReturn a JSON object with exactly these keys (no markdown, raw JSON only):\n{"executive_summary":"2-3 sentence summary covering both payroll and HR activity","vnpf_observation":"1-2 sentences about VNPF compliance","deduction_observation":"1-2 sentences about deductions","accuracy_observation":"1-2 sentences about payroll accuracy","recommendations":["rec 1","rec 2","rec 3","rec 4","rec 5"],"conclusion":"1-2 sentence conclusion covering payroll and HR"}';fetch('https://api.anthropic.com/v1/messages',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model:'claude-sonnet-4-20250514',max_tokens:1000,messages:[{role:'user',content:prompt}]})}).then(function(r){return r.json()}).then(function(data){try{var text=data.content.map(function(c){return c.text||''}).join('').trim();var clean=text.replace(/^```[a-z]*\n?/,'').replace(/\n?```$/,'').trim();callback(JSON.parse(clean));}catch(e){callback(defaultNarrative(LAST_COMPLIANCE_DATA))}}).catch(function(){callback(defaultNarrative(LAST_COMPLIANCE_DATA));});}
-function defaultNarrative(data){var bigOthers=data.list.filter(function(p){return p.others>0});var recs=['Maintain signed payroll approval records for all deductions.','Ensure VNPF remittances are submitted on time to avoid penalties.','Implement deduction categories within the payroll system for improved audit tracking.','Maintain fortnight payroll period references for better payroll transparency.','Introduce payroll reconciliation checks before final approval and payment processing.'];var hrD=data.hrData||[];var annLv=hrD.filter(function(r){return r.type==='Annual Leave'}).length;var sickLv=hrD.filter(function(r){return r.type==='Sick Leave'}).length;var unpLv=hrD.filter(function(r){return r.type==='Leave Without Pay'}).length;var advAmt=hrD.filter(function(r){return r.type==='Payment Advance'&&r.status==='Approved'}).reduce(function(s,r){return s+(r.amount||0)},0);
-  var execSummary='This report presents the payroll and HR compliance summary for '+data.periodLabel+'. The payroll covered '+data.list.length+' employee'+(data.list.length!==1?'s':'')+' with a total gross payroll of '+vuvFmt(data.tE)+'. Mandatory VNPF contributions were calculated at the standard rate of 6%, resulting in total VNPF deductions of '+vuvFmt(data.tV)+'. During this period, '+hrD.length+' HR request'+(hrD.length!==1?'s were':' was')+' recorded, including '+annLv+' annual leave, '+sickLv+' sick leave, '+unpLv+' leave without pay'+(advAmt>0?', and approved advances totalling '+vuvFmt(advAmt):'')+'.';var deductObs='All loan and other deductions have been processed and recorded.';if(bigOthers.length>0){deductObs='Significant additional deductions were identified under "Other Deductions" totalling '+vuvFmt(data.tO)+'. These should be reviewed and verified to ensure supporting documentation and authorization are properly maintained.';}return{executive_summary:execSummary,vnpf_observation:'The payroll system correctly applied the VNPF contribution rate of 6% across all processed salaries for the reporting period.',deduction_observation:deductObs,accuracy_observation:'The reported Net Payroll total of '+vuvFmt(data.tN)+' aligns with the processed payroll records after all deductions.',recommendations:recs,conclusion:'The '+data.periodLabel+' payroll process was completed with correct VNPF calculations. Management attention is recommended regarding deductions recorded during the payroll cycle to ensure full compliance and audit readiness.'};}
-
-function buildReportHTML(data,narrative,forPrint){
-  var pr=data;
-  // ── Payroll rows
-  var rows='';
-  pr.list.forEach(function(p){
-    var prd=getPeriodRange(p);
-    var periodStr=prd.start&&prd.end?fmtDate(prd.start)+' &ndash; '+fmtDate(prd.end):p.month+' '+p.year;
-    rows+='<tr><td style="font-weight:600">'+p.staff+'</td><td>'+p.empid+'</td><td style="white-space:nowrap">'+fmtDate(p.paydate)+'</td><td style="white-space:nowrap;font-size:11px">'+periodStr+'</td><td style="text-align:right">'+vuvFmt(p.totalEarn)+'</td><td style="text-align:right;color:#1565c0">'+vuvFmt(p.vnpf)+'</td><td style="text-align:right">'+vuvFmt(p.loan)+'</td><td style="text-align:right">'+vuvFmt(p.others)+(p.othersNote?'<br><span style="font-size:10px;color:#aaa;font-style:italic">('+p.othersNote+')</span>':'')+'</td><td style="text-align:right;font-weight:700;color:#000000">'+vuvFmt(p.net)+'</td></tr>';
-  });
-
-  // ── HR Leave rows
-  var hrData=pr.hrData||[];
-  var hrRows='';
-  var leaveTypes={'Annual Leave':0,'Sick Leave':0,'Leave Without Pay':0,'Payment Advance':0};
-  var totalAdvApproved=0;
-  hrData.forEach(function(r){
-    if(leaveTypes[r.type]!==undefined)leaveTypes[r.type]++;
-    if(r.type==='Payment Advance'&&r.status==='Approved')totalAdvApproved+=(r.amount||0);
-    var pill=r.status==='Approved'?'background:#dcfce7;color:#166534':r.status==='Rejected'?'background:#fee2e2;color:#991b1b':'background:#fef3c7;color:#92400e';
-    hrRows+='<tr><td style="font-weight:600">'+r.staff+'</td><td>'+r.empid+'</td><td>'+r.type+'</td><td style="white-space:nowrap">'+fmtDate(r.startDate)+'</td><td style="white-space:nowrap">'+fmtDate(r.endDate)+'</td><td style="text-align:center">'+(r.type==='Payment Advance'?'&mdash;':r.days||0)+'</td><td>'+(r.amount?vuvFmt(r.amount):'&mdash;')+'</td><td><span style="display:inline-block;padding:2px 10px;border-radius:12px;font-size:11px;font-weight:700;'+pill+'">'+r.status+'</span></td><td style="color:#777;font-size:11px">'+r.department+'</td></tr>';
-  });
-
-  // ── Staff Directory rows
-  var staffData=pr.staffData||[];
-  var staffRows='';
-  staffData.forEach(function(s){
-    var ls=getLeaveStats(s._id);
-    var aCol=ls.annualLeft<=0?'color:#dc2626':ls.annualLeft<=5?'color:#f59e0b':'color:#16a34a';
-    var sCol=ls.sickLeft<=0?'color:#dc2626':ls.sickLeft<=2?'color:#f59e0b':'color:#16a34a';
-    var statusColor=s.status==='Active'?'background:#dcfce7;color:#166534':'background:#f0f0f0;color:#666';
-    staffRows+='<tr><td style="font-weight:600">'+s.name+'</td><td>'+s.empid+'</td><td>'+s.designation+'</td><td>'+s.department+'</td><td style="text-align:center">'+ls.annualAlloc+'</td><td style="text-align:center;font-weight:700;'+aCol+'">'+ls.annualLeft+'</td><td style="text-align:center">'+ls.sickAlloc+'</td><td style="text-align:center;font-weight:700;'+sCol+'">'+ls.sickLeft+'</td><td><span style="display:inline-block;padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;'+statusColor+'">'+s.status+'</span></td></tr>';
-  });
-
-  var bigOthers=pr.list.filter(function(p){return p.others>0});
-  var warnBlock='';
-  if(bigOthers.length>0){warnBlock='<div class="rpt-highlight-warn"><strong>&#9888; Deduction Alert:</strong> '+bigOthers.map(function(p){return p.staff+' &mdash; Other Deduction: '+vuvFmt(p.others)+(p.othersNote?' ('+p.othersNote+')':'')}).join('; ')+'</div>';}
-  var recs=(narrative.recommendations||[]).map(function(r){return '<li>'+r+'</li>'}).join('');
-
-  var cs=DB.findOne('settings',{_id:'company'})||{name:'WokManeja',address:'PO BOX 3276, Shefa Province, Efate, Vanuatu'};
-  var cName=cs.name||'WokManeja';
-  var cAddress=cs.address||'PO BOX 3276, Shefa Province, Efate, Vanuatu';
-
-  return '<div class="rpt-page"'+(forPrint?' style="box-shadow:none;border:none;max-width:100%"':'')+' id="rpt-content">'
-    // ── HEADER
-    +'<div class="rpt-header">'
-      +'<div class="rpt-logo-row">'
-        +'<img src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCA3ODAgMjIwIiB3aWR0aD0iMTAwJSIgaGVpZ2h0PSIxMDAlIj4KICA8ZGVmcz4KICAgIDxzdHlsZT4KICAgICAgQGltcG9ydCB1cmwoJ2h0dHBzOi8vZm9udHMuZ29vZ2xlYXBpcy5jb20vY3NzMj9mYW1pbHk9UXVpY2tzYW5kOndnaHRANTAwOzcwMCZhbXA7ZGlzcGxheT1zd2FwJyk7CiAgICAgIC5tYWluLXRpdGxlIHsKICAgICAgICBmb250LWZhbWlseTogJ1F1aWNrc2FuZCcsIHN5c3RlbS11aSwgc2Fucy1zZXJpZjsKICAgICAgICBmb250LXdlaWdodDogNzAwOwogICAgICAgIGZvbnQtc2l6ZTogNjBweDsKICAgICAgICBmaWxsOiAjMjMyNzJBOwogICAgICB9CiAgICAgIC5ncmVlbi10ZXh0IHsKICAgICAgICBmaWxsOiAjMTBCOTgxOwogICAgICB9CiAgICAgIC5zdWItdGFnbGluZSB7CiAgICAgICAgZm9udC1mYW1pbHk6ICdRdWlja3NhbmQnLCBzeXN0ZW0tdWksIHNhbnMtc2VyaWY7CiAgICAgICAgZm9udC13ZWlnaHQ6IDUwMDsKICAgICAgICBmb250LXNpemU6IDI1cHg7CiAgICAgICAgZmlsbDogIzU1NUU2QjsKICAgICAgfQogICAgPC9zdHlsZT4KICA8L2RlZnM+CgogIDxnPgogICAgPGcgdHJhbnNmb3JtPSJ0cmFuc2xhdGUoMjUsIDI1KSI+CiAgICAgIDxyZWN0IHdpZHRoPSIxNzAiIGhlaWdodD0iMTcwIiByeD0iNDIiIGZpbGw9IiMxMTEyMTQiIC8+CiAgICAgIAogICAgICA8cGF0aCBkPSJNIDQwIDExMCBMIDY2IDg0IEwgOTIgMTA0IEwgMTMwIDYwIE0gMTEwIDYwIEwgMTMwIDYwIEwgMTMwIDgwIiBmaWxsPSJub25lIiBzdHJva2U9IiMxMEI5ODEiIHN0cm9rZS13aWR0aD0iMTYiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCIgLz4KICAgIDwvZz4KCiAgICA8dGV4dCB4PSIyMjUiIHk9IjExMiIgY2xhc3M9Im1haW4tdGl0bGUiPldvazx0c3BhbiBjbGFzcz0iZ3JlZW4tdGV4dCI+TWFuZWphPC90c3Bhbj48L3RleHQ+CiAgICA8dGV4dCB4PSIyMjciIHk9IjE1NiIgY2xhc3M9InN1Yi10YWdsaW5lIj5NZWtlbSB3b2sgYmxvbmcgeXUgaSBpc2k8L3RleHQ+CiAgPC9nPgo8L3N2Zz4K" alt="WokManeja" style="height:70px;width:auto;border-radius:6px"/>'
-        +'<div><div class="rpt-title">Executive Compliance &amp; Payroll Report</div><div class="rpt-subtitle">Prepared For: '+cName+' &bull; '+cAddress+'</div></div>'
-      +'</div>'
-      +'<div class="rpt-meta"><div class="rpt-meta-item"><p>Reporting Period</p><span>'+pr.periodLabel+'</span></div><div class="rpt-meta-item"><p>Generated Date</p><span>'+pr.today+'</span></div><div class="rpt-meta-item"><p>Employees Processed</p><span>'+pr.list.length+'</span></div></div>'
-    +'</div>'
-    // ── SECTION 1: Executive Summary
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">1.</span> Executive Summary</div><p style="font-size:13px;color:#444;line-height:1.8">'+narrative.executive_summary+'</p>'+warnBlock+'</div>'
-    // ── SECTION 2: Payroll Summary
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">2.</span> Payroll Compliance Summary</div><table class="rpt-summary-table"><tr><td>Total Gross Payroll</td><td>'+vuvFmt(pr.tE)+'</td></tr><tr><td>Total VNPF Contributions (6%)</td><td>'+vuvFmt(pr.tV)+'</td></tr><tr><td>Total Loan Deductions</td><td>'+vuvFmt(pr.tL)+'</td></tr><tr><td>Total Other Deductions</td><td>'+vuvFmt(pr.tO)+'</td></tr><tr><td>Total Net Payroll Paid</td><td>'+vuvFmt(pr.tN)+'</td></tr></table></div>'
-    // ── SECTION 3: Employee Payroll Details
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">3.</span> Employee Payroll Details</div><div style="overflow:auto"><table class="rpt-detail-table"><thead><tr><th><span data-i18n="tbl_staff_name">Staff Name</span></th><th><span data-i18n="tbl_emp_id">Employee ID</span></th><th><span data-i18n="tbl_pay_date">Pay Date</span></th><th><span data-i18n="tbl_payroll_period">Payroll Period</span></th><th style="text-align:right"><span data-i18n="tbl_gross_pay">Gross Pay</span></th><th style="text-align:right"><span data-i18n="tbl_vnpf">VNPF</span></th><th style="text-align:right"><span data-i18n="tbl_loan_ded">Loan</span></th><th style="text-align:right"><span data-i18n="tbl_other_ded">Other Ded.</span></th><th style="text-align:right"><span data-i18n="tbl_net_pay">Net Pay</span></th></tr></thead><tbody>'+rows+'</tbody></table></div></div>'
-    // ── SECTION 4: HR Leave & Advance Summary
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">4.</span> HR Leave &amp; Advance Summary</div>'
-      +'<div style="display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem">'
-        +'<div style="background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;padding:.75rem;text-align:center"><p style="font-size:10px;font-weight:700;color:#1d4ed8;text-transform:uppercase;margin-bottom:4px">Annual Leave</p><p style="font-size:22px;font-weight:800;color:#1d4ed8">'+leaveTypes['Annual Leave']+'</p></div>'
-        +'<div style="background:#fef2f2;border:1px solid #fecaca;border-radius:8px;padding:.75rem;text-align:center"><p style="font-size:10px;font-weight:700;color:#dc2626;text-transform:uppercase;margin-bottom:4px">Sick Leave</p><p style="font-size:22px;font-weight:800;color:#dc2626">'+leaveTypes['Sick Leave']+'</p></div>'
-        +'<div style="background:#fffbeb;border:1px solid #fde68a;border-radius:8px;padding:.75rem;text-align:center"><p style="font-size:10px;font-weight:700;color:#d97706;text-transform:uppercase;margin-bottom:4px">Leave W/O Pay</p><p style="font-size:22px;font-weight:800;color:#d97706">'+leaveTypes['Leave Without Pay']+'</p></div>'
-        +'<div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:.75rem;text-align:center"><p style="font-size:10px;font-weight:700;color:#16a34a;text-transform:uppercase;margin-bottom:4px">Advances Approved</p><p style="font-size:16px;font-weight:800;color:#16a34a">'+vuvFmt(totalAdvApproved)+'</p></div>'
-      +'</div>'
-      +(hrData.length?'<div style="overflow:auto"><table class="rpt-detail-table"><thead><tr><th>Employee</th><th>ID</th><th><span data-i18n="tbl_type">Request Type</span></th><th><span data-i18n="tbl_start">Start Date</span></th><th><span data-i18n="tbl_end">End Date</span></th><th style="text-align:center"><span data-i18n="tbl_days">Days</span></th><th><span data-i18n="tbl_amount">Amount</span></th><th><span data-i18n="tbl_status">Status</span></th><th><span data-i18n="tbl_dept">Department</span></th></tr></thead><tbody>'+hrRows+'</tbody></table></div>':'<p style="font-size:13px;color:#888;text-align:center;padding:1rem"><span data-i18n="msg_no_hr_rpt">No HR leave or advance requests for this period.</span></p>')
-    +'</div>'
-    // ── SECTION 5: Staff Directory & Leave Balances
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">5.</span> Staff Directory &amp; Leave Balances</div>'
-      +(staffData.length?'<div style="overflow:auto"><table class="rpt-detail-table"><thead><tr><th><span data-i18n="tbl_name">Name</span></th><th><span data-i18n="tbl_id">ID</span></th><th><span data-i18n="tbl_designation">Designation</span></th><th><span data-i18n="tbl_dept">Department</span></th><th style="text-align:center"><span data-i18n="tbl_annual_alloc">Annual Alloc.</span></th><th style="text-align:center"><span data-i18n="tbl_annual_left">Annual Left</span></th><th style="text-align:center"><span data-i18n="tbl_sick_alloc">Sick Alloc.</span></th><th style="text-align:center"><span data-i18n="tbl_sick_left">Sick Left</span></th><th><span data-i18n="tbl_status">Status</span></th></tr></thead><tbody>'+staffRows+'</tbody></table></div>':'<p style="font-size:13px;color:#888;text-align:center;padding:1rem"><span data-i18n="msg_no_staff_rpt">No staff records found.</span></p>')
-    +'</div>'
-    // ── SECTION 6: Compliance Observations
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">6.</span> Compliance Observations</div><div class="rpt-obs-block"><div class="rpt-obs-title">VNPF Compliance</div><div class="rpt-obs-text">'+narrative.vnpf_observation+'</div><div class="rpt-highlight-ok">&#10003; VNPF calculated at 6% &mdash; Total: '+vuvFmt(pr.tV)+'</div></div><div class="rpt-obs-block"><div class="rpt-obs-title">Deduction Review</div><div class="rpt-obs-text">'+narrative.deduction_observation+(pr.tO>0?'<ul>'+bigOthers.map(function(p){return'<li><strong>'+p.staff+'</strong>: '+vuvFmt(p.others)+(p.othersNote?' &mdash; '+p.othersNote:'')+' </li>'}).join('')+'</ul>':'')+'</div></div><div class="rpt-obs-block"><div class="rpt-obs-title">Payroll Accuracy</div><div class="rpt-obs-text">'+narrative.accuracy_observation+'</div></div></div>'
-    // ── SECTION 7: Recommendations
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">7.</span> Recommendations</div><p style="font-size:13px;color:#555;margin-bottom:.75rem">Management is advised to:</p><ul class="rpt-rec-list">'+recs+'</ul></div>'
-    // ── SECTION 8: Conclusion
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">8.</span> Conclusion</div><p style="font-size:13px;color:#444;line-height:1.8">'+narrative.conclusion+'</p></div>'
-    // ── FOOTER
-    +'<div class="rpt-section"><div class="rpt-section-title"><span class="rpt-section-num">4.</span> <span data-i18n="tbl_salary_banking">Salary Banking List</span></div><div style="overflow:auto"><table class="rpt-detail-table"><thead><tr><th><span data-i18n="tbl_name_col">Name</span></th><th><span data-i18n="tbl_bank_col">Bank</span></th><th><span data-i18n="tbl_account_col">Account</span></th><th style="text-align:right"><span data-i18n="tbl_amount_vt">Amount Vt</span></th><th><span data-i18n="tbl_account_desc">To account description</span></th><th><span data-i18n="tbl_transfer_priority">Transfer priority</span></th></tr></thead><tbody>'+bankRows+'</tbody></table></div></div>'
-    +'<div class="rpt-footer">'
-      +'<div><strong>Prepared By:</strong><br>Payroll &amp; Compliance Department<br>WokManeja</div>'
-      +'<div style="text-align:center"><div style="font-size:9px;color:#bbb;text-transform:uppercase;letter-spacing:.6px;margin-bottom:4px">System Developed by</div></div>'
-      +'<div style="text-align:right;font-size:11px;color:#aaa">Generated: '+pr.today+'<br>WokManeja Payroll System &mdash; Confidential</div>'
-    +'</div>'
-  +'</div>';
-}
-function renderComplianceReport(data,narrative){document.getElementById('compliance-output').innerHTML=buildReportHTML(data,narrative,false); setTimeout(translateUI, 10); }
-function downloadCompliancePDF(){
-  if(!LAST_COMPLIANCE_DATA){alert('Please generate the report first.');return}
-  var filterM=document.getElementById('cr-month').value;var filterY=document.getElementById('cr-year').value;
-  var list=DB.findAll('payslips').filter(function(p){return(!filterM||p.month===filterM)&&(!filterY||p.year==filterY)});
-  if(!list.length){alert('No data to export.');return}
-  var tE=list.reduce(function(s,p){return s+p.totalEarn},0);var tV=list.reduce(function(s,p){return s+p.vnpf},0);var tL=list.reduce(function(s,p){return s+p.loan},0);var tO=list.reduce(function(s,p){return s+p.others},0);var tN=list.reduce(function(s,p){return s+p.net},0);
-  var periodLabel=filterM&&filterY?filterM+' '+filterY:filterY?'Year '+filterY:'All Periods';
-  var today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-  var freshData={list:list,tE:tE,tV:tV,tL:tL,tO:tO,tN:tN,periodLabel:periodLabel,today:today};
-  var narrative=LAST_COMPLIANCE_DATA._narrative||defaultNarrative(freshData);
-  var reportHTML=buildReportHTML(freshData,narrative,true);
-  var pdfContent = '<div><style>*{box-sizing:border-box;margin:0;padding:0;font-family: Montserrat, sans-serif}body{background:#fff;color:#1a1a1a;padding:0}.rpt-page{max-width:100%;padding:2rem;color:#1a1a1a}.rpt-header{border-bottom:3px solid #0a0a0a;padding-bottom:1.25rem;margin-bottom:1.5rem}.rpt-logo-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.rpt-title{font-size:22px;font-weight:800;color:#0a0a0a;margin-bottom:2px}.rpt-subtitle{font-size:13px;color:#555}.rpt-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:12px}.rpt-meta-item p{color:#888;margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.rpt-meta-item span{font-weight:700;color:#0a0a0a;font-size:13px}.rpt-section{margin-bottom:1.75rem;page-break-inside:avoid}.rpt-section-title{font-size:14px;font-weight:700;color:#0a0a0a;border-left:4px solid #10b981;padding-left:.75rem;margin-bottom:1rem}.rpt-section-num{color:#10b981;margin-right:.35rem}.rpt-summary-table{width:100%;border-collapse:collapse;margin-bottom:.5rem}.rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}.rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}.rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}.rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}.rpt-detail-table tr:nth-child(even) td{background:#fafafa}.rpt-obs-block{background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:.75rem;border-left:3px solid #0a0a0a}.rpt-obs-title{font-size:12px;font-weight:700;color:#0a0a0a;margin-bottom:.4rem}.rpt-obs-text{font-size:12.5px;color:#444;line-height:1.7}.rpt-obs-text ul{padding-left:1.2rem;margin-top:.35rem}.rpt-obs-text li{margin-bottom:.2rem}.rpt-rec-list{list-style:none;padding:0}.rpt-rec-list li{font-size:12.5px;color:#444;padding:8px 0;border-bottom:1px solid #eee;display:flex;gap:.6rem;align-items:flex-start;line-height:1.6}.rpt-rec-list li::before{content:"\\2192";color:#10b981;font-weight:800;flex-shrink:0}.rpt-footer{border-top:2px solid #0a0a0a;padding-top:1rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#666}.rpt-highlight-warn{background:#fff8e1;border:1px solid #ffe082;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#7c5000;margin-top:.5rem}.rpt-highlight-ok{background:#e8f5e9;border:1px solid #a5d6a7;border-radius:6px;padding:.5rem .75rem;font-size:12px;color:#1b5e20;margin-top:.5rem}@media print{body{padding:0}@page{margin:1.5cm}}</style>' + reportHTML + '</div>';
-  generatePDF(pdfContent, 'Compliance_Report.pdf');
-}
-
-// ── VNPF & Bank Report
-var LAST_VNPF_DATA = null;
-
-function renderVNPF() {
-  document.getElementById('cr-loading').style.display='block';
-  document.getElementById('compliance-output').innerHTML='';
-  document.getElementById('cr-pdf-btn').style.display='none';
-  document.getElementById('cr-vnpf-btn').style.display='none';
-  if(document.getElementById('cr-bank-btn')) document.getElementById('cr-bank-btn').style.display='none';
-  setTimeout(function(){
-    var filterM=document.getElementById('cr-month').value;var filterY=document.getElementById('cr-year').value;
-    var list=DB.findAll('payslips').filter(function(p){return(!filterM||p.month===filterM)&&(!filterY||p.year==filterY)});
-    if(!list.length){
-      document.getElementById('cr-loading').style.display='none';
-      document.getElementById('compliance-output').innerHTML='<p style="text-align:center;color:#666;padding:2rem">No payroll data found for the selected period.</p>';
-      return;
-    }
-    var tGross=0, tEmp6=0, tEmployer6=0, tTotal12=0, tNet=0;
-    list.forEach(function(p){
-      tGross += p.totalEarn;
-      tEmp6 += p.vnpf;
-      var s=DB.findOne('settings',{_id:'company'}); var vP=s&&s.vnpfPercent?s.vnpfPercent:6; var empMatch = Math.round(p.totalEarn * (vP/100));
-      tEmployer6 += empMatch;
-      tTotal12 += p.vnpf + empMatch;
-      tNet += p.net;
-    });
-    var periodLabel=filterM&&filterY?filterM+' '+filterY:filterY?'Year '+filterY:'All Periods';
-    var today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-    LAST_VNPF_DATA = {list:list, tGross:tGross, tEmp6:tEmp6, tEmployer6:tEmployer6, tTotal12:tTotal12, tNet:tNet, periodLabel:periodLabel, today:today};
-    document.getElementById('cr-loading').style.display='none';
-    document.getElementById('cr-vnpf-btn').style.display='inline-flex';
-    document.getElementById('compliance-output').innerHTML=buildVNPFHTML(LAST_VNPF_DATA, false);
-    translateUI();
-  }, 400);
-}
-
-function renderBank() {
-  document.getElementById('cr-loading').style.display='block';
-  document.getElementById('compliance-output').innerHTML='';
-  document.getElementById('cr-pdf-btn').style.display='none';
-  document.getElementById('cr-vnpf-btn').style.display='none';
-  if(document.getElementById('cr-bank-btn')) document.getElementById('cr-bank-btn').style.display='none';
-  setTimeout(function(){
-    var filterM=document.getElementById('cr-month').value;var filterY=document.getElementById('cr-year').value;
-    var list=DB.findAll('payslips').filter(function(p){return(!filterM||p.month===filterM)&&(!filterY||p.year==filterY)});
-    if(!list.length){
-      document.getElementById('cr-loading').style.display='none';
-      document.getElementById('compliance-output').innerHTML='<p style="text-align:center;color:#666;padding:2rem">No payroll data found for the selected period.</p>';
-      return;
-    }
-    var periodLabel=filterM&&filterY?filterM+' '+filterY:filterY?'Year '+filterY:'All Periods';
-    var today=new Date().toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'});
-    LAST_BANK_DATA = {list:list, periodLabel:periodLabel, today:today};
-    document.getElementById('cr-loading').style.display='none';
-    document.getElementById('cr-bank-btn').style.display='inline-flex';
-    document.getElementById('compliance-output').innerHTML=buildBankHTML(LAST_BANK_DATA, false);
-    translateUI();
-  }, 400);
-}
-
-function downloadVNPFPDF() {
-  if(!LAST_VNPF_DATA) return;
-  var reportHTML = buildVNPFHTML(LAST_VNPF_DATA, true);
-  var pdfContent = '<div><style>*{box-sizing:border-box;margin:0;padding:0;font-family: Montserrat, sans-serif}body{background:#fff;color:#1a1a1a;padding:0}.rpt-page{max-width:100%;padding:2rem;color:#1a1a1a}.rpt-header{border-bottom:3px solid #0a0a0a;padding-bottom:1.25rem;margin-bottom:1.5rem}.rpt-logo-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.rpt-title{font-size:22px;font-weight:800;color:#0a0a0a;margin-bottom:2px}.rpt-subtitle{font-size:13px;color:#555}.rpt-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:12px}.rpt-meta-item p{color:#888;margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.rpt-meta-item span{font-weight:700;color:#0a0a0a;font-size:13px}.rpt-section{margin-bottom:1.75rem;page-break-inside:avoid}.rpt-section-title{font-size:14px;font-weight:700;color:#0a0a0a;border-left:4px solid #10b981;padding-left:.75rem;margin-bottom:1rem}.rpt-section-num{color:#10b981;margin-right:.35rem}.rpt-summary-table{width:100%;border-collapse:collapse;margin-bottom:.5rem}.rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}.rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}.rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}.rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}.rpt-detail-table tr:nth-child(even) td{background:#fafafa}.rpt-footer{border-top:2px solid #0a0a0a;padding-top:1rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#666}@media print{body{padding:0}@page{margin:1.5cm}}</style>' + reportHTML + '</div>';
-  generatePDF(pdfContent, 'Report.pdf');
-}
-
-function downloadBankPDF() {
-  if(!LAST_BANK_DATA) return;
-  var reportHTML = buildBankHTML(LAST_BANK_DATA, true);
-  var pdfContent = '<div><style>*{box-sizing:border-box;margin:0;padding:0;font-family: Montserrat, sans-serif}body{background:#fff;color:#1a1a1a;padding:0}.rpt-page{max-width:100%;padding:2rem;color:#1a1a1a}.rpt-header{border-bottom:3px solid #0a0a0a;padding-bottom:1.25rem;margin-bottom:1.5rem}.rpt-logo-row{display:flex;align-items:center;gap:1rem;margin-bottom:1rem}.rpt-title{font-size:22px;font-weight:800;color:#0a0a0a;margin-bottom:2px}.rpt-subtitle{font-size:13px;color:#555}.rpt-meta{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:1.5rem;font-size:12px}.rpt-meta-item p{color:#888;margin-bottom:2px;font-weight:600;text-transform:uppercase;letter-spacing:.4px}.rpt-meta-item span{font-weight:700;color:#0a0a0a;font-size:13px}.rpt-section{margin-bottom:1.75rem;page-break-inside:avoid}.rpt-section-title{font-size:14px;font-weight:700;color:#0a0a0a;border-left:4px solid #10b981;padding-left:.75rem;margin-bottom:1rem}.rpt-section-num{color:#10b981;margin-right:.35rem}.rpt-summary-table{width:100%;border-collapse:collapse;margin-bottom:.5rem}.rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}.rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}.rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}.rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}.rpt-detail-table tr:nth-child(even) td{background:#fafafa}.rpt-footer{border-top:2px solid #0a0a0a;padding-top:1rem;margin-top:1.5rem;display:flex;justify-content:space-between;align-items:flex-end;font-size:12px;color:#666}@media print{body{padding:0}@page{margin:1.5cm}}</style>' + reportHTML + '</div>';
-  generatePDF(pdfContent, 'Report.pdf');
-}
-
-function buildVNPFHTML(d, forPrint) {
-  var s=DB.findOne('settings',{_id:'company'})||{};
-  var cName=s.name||'WokManeja';
-  var logoHtml = '<img src="logo.png" style="width:40px;height:40px;border-radius:10px">';
-  var rows='';
-  d.list.forEach(function(p){
-    var s=DB.findOne('settings',{_id:'company'}); var vP=s&&s.vnpfPercent?s.vnpfPercent:6; var empMatch = Math.round(p.totalEarn * (vP/100));
-    var tot = p.vnpf + empMatch;
-    var sRec = DB.findOne('staff',{empid:p.empid})||{};
-    var vnpfNum = sRec.vnpfNumber||'N/A';
-    rows+='<tr>'+
-      '<td>'+p.staff+'</td>'+
-      '<td style="color:#666">'+p.empid+'</td>'+
-      '<td style="font-weight:600;color:#185fa5">'+vnpfNum+'</td>'+
-      '<td style="text-align:right">'+vuvFmt(p.totalEarn)+'</td>'+
-      '<td style="text-align:right;color:#a32d2d">'+vuvFmt(p.vnpf)+'</td>'+
-      '<td style="text-align:right;color:#a32d2d">'+vuvFmt(empMatch)+'</td>'+
-      '<td style="text-align:right;font-weight:700;color:#0a0a0a">'+vuvFmt(tot)+'</td>'+
-    '</tr>';
-  });
-  return '<div class="rpt-page">'+
-    '<div class="rpt-header">'+
-      '<div class="rpt-logo-row">'+logoHtml+'<div><p class="rpt-title"><span data-i18n="doc_vnpf_remittance">VNPF Remittance Report</span></p><p class="rpt-subtitle">'+cName+'</p></div></div>'+
-    '</div>'+
-    '<div class="rpt-meta">'+
-      '<div class="rpt-meta-item"><p><span data-i18n="lbl_period">Period</span></p><span>'+d.periodLabel+'</span></div>'+
-      '<div class="rpt-meta-item"><p><span data-i18n="lbl_generated_on">Generated On</span></p><span>'+d.today+'</span></div>'+
-      '<div class="rpt-meta-item"><p><span data-i18n="lbl_status">Status</span></p><span style="color:#10b981"><span data-i18n="lbl_finalized">Finalized</span></span></div>'+
-    '</div>'+
-    '<div class="rpt-section">'+
-      '<p class="rpt-section-title"><span class="rpt-section-num">1.</span> <span data-i18n="lbl_vnpf_remit_sum">Remittance Summary</span></p>'+
-      '<table class="rpt-summary-table">'+
-        '<tr><td><span data-i18n="lbl_total_gross_pay">Total Gross Subject to VNPF</span></td><td>'+vuvFmt(d.tGross)+'</td></tr>'+
-        '<tr><td><span data-i18n="lbl_emp_deduction">Employee Deduction</span></td><td>'+vuvFmt(d.tEmp6)+'</td></tr>'+
-        '<tr><td><span data-i18n="lbl_employer_contribution">Employer Contribution</span></td><td>'+vuvFmt(d.tEmployer6)+'</td></tr>'+
-        '<tr style="background:#f8f9fb"><td><span data-i18n="lbl_total_vnpf_payable">Total VNPF Payable</span></td><td>'+vuvFmt(d.tTotal12)+'</td></tr>'+
-      '</table>'+
-    '</div>'+
-    '<div class="rpt-section">'+
-      '<p class="rpt-section-title"><span class="rpt-section-num">2.</span> <span data-i18n="lbl_vnpf_breakdown">Staff VNPF Breakdown</span></p>'+
-      '<table class="rpt-detail-table">'+
-        '<thead><tr><th><span data-i18n="tbl_staff">Staff</span></th><th><span data-i18n="tbl_id">ID</span></th><th><span data-i18n="lbl_vnpf_num">VNPF Number</span></th><th style="text-align:right"><span data-i18n="tbl_gross_pay">Gross Pay</span></th><th style="text-align:right"><span data-i18n="lbl_emp_6">Emp. VNPF</span></th><th style="text-align:right"><span data-i18n="lbl_empr_6">Empr. VNPF</span></th><th style="text-align:right"><span data-i18n="tbl_total_12">Total VNPF</span></th></tr></thead>'+
-        '<tbody>'+rows+'</tbody>'+
-      '</table>'+
-    '</div>'+
-    '<div class="rpt-footer">'+
-      '<p><span data-i18n="txt_generated_by_wokmaneja">Generated by WokManeja</span></p>'+
-      '<p><span data-i18n="lbl_page_1_of_1">Page 1 of 1</span></p>'+
-    '</div>'+
-  '</div>';
-}
-
-function buildBankHTML(d, forPrint) {
-  var s=DB.findOne('settings',{_id:'company'})||{};
-  var cName=s.name||'WokManeja';
-  var logoHtml = '<img src="logo.png" style="width:40px;height:40px;border-radius:10px">';
-  var bankRows='';
-  d.list.forEach(function(p){
-    var sRec = DB.findOne('staff',{empid:p.empid})||{};
-    var bankName = sRec.bankName||'N/A';
-    var accNum = sRec.accountNumber||'N/A';
-    var priorityInput = forPrint 
-      ? '<span data-i18n="txt_standard">Standard</span>' 
-      : '<select class="form-select" style="padding:2px;font-size:12px;border:none;background:transparent;"><option value="Standard" data-i18n="txt_standard">Standard</option><option value="Urgent" data-i18n="txt_urgent">Urgent</option></select>';
-    var periodDesc = 'Salary ' + p.month + ' ' + p.year;
-
-    bankRows+='<tr>'+
-      '<td>'+p.staff+'</td>'+
-      '<td style="color:#666">'+bankName+'</td>'+
-      '<td style="font-family:monospace;color:#185fa5">'+accNum+'</td>'+
-      '<td style="text-align:right;font-weight:700;color:#1a1a1a">'+vuvFmt(p.net)+'</td>'+
-      '<td>'+periodDesc+'</td>'+
-      '<td>'+priorityInput+'</td>'+
-    '</tr>';
-  });
-  return '<div class="rpt-page">'+
-    '<div class="rpt-header">'+
-      '<div class="rpt-logo-row">'+logoHtml+'<div><p class="rpt-title"><span data-i18n="tbl_salary_banking">Salary Banking List</span></p><p class="rpt-subtitle">'+cName+'</p></div></div>'+
-    '</div>'+
-    '<div class="rpt-meta">'+
-      '<div class="rpt-meta-item"><p><span data-i18n="lbl_period">Period</span></p><span>'+d.periodLabel+'</span></div>'+
-      '<div class="rpt-meta-item"><p><span data-i18n="lbl_generated_on">Generated On</span></p><span>'+d.today+'</span></div>'+
-      '<div class="rpt-meta-item"><p><span data-i18n="lbl_status">Status</span></p><span style="color:#10b981"><span data-i18n="lbl_finalized">Finalized</span></span></div>'+
-    '</div>'+
-    '<div class="rpt-section">'+
-      '<table class="rpt-detail-table">'+
-        '<thead><tr><th><span data-i18n="tbl_name">Name</span></th><th><span data-i18n="lbl_bank_name">Bank</span></th><th><span data-i18n="lbl_account_num">Account</span></th><th style="text-align:right"><span data-i18n="lbl_amount_vt">Amount Vt</span></th><th><span data-i18n="lbl_to_account_desc">To Account Description</span></th><th><span data-i18n="lbl_transfer_priority">Transfer Priority</span></th></tr></thead>'+
-        '<tbody>'+bankRows+'</tbody>'+
-      '</table>'+
-    '</div>'+
-    '<div class="rpt-footer">'+
-      '<p><span data-i18n="txt_generated_by_wokmaneja">Generated by WokManeja</span></p>'+
-      '<p><span data-i18n="lbl_page_1_of_1">Page 1 of 1</span></p>'+
-    '</div>'+
-  '</div>';
-}
-
 function getUserHRRecords(){
   var all=DB.findAll('hr_requests');
   if(APP.currentUser&&APP.currentUser.role==='staff'&&APP.currentUser.linkedStaffId){
@@ -1961,14 +1759,15 @@ function getUserPayslips(){
 }
 function renderDashboard(){var role=APP.currentUser.role;if(role==='staff'){renderStaffDashboard();return;}var activeStaff=DB.findAll('staff',{status:'Active'}).length;var mySlips=getUserPayslips();var allHR=getUserHRRecords();var tN=mySlips.reduce(function(s,p){return s+p.net},0);var tV=mySlips.reduce(function(s,p){return s+p.vnpf},0);var pendingHR=allHR.filter(function(r){return r.status==='Pending'}).length;var approvedAdv=allHR.filter(function(r){return r.type==='Payment Advance'&&r.status==='Approved'}).reduce(function(s,r){return s+(r.amount||0)},0);var html='';
 // Finance Section
-var f_exp = DB.findAll('finance_expenses').reduce(function(s,e){return s+(parseFloat(e.amount)||0)},0);
-var f_inc = DB.findAll('finance_daily_income').reduce(function(s,e){return s+(parseFloat(e.total)||0)},0);
-var f_acc = DB.findAll('finance_accounts').length;
+var f_exp = DB.findAll('finance_expenses').reduce(function(s,e){return s+(parseFloat(e.amount)||0)},0) + DB.findAll('finance_bills').filter(function(b){return b.status==='Paid'}).reduce(function(s,b){return s+(parseFloat(b.amount)||0)},0);
+var f_inc = DB.findAll('finance_daily_income').reduce(function(s,e){return s+(parseFloat(e.amount)||0)},0) + DB.findAll('finance_invoices').filter(function(i){return i.status==='Paid'}).reduce(function(s,i){return s+(parseFloat(i.amount)||0)},0);
+var f_net = f_inc - f_exp;
+var f_net_color = f_net>=0?'#10b981':'#ef4444';
 html+='<h4 style="margin:0 0 1rem 0;color:var(--navy)"><i class="ti ti-chart-bar"></i> Finance Overview</h4>';
 html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">';
-html+='<div class="card" style="border-top:3px solid #3b82f6"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Total Income</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:#3b82f6">'+vuvFmt(f_inc)+'</p></div>';
+html+='<div class="card" style="border-top:3px solid #3b82f6"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Net Income</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:#3b82f6">'+vuvFmt(f_inc)+'</p></div>';
 html+='<div class="card" style="border-top:3px solid #ef4444"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Total Expenses</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:#ef4444">'+vuvFmt(f_exp)+'</p></div>';
-html+='<div class="card" style="border-top:3px solid #10b981"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Chart of Accounts</p><p style="font-size:30px;font-weight:800;margin-top:6px;color:#10b981">'+f_acc+'</p></div>';
+html+='<div class="card" style="border-top:3px solid '+f_net_color+'"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Net Profit</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:'+f_net_color+'">'+vuvFmt(f_net)+'</p></div>';
 html+='</div>';
 
 
@@ -2073,6 +1872,15 @@ function renderCompanySettings(){
     document.getElementById('cs-email').value=s.email||'';
     document.getElementById('cs-vnpf-percent').value=s.vnpfPercent||6;
     document.getElementById('cs-license').value=s.license||'';
+    if(s.logo){
+      document.getElementById('cs-logo-data').value=s.logo;
+      var pImg=document.getElementById('cs-logo-preview');pImg.src=s.logo;pImg.style.display='block';
+      var pPh=document.getElementById('cs-logo-placeholder');if(pPh)pPh.style.display='none';
+    }else{
+      document.getElementById('cs-logo-data').value='';
+      var pImg2=document.getElementById('cs-logo-preview');pImg2.src='';pImg2.style.display='none';
+      var pPh2=document.getElementById('cs-logo-placeholder');if(pPh2)pPh2.style.display='flex';
+    }
   }
   renderLicenseStatus();
 }
@@ -2085,7 +1893,9 @@ async function renderLicenseStatus(){
     if(data.status==='active'){
       var badge=data.plan==='pro'?'<span class="badge badge-manager" style="margin-left:8px">PRO</span>':'<span class="badge badge-admin" style="margin-left:8px">Business Suite</span>';
       card.style.background='#ddf0dd';card.style.color='#27500a';
-      card.innerHTML='<i class="ti ti-circle-check" style="font-size:16px"></i> Hardware-Locked License'+badge+'<br><span style="font-size:11px;font-weight:400;opacity:.8">Expires: '+new Date(data.expires).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+' ('+data.daysLeft+' days left)</span>';
+      var modLabel=data.modules?data.modules.map(function(m){return m.toUpperCase()}).join(', '):'All Modules';
+      var staffLabel=(data.maxStaff==null)?'Unlimited':(data.staffCount||0)+' / '+data.maxStaff;
+      card.innerHTML='<i class="ti ti-circle-check" style="font-size:16px"></i> Hardware-Locked License'+badge+'<br><span style="font-size:11px;font-weight:400;opacity:.8">Expires: '+new Date(data.expires).toLocaleDateString('en-GB',{day:'2-digit',month:'long',year:'numeric'})+' ('+data.daysLeft+' days left)</span><br><span style="font-size:11px;font-weight:400;opacity:.8">Modules: '+modLabel+' &nbsp;|&nbsp; Staff: '+staffLabel+'</span>';
     }else if(data.status==='expired'){
       card.style.background='#fff0f0';card.style.color='#a32d2d';
       card.innerHTML='<i class="ti ti-alert-circle" style="font-size:16px"></i> License Expired<br><span style="font-size:11px;font-weight:400">Please enter a new license key to continue.</span>';
@@ -2101,7 +1911,9 @@ async function renderLicenseStatus(){
       card.innerHTML='<i class="ti ti-alert-circle" style="font-size:16px"></i> License Error<br><span style="font-size:11px;font-weight:400">Could not verify license status.</span>';
   }
 }
-function saveCompanySettings(){var obj={name:document.getElementById('cs-name').value.trim(),address:document.getElementById('cs-address').value.trim(),phone:document.getElementById('cs-phone').value.trim(),email:document.getElementById('cs-email').value.trim(),license:document.getElementById('cs-license').value.trim(),vnpfPercent:parseFloat(document.getElementById('cs-vnpf-percent').value)||6};var s=DB.findOne('settings',{_id:'company'});if(s){DB.update('settings',{_id:'company'},obj);}else{obj._id='company';if(!MEMORY_DB.settings)MEMORY_DB.settings=[];MEMORY_DB.settings.push(obj);fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});}var n=obj.name;if(n){var el=document.getElementById('login-company-name');if(el)el.textContent=n;var hEl=document.getElementById('menu-company-name');if(hEl)hEl.textContent=n;}var m=document.getElementById('cs-msg');m.textContent='Company settings saved.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
+function handleLogoUpload(e){var file=e.target.files&&e.target.files[0];if(!file)return;if(!file.type.match(/^image\//)){alert('Please choose an image file.');return}if(file.size>2*1024*1024){alert('Logo image must be smaller than 2MB.');return}var reader=new FileReader();reader.onload=function(ev){var dataUrl=ev.target.result;document.getElementById('cs-logo-data').value=dataUrl;var img=document.getElementById('cs-logo-preview');img.src=dataUrl;img.style.display='block';var ph=document.getElementById('cs-logo-placeholder');if(ph)ph.style.display='none';};reader.readAsDataURL(file);}
+function removeCompanyLogo(){document.getElementById('cs-logo-data').value='';var img=document.getElementById('cs-logo-preview');img.src='';img.style.display='none';var ph=document.getElementById('cs-logo-placeholder');if(ph)ph.style.display='flex';var f=document.getElementById('cs-logo-file');if(f)f.value='';}
+function saveCompanySettings(){var obj={name:document.getElementById('cs-name').value.trim(),address:document.getElementById('cs-address').value.trim(),phone:document.getElementById('cs-phone').value.trim(),email:document.getElementById('cs-email').value.trim(),license:document.getElementById('cs-license').value.trim(),vnpfPercent:parseFloat(document.getElementById('cs-vnpf-percent').value)||6,logo:document.getElementById('cs-logo-data').value||''};var s=DB.findOne('settings',{_id:'company'});if(s){DB.update('settings',{_id:'company'},obj);}else{obj._id='company';if(!MEMORY_DB.settings)MEMORY_DB.settings=[];MEMORY_DB.settings.push(obj);fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});}var n=obj.name;if(n){var el=document.getElementById('login-company-name');if(el)el.textContent=n;var hEl=document.getElementById('menu-company-name');if(hEl)hEl.textContent=n;}if(obj.logo){var loginLogo=document.getElementById('login-company-logo');if(loginLogo){loginLogo.src=obj.logo;loginLogo.style.display='block';}}var m=document.getElementById('cs-msg');m.textContent='Company settings saved.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
 
 async function activateLicense(){
   var key=(document.getElementById('cs-appkey').value||'').trim().toUpperCase();
@@ -2759,95 +2571,107 @@ document.addEventListener('DOMContentLoaded', function() {
 
 <!-- INVOICE PRINT OVERLAY -->
 <div id="invoice-print-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;width:100%;max-width:800px;border-radius:12px;padding:2rem;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.2);position:relative">
+  <div style="background:#fff;width:700px;max-width:100%;max-height:92vh;overflow:auto;border-radius:14px;padding:2.25rem;color:#111;font-family: Montserrat, sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative">
     <button onclick="document.getElementById('invoice-print-overlay').style.display='none'" style="position:absolute;top:15px;right:15px;background:none;border:none;font-size:24px;cursor:pointer;color:#999" class="no-print"><i class="ti ti-x"></i></button>
-    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:2rem;border-bottom:2px solid #f0f0f0;padding-bottom:1rem">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:2px solid #0a0a0a">
       <div>
-        <h1 style="margin:0;color:var(--navy);font-size:28px">INVOICE</h1>
-        <div id="inv-print-num" style="font-weight:700;color:#666;font-size:14px;margin-top:4px"></div>
+        <img id="inv-print-company-logo" src="" alt="" style="height:60px;width:auto;border-radius:4px;display:none;margin-bottom:4px">
+        <div id="inv-print-company" style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px"></div>
+        <div id="inv-print-address" style="font-size:11px;color:#111;font-weight:500"></div>
+        <div id="inv-print-phone" style="font-size:11px;color:#111"></div>
+        <div id="inv-print-email" style="font-size:11px;color:#111"></div>
+        <div id="inv-print-bank" style="font-size:11px;color:#111"></div>
       </div>
       <div style="text-align:right">
-        <h2 id="inv-print-company" style="margin:0;font-size:18px;color:#333"></h2>
-        <div id="inv-print-address" style="color:#666;font-size:13px;margin-top:4px"></div>
-        <div id="inv-print-phone" style="color:#666;font-size:13px"></div>
-        <div id="inv-print-email" style="color:#666;font-size:13px"></div>
+        <div style="font-size:12px;color:#111;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Invoice</div>
+        <div style="font-size:16px;font-weight:800;color:#0a0a0a" id="inv-print-num"></div>
+        <div id="inv-print-status" style="margin-top:6px"></div>
       </div>
     </div>
-    
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-bottom:2rem">
-      <div>
-        <div style="font-size:11px;color:#999;text-transform:uppercase;font-weight:700;margin-bottom:4px">Billed To</div>
-        <div id="inv-print-client" style="font-weight:600;font-size:15px;color:#333"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div style="background:#f8f9fb;border-radius:10px;padding:1rem">
+        <div style="font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:#111;margin-bottom:.5rem">Billed To</div>
+        <div id="inv-print-client" style="font-weight:700;font-size:14px;color:#111"></div>
       </div>
-      <div style="text-align:right">
-        <div id="inv-print-status" style="margin-bottom:8px"></div>
-        <div id="inv-print-dates" style="font-size:13px;color:#555;line-height:1.6"></div>
+      <div style="background:#f8f9fb;border-radius:10px;padding:1rem">
+        <div style="font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:#111;margin-bottom:.5rem">Dates</div>
+        <div id="inv-print-dates" style="font-size:13px;color:#333;line-height:1.7"></div>
       </div>
     </div>
 
-    <table style="width:100%;border-collapse:collapse;margin-bottom:2rem">
-      <thead>
-        <tr style="background:#f8f9fb;border-bottom:2px solid #eee">
-          <th style="padding:10px 12px;text-align:left;font-size:12px;color:#666">Description</th>
-          <th style="padding:10px 12px;text-align:center;font-size:12px;color:#666">Qty</th>
-          <th style="padding:10px 12px;text-align:right;font-size:12px;color:#666">Price</th>
-          <th style="padding:10px 12px;text-align:right;font-size:12px;color:#666">Amount</th>
-        </tr>
-      </thead>
-      <tbody id="inv-print-lines"></tbody>
-    </table>
-
-    <div style="display:flex;justify-content:flex-end;margin-bottom:2rem">
-      <div style="width:300px;background:#f8f9fb;padding:1.5rem;border-radius:8px">
-        <div style="display:flex;justify-content:space-between;font-size:18px;font-weight:800;color:#0a0a0a">
-          <span>Total</span>
-          <span id="inv-print-total"></span>
-        </div>
-      </div>
+    <div style="border:1px solid #eee;border-radius:10px;padding:1.1rem;margin-bottom:1rem">
+      <div style="font-weight:700;font-size:13px;margin-bottom:.85rem;padding-bottom:.6rem;border-bottom:2px solid #f0f0f0;color:#0a0a0a">Line Items</div>
+      <table style="width:100%;border-collapse:collapse;font-size:13px">
+        <thead>
+          <tr style="border-bottom:1px solid #eee">
+            <th style="padding:6px 8px 6px 0;text-align:left;font-size:11px;color:#888;text-transform:uppercase">Description</th>
+            <th style="padding:6px 8px;text-align:center;font-size:11px;color:#888;text-transform:uppercase">Qty</th>
+            <th style="padding:6px 8px;text-align:right;font-size:11px;color:#888;text-transform:uppercase">Price</th>
+            <th style="padding:6px 0 6px 8px;text-align:right;font-size:11px;color:#888;text-transform:uppercase">Amount</th>
+          </tr>
+        </thead>
+        <tbody id="inv-print-lines"></tbody>
+      </table>
     </div>
 
-    <div id="inv-print-notes-wrap" style="display:none;margin-bottom:2rem;padding:1rem;background:#fffbea;border-left:4px solid #f59e0b;border-radius:4px">
+    <div style="background:#0a0a0a;border-radius:10px;padding:0.85rem 1.1rem;display:flex;justify-content:space-between;align-items:center;margin-bottom:0.85rem">
+      <div style="font-weight:800;font-size:14px;color:#fff">TOTAL</div>
+      <div style="font-size:24px;font-weight:800;color:#6ee7b7" id="inv-print-total"></div>
+    </div>
+
+    <div id="inv-print-notes-wrap" style="display:none;margin-bottom:1rem;padding:1rem;background:#fffbea;border-left:4px solid #f59e0b;border-radius:4px">
       <div style="font-size:11px;color:#b45309;text-transform:uppercase;font-weight:700;margin-bottom:4px">Notes</div>
       <div id="inv-print-notes" style="font-size:13px;color:#78350f;white-space:pre-wrap"></div>
     </div>
 
-    <div style="text-align:center;border-top:1px solid #eee;padding-top:1.5rem;color:#999;font-size:11px">
+    <div style="text-align:center;border-top:1px solid #eee;padding-top:1rem;color:#999;font-size:11px">
       <div id="inv-print-footer"></div>
     </div>
-    
-    <div style="margin-top:2rem;text-align:center" class="no-print">
-      <button class="btn btn-outline" onclick="window.print()" style="padding:10px 20px;font-size:15px;margin-right:10px"><i class="ti ti-printer"></i> Print</button>
-      <button class="btn btn-primary" onclick="generatePDF(this.parentElement.parentElement, 'Document.pdf')" style="padding:10px 20px;font-size:15px"><i class="ti ti-download"></i> Save PDF</button>
+
+    <div style="margin-top:1.5rem;text-align:center" class="no-print">
+      <button class="btn btn-outline" onclick="document.getElementById('invoice-print-overlay').style.display='none'" style="margin-right:8px"><i class="ti ti-x"></i> Close</button>
+      <button id="inv-print-btn-pay" class="btn btn-primary" style="display:none;margin-right:8px"><i class="ti ti-check"></i> Mark Paid</button>
+      <button class="btn btn-outline" onclick="window.print()" style="margin-right:8px"><i class="ti ti-printer"></i> Print</button>
+      <button class="btn btn-primary" onclick="generatePDF(document.querySelector('#invoice-print-overlay > div'), 'Invoice.pdf')"><i class="ti ti-download"></i> Save PDF</button>
     </div>
   </div>
 </div>
 
 <!-- RECEIPT PRINT OVERLAY -->
 <div id="receipt-print-overlay" style="display:none;position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,.6);z-index:9999;align-items:center;justify-content:center;padding:1rem">
-  <div style="background:#fff;width:100%;max-width:500px;border-radius:12px;padding:2rem;max-height:90vh;overflow-y:auto;box-shadow:0 10px 40px rgba(0,0,0,.2);position:relative">
+  <div style="background:#fff;width:660px;max-width:100%;max-height:92vh;overflow:auto;border-radius:14px;padding:2.25rem;color:#111;font-family: Montserrat, sans-serif;box-shadow:0 20px 60px rgba(0,0,0,.4);position:relative">
     <button onclick="document.getElementById('receipt-print-overlay').style.display='none'" style="position:absolute;top:15px;right:15px;background:none;border:none;font-size:24px;cursor:pointer;color:#999" class="no-print"><i class="ti ti-x"></i></button>
-    
-    <div style="text-align:center;margin-bottom:1.5rem">
-      <div style="width:60px;height:60px;background:#dcfce7;color:#166534;border-radius:30px;display:flex;align-items:center;justify-content:center;font-size:32px;margin:0 auto 1rem"><i class="ti ti-check"></i></div>
-      <h1 style="margin:0;font-size:24px;color:#111">Payment Receipt</h1>
-      <h2 id="rcpt-print-company" style="margin:8px 0 2px;font-size:16px;color:#333"></h2>
-      <div id="rcpt-print-address" style="color:#666;font-size:13px"></div>
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:1.75rem;padding-bottom:1.25rem;border-bottom:2px solid #0a0a0a">
+      <div>
+        <img id="rcpt-print-company-logo" src="" alt="" style="height:60px;width:auto;border-radius:4px;display:none;margin-bottom:4px">
+        <div id="rcpt-print-company" style="font-size:14px;font-weight:700;color:var(--navy);margin-bottom:2px"></div>
+        <div id="rcpt-print-address" style="font-size:11px;color:#111;font-weight:500"></div>
+        <div id="rcpt-print-phone" style="font-size:11px;color:#111"></div>
+        <div id="rcpt-print-email" style="font-size:11px;color:#111"></div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:12px;color:#111;font-weight:700;text-transform:uppercase;letter-spacing:.5px">Payment Receipt</div>
+        <div style="width:44px;height:44px;background:#dcfce7;color:#166534;border-radius:22px;display:flex;align-items:center;justify-content:center;font-size:22px;margin:8px 0 0 auto"><i class="ti ti-check"></i></div>
+        <div id="rcpt-print-bank" style="font-size:11px;color:#111;margin-top:6px"></div>
+      </div>
     </div>
-    
-    <div style="background:#f8f9fb;border-radius:8px;padding:1.5rem;text-align:center;margin-bottom:1.5rem">
-      <div style="font-size:12px;color:#666;text-transform:uppercase;font-weight:700;margin-bottom:4px">Amount Received</div>
-      <div style="font-size:32px;font-weight:800;color:#10b981" id="rcpt-print-amount"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+      <div style="background:#f8f9fb;border-radius:10px;padding:1rem">
+        <div style="font-weight:800;font-size:13px;text-transform:uppercase;letter-spacing:.6px;color:#111;margin-bottom:.75rem">Receipt Details</div>
+        <div id="rcpt-print-rows"></div>
+      </div>
+      <div style="background:#0a0a0a;border-radius:10px;padding:1.25rem;color:#fff;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:11px;color:#fff;font-weight:600;text-transform:uppercase;letter-spacing:.5px">Amount Received</div>
+        <div style="font-size:28px;font-weight:800;color:#6ee7b7;margin:6px 0" id="rcpt-print-amount"></div>
+      </div>
     </div>
-    
-    <div id="rcpt-print-rows" style="margin-bottom:2rem"></div>
-    
-    <div style="text-align:center;border-top:1px solid #eee;padding-top:1.5rem;color:#999;font-size:11px">
+    <div style="text-align:center;border-top:1px solid #eee;padding-top:1rem;color:#999;font-size:11px">
       <div id="rcpt-print-footer"></div>
     </div>
-    
-    <div style="margin-top:2rem;text-align:center" class="no-print">
-      <button class="btn btn-outline" onclick="window.print()" style="padding:10px 20px;font-size:15px;margin-right:10px"><i class="ti ti-printer"></i> Print</button>
-      <button class="btn btn-primary" onclick="generatePDF(this.parentElement.parentElement, 'Document.pdf')" style="padding:10px 20px;font-size:15px"><i class="ti ti-download"></i> Save PDF</button>
+    <div style="margin-top:1.5rem;text-align:center" class="no-print">
+      <button class="btn btn-outline" onclick="document.getElementById('receipt-print-overlay').style.display='none'" style="margin-right:8px"><i class="ti ti-x"></i> Close</button>
+      <button class="btn btn-outline" onclick="window.print()" style="margin-right:8px"><i class="ti ti-printer"></i> Print</button>
+      <button class="btn btn-primary" onclick="generatePDF(document.querySelector('#receipt-print-overlay > div'), 'Receipt.pdf')"><i class="ti ti-download"></i> Save PDF</button>
     </div>
   </div>
 </div>
@@ -2857,6 +2681,12 @@ document.addEventListener('DOMContentLoaded', function() {
 async function resetStaffPassword(userId) {
     if(await uiConfirm("Are you sure you want to reset this staff member's password? It will be set to 'staff123'.")) {
         DB.update('users', { _id: userId }, { password: 'staff123' });
+        var u=DB.findOne('users',{_id:userId});
+        var staffRec=u&&u.linkedStaffId?DB.findOne('staff',{_id:u.linkedStaffId}):null;
+        if(staffRec&&staffRec.email){
+            var bodyHtml='Hi '+(staffRec.name||'')+',<br><br>Your WokManeja account password has been reset by an administrator.<br><br>Your temporary password is: <strong style="font-family:monospace;font-size:15px">staff123</strong><br><br>Please log in and change your password as soon as possible.';
+            sendSystemNotificationEmail(staffRec.email,'Your Password Has Been Reset','Password Reset',bodyHtml);
+        }
         alert("Password reset to 'staff123'");
     }
 }

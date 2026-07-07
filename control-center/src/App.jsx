@@ -1,9 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { KeyRound, ShieldAlert, Activity, LogOut, CheckCircle, Clock, Download, PlusSquare, Copy, UploadCloud } from 'lucide-react';
+import { KeyRound, ShieldAlert, LogOut, CheckCircle, Clock, Download, PlusSquare, Copy, UploadCloud } from 'lucide-react';
 import './index.css';
 
 const GITHUB_OWNER = 'wokmaneja';
 const GITHUB_REPO = 'Payroll-HR-Management-System';
+
+const MODULE_OPTIONS = [
+  { code: 'HR', label: 'HR' },
+  { code: 'PC', label: 'Petty Cash' },
+  { code: 'FIN', label: 'Finance' },
+  { code: 'PAY', label: 'Payroll' },
+  { code: 'RPT', label: 'Reports' },
+  { code: 'ADM', label: 'Admin' },
+];
 
 function App() {
   const [token, setToken] = useState(localStorage.getItem('gh_token') || '');
@@ -18,6 +27,8 @@ function App() {
   // Key Generator State
   const [genPlan, setGenPlan] = useState('PRO');
   const [genDur, setGenDur] = useState('1Y');
+  const [genModules, setGenModules] = useState(['ALL']); // 'ALL' or an array of module codes
+  const [genStaffCap, setGenStaffCap] = useState('UNL'); // 'UNL' or a numeric string
   const [generatedKey, setGeneratedKey] = useState('');
 
   // Push Update State
@@ -78,9 +89,23 @@ function App() {
     setLoading(false);
   };
 
+  const toggleModule = (code) => {
+    setGenModules(prev => {
+      if (code === 'ALL') return ['ALL'];
+      const withoutAll = prev.filter(c => c !== 'ALL');
+      if (withoutAll.includes(code)) {
+        const next = withoutAll.filter(c => c !== code);
+        return next.length ? next : ['ALL'];
+      }
+      return [...withoutAll, code];
+    });
+  };
+
   const handleGenerateKey = () => {
     const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
-    const key = `WM-${genPlan}-${genDur}-${randomHex}`;
+    const moduleSegment = genModules.includes('ALL') ? 'ALL' : genModules.join('-');
+    const staffSegment = genStaffCap === 'UNL' ? 'SUNL' : `S${genStaffCap || '1'}`;
+    const key = `WM-${genPlan}-${genDur}-${moduleSegment}-${staffSegment}-${randomHex}`;
     setGeneratedKey(key);
   };
 
@@ -340,8 +365,8 @@ function App() {
       <div className="login-overlay">
         <div className="glass-card login-card">
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
-            <div style={{ background: 'var(--accent-light)', padding: '1rem', borderRadius: '50%' }}>
-              <ShieldAlert size={32} color="var(--accent)" />
+            <div style={{ background: 'var(--accent-light)', padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src="/logo.png" alt="WokManeja" style={{ height: '40px', width: '40px', objectFit: 'contain' }} />
             </div>
           </div>
           <h2>WokManeja Control</h2>
@@ -373,8 +398,8 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <header style={{ height: '60px', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <div style={{ fontWeight: '800', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <Activity color="var(--accent)" size={20} />
-          <span>Wok<span style={{ color: 'var(--accent)' }}>Maneja</span></span> 
+          <img src="/logo.png" alt="WokManeja" style={{ height: '26px', width: '26px', objectFit: 'contain' }} />
+          <span>Wok<span style={{ color: 'var(--accent)' }}>Maneja</span></span>
           <span style={{ fontWeight: 400, opacity: 0.7, fontSize: '13px', marginLeft: '4px' }}>Control Center</span>
         </div>
         <button onClick={handleLogout} className="btn" style={{ background: 'rgba(255,255,255,0.1)', color: '#fff', border: '1px solid rgba(255,255,255,0.2)', padding: '6px 12px', fontSize: '12px', width: 'auto' }}>
@@ -566,7 +591,46 @@ function App() {
                 <option value="LIFETIME">Lifetime</option>
               </select>
             </div>
-            
+
+            <div className="input-group">
+              <label>Licensed Modules</label>
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', marginTop: '0.4rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', fontWeight: genModules.includes('ALL') ? 700 : 400 }}>
+                  <input type="checkbox" checked={genModules.includes('ALL')} onChange={() => toggleModule('ALL')} /> All Modules
+                </label>
+                {MODULE_OPTIONS.map(m => (
+                  <label key={m.code} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem', opacity: genModules.includes('ALL') ? 0.5 : 1 }}>
+                    <input type="checkbox" checked={genModules.includes(m.code)} disabled={genModules.includes('ALL')} onChange={() => toggleModule(m.code)} /> {m.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div className="input-group">
+              <label>Staff Cap</label>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.85rem' }}>
+                  <input type="checkbox" checked={genStaffCap === 'UNL'} onChange={(e) => setGenStaffCap(e.target.checked ? 'UNL' : '50')} /> Unlimited
+                </label>
+                {genStaffCap !== 'UNL' && (
+                  <input
+                    type="number"
+                    min="1"
+                    className="input-field"
+                    style={{ maxWidth: '120px' }}
+                    value={genStaffCap}
+                    onChange={(e) => setGenStaffCap(e.target.value.replace(/\D/g, ''))}
+                    placeholder="e.g. 50"
+                  />
+                )}
+              </div>
+            </div>
+
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.8rem', lineHeight: 1.5, margin: '0.5rem 0 1.5rem' }}>
+              Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key.<br />
+              Keys may include module codes (-HR-, -PC-, -FIN-, -PAY-, -RPT-, -ADM-, or -ALL-) and a staff cap (-S50- or -SUNL- for unlimited).
+            </p>
+
             <button onClick={handleGenerateKey} className="btn btn-primary" style={{ marginTop: '1rem' }}>
               Generate Key
             </button>

@@ -1,5 +1,16 @@
 // WokManeja Finance Module - Phase 1
 
+// Shared toolbar for report screens: Print / Save PDF / Email Report.
+// targetId must point to a wrapper div containing only the printable report content
+// (buttons and filter controls should live outside it so they don't end up in the PDF).
+function reportActionBar(targetId, filename, subject) {
+    return '<div class="no-print" style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">' +
+        '<button class="btn btn-outline" onclick="window.print()"><i class="ti ti-printer"></i> Print</button>' +
+        '<button class="btn btn-primary" onclick="generatePDF(document.getElementById(\'' + targetId + '\'), \'' + filename + '\')"><i class="ti ti-download"></i> Save PDF</button>' +
+        '<button class="btn btn-outline" onclick="emailReportPDF(document.getElementById(\'' + targetId + '\'), \'' + filename + '\', \'' + subject + '\')"><i class="ti ti-mail"></i> Email Report</button>' +
+        '</div>';
+}
+
 async function renderFinanceDashboard() {
     var el = document.getElementById('section-finance-dashboard');
     el.innerHTML = '<div style="padding:20px;text-align:center">Loading Dashboard Data...</div>';
@@ -190,6 +201,8 @@ async function renderFinanceDashboard() {
 function renderFinanceDailyIncome() {
     var el = document.getElementById('section-finance-daily-income');
     var today = new Date().toISOString().split('T')[0];
+    var now = new Date();
+    var firstOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
 
     el.innerHTML = `
         <p class="section-title"><i class="ti ti-trending-up" style="color:var(--gold)"></i> <span>Daily Income</span></p>
@@ -284,8 +297,115 @@ function renderFinanceDailyIncome() {
                 <div id="di-list"></div>
             </div>
         </div>
+
+        <!-- Daily Income Report -->
+        <div class="card" style="margin-top:1rem">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;flex-wrap:wrap;gap:.75rem">
+                <p style="font-size:13px;font-weight:700;color:var(--navy);margin:0"><i class="ti ti-report-money" style="color:var(--gold)"></i> Daily Income Report</p>
+                <div style="display:flex;gap:.5rem;align-items:flex-end;flex-wrap:wrap">
+                    <div><label style="font-size:11px">From</label><input type="date" id="di-report-from" value="${firstOfMonth}" style="font-size:12px;padding:6px 8px"></div>
+                    <div><label style="font-size:11px">To</label><input type="date" id="di-report-to" value="${today}" style="font-size:12px;padding:6px 8px"></div>
+                    <button class="btn btn-primary" style="padding:8px 14px;font-size:12px" onclick="generateDailyIncomeReport()"><i class="ti ti-search"></i> Generate Report</button>
+                </div>
+            </div>
+            <div id="di-report-out"><p style="color:#888;font-size:12px;text-align:center;padding:1.5rem 0">Choose a date range and click Generate Report.</p></div>
+        </div>
     `;
     refreshDailyIncomeList();
+}
+
+function generateDailyIncomeReport() {
+    var from = document.getElementById('di-report-from').value;
+    var to = document.getElementById('di-report-to').value;
+    var out = document.getElementById('di-report-out');
+    if (!from || !to) {
+        out.innerHTML = '<p style="color:#888;font-size:12px;text-align:center;padding:1rem 0">Please select a valid date range.</p>';
+        return;
+    }
+
+    var all = DB.findAll('finance_daily_income') || [];
+    var list = all.filter(r => r.date >= from && r.date <= to);
+    list.sort((a,b) => new Date(a.date) - new Date(b.date));
+
+    if (!list.length) {
+        out.innerHTML = '<p style="color:#888;font-size:12px;text-align:center;padding:2rem 0"><i class="ti ti-inbox" style="font-size:2rem;display:block;margin-bottom:.5rem"></i>No income records found for this period.</p>';
+        return;
+    }
+
+    var total = list.reduce((s,r) => s + (parseFloat(r.amount)||0), 0);
+    var count = list.length;
+
+    var byDay = {};
+    list.forEach(r => { byDay[r.date] = (byDay[r.date]||0) + (parseFloat(r.amount)||0); });
+    var dayKeys = Object.keys(byDay);
+    var avgPerDay = dayKeys.length > 0 ? total/dayKeys.length : 0;
+    var bestDay = dayKeys.reduce((best,d) => (byDay[d] > (byDay[best]||0)) ? d : best, dayKeys[0]);
+
+    var bySource = {};
+    list.forEach(r => { bySource[r.source] = (bySource[r.source]||0) + (parseFloat(r.amount)||0); });
+    var sourceKeys = Object.keys(bySource).sort((a,b) => bySource[b]-bySource[a]);
+
+    var byMethod = {};
+    list.forEach(r => { var m = r.paymentMethod || 'Cash'; byMethod[m] = (byMethod[m]||0) + (parseFloat(r.amount)||0); });
+    var methodKeys = Object.keys(byMethod).sort((a,b) => byMethod[b]-byMethod[a]);
+
+    var sourceRows = sourceKeys.map(s => `<tr><td>${s}</td><td style="text-align:right">VUV ${Math.round(bySource[s]).toLocaleString()}</td><td style="text-align:right">${total>0?(bySource[s]/total*100).toFixed(1):'0.0'}%</td></tr>`).join('');
+    var methodRows = methodKeys.map(m => `<tr><td>${m}</td><td style="text-align:right">VUV ${Math.round(byMethod[m]).toLocaleString()}</td><td style="text-align:right">${total>0?(byMethod[m]/total*100).toFixed(1):'0.0'}%</td></tr>`).join('');
+    var detailRows = list.map(r => `<tr><td style="white-space:nowrap">${fmtDate(r.date)}</td><td>${r.source}</td><td>${r.description||'-'}</td><td>${r.paymentMethod||'-'}</td><td style="text-align:right;font-weight:700;color:#10b981">VUV ${Math.round(r.amount||0).toLocaleString()}</td></tr>`).join('');
+
+    out.innerHTML = `
+        <div id="di-report-printable">
+            <p style="font-size:12px;color:#888;margin-bottom:1rem">Report period: <strong>${fmtDate(from)} &ndash; ${fmtDate(to)}</strong></p>
+            <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.75rem;margin-bottom:1.25rem">
+                <div style="background:#f8f9fb;border-radius:8px;padding:.85rem;text-align:center">
+                    <p style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px">Total Income</p>
+                    <p style="font-size:18px;font-weight:800;color:#10b981">VUV ${Math.round(total).toLocaleString()}</p>
+                </div>
+                <div style="background:#f8f9fb;border-radius:8px;padding:.85rem;text-align:center">
+                    <p style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px">Transactions</p>
+                    <p style="font-size:18px;font-weight:800;color:var(--navy)">${count}</p>
+                </div>
+                <div style="background:#f8f9fb;border-radius:8px;padding:.85rem;text-align:center">
+                    <p style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px">Avg / Day Recorded</p>
+                    <p style="font-size:18px;font-weight:800;color:var(--gold)">VUV ${Math.round(avgPerDay).toLocaleString()}</p>
+                </div>
+                <div style="background:#f8f9fb;border-radius:8px;padding:.85rem;text-align:center">
+                    <p style="font-size:10px;color:#888;text-transform:uppercase;margin-bottom:4px">Best Day</p>
+                    <p style="font-size:13px;font-weight:800;color:#6366f1">${fmtDate(bestDay)}</p>
+                    <p style="font-size:11px;color:#888">VUV ${Math.round(byDay[bestDay]||0).toLocaleString()}</p>
+                </div>
+            </div>
+
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.25rem">
+                <div>
+                    <p style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:.5rem">By Source</p>
+                    <table class="table" style="width:100%;font-size:12px"><thead><tr><th>Source</th><th style="text-align:right">Amount</th><th style="text-align:right">%</th></tr></thead><tbody>${sourceRows}</tbody></table>
+                </div>
+                <div>
+                    <p style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:.5rem">By Payment Method</p>
+                    <table class="table" style="width:100%;font-size:12px"><thead><tr><th>Method</th><th style="text-align:right">Amount</th><th style="text-align:right">%</th></tr></thead><tbody>${methodRows}</tbody></table>
+                </div>
+            </div>
+
+            <div style="margin-bottom:1.25rem">
+                <p style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:.5rem">Income by Source</p>
+                <div style="position:relative;height:240px;width:100%"><canvas id="di-report-chart"></canvas></div>
+            </div>
+
+            <p style="font-size:12px;font-weight:700;color:var(--navy);margin-bottom:.5rem">Transaction Detail</p>
+            <table class="table" style="width:100%;font-size:12px"><thead><tr><th>Date</th><th>Source</th><th>Description</th><th>Payment</th><th style="text-align:right">Amount</th></tr></thead><tbody>${detailRows}</tbody></table>
+        </div>
+
+        ${reportActionBar('di-report-printable', 'Daily-Income-Report.pdf', 'Daily Income Report')}
+    `;
+
+    setTimeout(() => {
+        if (typeof createChart !== 'function') return;
+        createChart('di-report-chart', 'doughnut', {
+            labels: sourceKeys,
+            datasets: [{ data: sourceKeys.map(s => bySource[s]), backgroundColor: PALETTE }]
+        });
+    }, 100);
 }
 
 async function submitDailyIncome() {
@@ -1404,7 +1524,13 @@ function renderFinanceBudget() {
     var el = document.getElementById('section-finance-budget');
     var depts = DB.findAll('departments') || [];
     var deptOptions = '<option value="">-- Select Department --</option>';
-    depts.forEach(d => { deptOptions += '<option value="'+d.name+'">'+d.name+'</option>'; });
+    var seen = {};
+    depts.forEach(d => { 
+        if(!seen[d.name]) {
+            deptOptions += '<option value="'+d.name+'">'+d.name+'</option>'; 
+            seen[d.name] = true;
+        }
+    });
 
     el.innerHTML = `
         <p class="section-title"><i class="ti ti-target" style="color:var(--gold)"></i> <span>Budgeting Dashboard</span></p>
@@ -1587,25 +1713,31 @@ async function refreshReports() {
 // ----------------------------------------------------
 // INTEGRATION HOOKS
 // ----------------------------------------------------
+// NOTE: Payroll GL posting is now handled automatically server-side (autoPostPayslip in
+// server.js) whenever a payslip is inserted, so this function is no longer called from
+// savePayslip()/saveBulkPayroll() -- calling both would double-post every payslip to the GL.
+// Kept here (fixed, not deleted) in case anything still references it directly.
 async function postPayrollGL(p) {
     // p is the payslip document inserted into 'payslips'
-    // Total Cost to Company = Gross Earnings + Employer VNPF (usually same as employee VNPF)
-    // Debit: Salary Expense
-    // Credit: PAYE Payable (not implemented here, but we can assume 'others' goes there or to a generic Liability)
-    // Credit: VNPF Payable (Employee 6% + Employer 6% = 12%)
-    // Credit: Salary Payable (Net Pay)
-    
-    var employerVNPF = p.vnpf || 0; 
+    // Debit: Salary Expense (gross pay only)
+    // Debit: VNPF Employer Expense
+    // Credit: VNPF Payable (Employee + Employer, 12% total)
+    // Credit: Cash / Bank (Net Pay)
+    // Credit: Employee Advances (loan repayment) / Accounts Payable (other deductions)
+
+    var employerVNPF = p.vnpf || 0;
     var employeeVNPF = p.vnpf || 0;
     var totalVNPF = employerVNPF + employeeVNPF;
     var gross = p.totalEarn || 0;
-    var totalCost = gross + employerVNPF;
     var net = p.net || 0;
     var loanDeduction = p.loan || 0;
     var otherDeduction = p.others || 0;
 
+    // Salary Expense = gross pay only. Folding Employer VNPF into this line too (as a
+    // "total cost to company" figure) would double-count it alongside the VNPF Employer
+    // Expense line below, and throw the entry out of balance.
     var lines = [
-        { accountName: 'Salary Expense', debit: totalCost, department: p.department }
+        { accountName: 'Salary Expense', debit: gross, department: p.department }
     ];
 
     if(totalVNPF > 0) lines.push({ accountName: 'VNPF Employer Expense', debit: employerVNPF });
@@ -1698,9 +1830,21 @@ async function refreshContactsList() {
 
 async function renderFinanceInvoices() {
     var c = document.getElementById('section-finance-invoices');
-    var [cRes, accRes] = await Promise.all([fetch('/api/finance_contacts'), fetch('/api/fin/accounts', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }})]);
+    var [cRes, accRes] = await Promise.all([
+        fetch('/api/finance_contacts', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }}),
+        fetch('/api/fin/accounts', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }})
+    ]);
     var contacts = await cRes.json();
     var accounts = await accRes.json();
+    
+    if (!Array.isArray(contacts)) {
+        c.innerHTML = '<div style="padding:20px;color:red;">Error loading contacts: ' + JSON.stringify(contacts) + '</div>';
+        return;
+    }
+    if (!Array.isArray(accounts)) {
+        c.innerHTML = '<div style="padding:20px;color:red;">Error loading accounts: ' + JSON.stringify(accounts) + '</div>';
+        return;
+    }
     var clientOptions = contacts.filter(x => x.type === 'Client' || x.type === 'Both').map(x => `<option value="${x.name}">${x.name}</option>`).join('');
     var revenueOptions = accounts.filter(x => x.type === 'Revenue' || x.type === 'Income').map(x => `<option value="${x.code} - ${x.name}">${x.code} - ${x.name}</option>`).join('');
 
@@ -1855,24 +1999,35 @@ async function saveInvoice(status) {
 }
 
 async function refreshInvoicesList() {
-    var res = await fetch('/api/finance_invoices');
-    var invoices = await res.json();
-    var today = new Date(); today.setHours(0,0,0,0);
-    invoices.forEach(inv => {
-        if(inv.status !== 'Paid' && inv.due) {
-            var d = new Date(inv.due); d.setHours(0,0,0,0);
-            inv._computed = d < today ? 'Overdue' : inv.status;
-        } else { inv._computed = inv.status; }
-    });
-    var paid = invoices.filter(i => i._computed === 'Paid').length;
-    var overdue = invoices.filter(i => i._computed === 'Overdue').length;
-    var pending = invoices.filter(i => i._computed !== 'Paid' && i._computed !== 'Overdue').length;
-    var totalOut = invoices.filter(i => i._computed !== 'Paid').reduce((s, i) => s + (i.amount||0), 0);
-    var pillsHtml = `<span style="background:#dcfce7;color:#166534;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${paid} Paid</span><span style="background:#fef9c3;color:#92400e;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${pending} Pending</span><span style="background:#fee2e2;color:#991b1b;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${overdue} Overdue</span><span style="background:#f0f0f0;color:#444;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">Outstanding: VUV ${totalOut.toLocaleString()}</span>`;
-    var pillEl = document.getElementById('inv-summary-pills');
-    if(pillEl) pillEl.innerHTML = pillsHtml;
-    window._allInvoices = invoices;
-    renderInvoiceTable(invoices);
+    try {
+        var res = await fetch('/api/finance_invoices', { headers: { 'Authorization': 'Bearer ' + sessionStorage.getItem('api_token') }});
+        var invoices = await res.json();
+        if (!Array.isArray(invoices)) {
+            var ilist = document.getElementById('invoices-list');
+            if (ilist) ilist.innerHTML = '<div style="color:red;padding:20px;">Error loading invoices: ' + JSON.stringify(invoices) + '</div>';
+            return;
+        }
+        var today = new Date(); today.setHours(0,0,0,0);
+        invoices.forEach(inv => {
+            if(inv.status !== 'Paid' && inv.due) {
+                var d = new Date(inv.due); d.setHours(0,0,0,0);
+                inv._computed = d < today ? 'Overdue' : inv.status;
+            } else { inv._computed = inv.status; }
+        });
+        var paid = invoices.filter(i => i._computed === 'Paid').length;
+        var overdue = invoices.filter(i => i._computed === 'Overdue').length;
+        var pending = invoices.filter(i => i._computed !== 'Paid' && i._computed !== 'Overdue').length;
+        var totalOut = invoices.filter(i => i._computed !== 'Paid').reduce((s, i) => s + (i.amount||0), 0);
+        var pillsHtml = `<span style="background:#dcfce7;color:#166534;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${paid} Paid</span><span style="background:#fef9c3;color:#92400e;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${pending} Pending</span><span style="background:#fee2e2;color:#991b1b;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">${overdue} Overdue</span><span style="background:#f0f0f0;color:#444;padding:5px 12px;border-radius:20px;font-size:11px;font-weight:700">Outstanding: VUV ${totalOut.toLocaleString()}</span>`;
+        var pillEl = document.getElementById('inv-summary-pills');
+        if(pillEl) pillEl.innerHTML = pillsHtml;
+        window._allInvoices = invoices;
+        renderInvoiceTable(invoices);
+    } catch (err) {
+        var c = document.getElementById('invoices-list');
+        if(c) c.innerHTML = '<div style="color:red;padding:20px;">Exception in refreshInvoicesList: ' + err.stack + '</div>';
+        console.error(err);
+    }
 }
 
 function filterInvoices() {
@@ -1924,106 +2079,174 @@ function renderInvoiceTable(invoices) {
     if(listEl) listEl.innerHTML = html;
 }
 
-async function markInvoicePaid(id, num, client, amount) {
+async function markInvoicePaid(id, num, client, amount, fromOverlay) {
     if(!confirm('Mark Invoice ' + num + ' as PAID? This will post a GL entry and allow receipt printing.')) return;
-    var paidDate = new Date().toISOString().split('T')[0];
-    await fetch('/api/finance_invoices/' + id, { method: 'PATCH', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ status: 'Paid', paidDate }) });
-    await postJournalEntry('Payment Received - Invoice ' + num + ' (' + client + ')', paidDate, [
-        { accountName: 'Cash', debit: amount },
-        { accountName: 'Accounts Receivable', credit: amount }
-    ]);
-    await refreshInvoicesList();
+    try {
+        var token = sessionStorage.getItem('api_token');
+        var headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
+        var paidDate = new Date().toISOString().split('T')[0];
+        var res = await fetch('/api/finance_invoices/' + id, { method: 'PATCH', headers: headers, body: JSON.stringify({ status: 'Paid', paidDate }) });
+        if (!res.ok) throw new Error('Failed to update invoice');
+        await postJournalEntry('Payment Received - Invoice ' + num + ' (' + client + ')', paidDate, [
+            { accountName: 'Cash', debit: amount },
+            { accountName: 'Accounts Receivable', credit: amount }
+        ]);
+        await refreshInvoicesList();
+        
+        if (fromOverlay) {
+            document.getElementById('invoice-print-overlay').style.display = 'none';
+        }
+        
+        // Automatically open the receipt for the user
+        printReceipt(id);
+    } catch (e) {
+        console.error('Failed to mark invoice paid:', e);
+        alert('Failed to mark invoice paid: ' + e.message);
+    }
 }
 
 async function printInvoice(id) {
-    var res = await fetch('/api/finance_invoices/' + id);
-    var inv = await res.json();
-    var companyRes = await fetch('/api/company_settings');
-    var companyArr = await companyRes.json();
-    var company = Array.isArray(companyArr) ? (companyArr[0]||{}) : (companyArr||{});
-    var cName = company.name || 'WokManeja';
-    var cAddress = company.address || 'Vanuatu';
-    var cPhone = company.phone || '';
-    var cEmail = company.email || '';
+    try {
+        var token = sessionStorage.getItem('api_token');
+        var headers = { 'Authorization': 'Bearer ' + token };
+        
+        var res = await fetch('/api/finance_invoices/' + id, { headers: headers });
+        if (!res.ok) throw new Error('Failed to fetch invoice: ' + res.status + ' ' + res.statusText);
+        var inv = await res.json();
+        if (inv.error) throw new Error(inv.error);
+        
+        var company = window.DB ? (window.DB.findOne('settings', {_id: 'company'}) || {}) : {};
+        var cName = company.name || 'War Horse Saloon';
+        var cAddress = company.address || 'Wharf Rd, Port Vila';
+        var cPhone = company.phone || '';
+        var cEmail = company.email || '';
+        var cBank = company.bank || '';
 
-    // Populate overlay fields
-    document.getElementById('inv-print-company').textContent = cName;
-    document.getElementById('inv-print-address').textContent = cAddress;
-    document.getElementById('inv-print-phone').textContent = cPhone;
-    document.getElementById('inv-print-email').textContent = cEmail;
-    document.getElementById('inv-print-num').textContent = inv.num || '';
-    document.getElementById('inv-print-client').textContent = inv.client || '';
-    document.getElementById('inv-print-footer').textContent = 'Generated by WokManeja · ' + new Date().toLocaleDateString();
+        // Populate overlay fields
+        if(company.logo){
+            var logoEl = document.getElementById('inv-print-company-logo');
+            if(logoEl){ logoEl.src = company.logo; logoEl.style.display = 'block'; }
+        }
+        document.getElementById('inv-print-company').textContent = cName;
+        document.getElementById('inv-print-address').textContent = cAddress;
+        document.getElementById('inv-print-phone').textContent = cPhone;
+        document.getElementById('inv-print-email').textContent = cEmail;
+        document.getElementById('inv-print-bank').textContent = cBank ? 'Bank Details: ' + cBank : '';
+        document.getElementById('inv-print-num').textContent = inv.num || '';
+        document.getElementById('inv-print-client').textContent = inv.client || '';
+        document.getElementById('inv-print-footer').textContent = 'Generated by WokManeja · ' + new Date().toLocaleDateString();
 
-    // Status badge
-    var s = inv.status;
-    document.getElementById('inv-print-status').innerHTML = s === 'Paid'
-        ? '<span style="background:#dcfce7;color:#166534;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:700">✓ PAID</span>'
-        : '<span style="background:#fef3c7;color:#92400e;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:700">UNPAID</span>';
+        // Status badge
+        var s = inv.status;
+        document.getElementById('inv-print-status').innerHTML = s === 'Paid'
+            ? '<span style="background:#dcfce7;color:#166534;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:700">✓ PAID</span>'
+            : '<span style="background:#fef3c7;color:#92400e;padding:5px 15px;border-radius:20px;font-size:12px;font-weight:700">UNPAID</span>';
 
-    // Dates
-    var datesHtml = 'Invoice Date: <strong>' + (inv.date||'') + '</strong><br>Due Date: <strong>' + (inv.due||'') + '</strong>';
-    if(inv.paidDate) datesHtml += '<br>Paid On: <strong>' + inv.paidDate + '</strong>';
-    document.getElementById('inv-print-dates').innerHTML = datesHtml;
+        // Dates
+        var datesHtml = 'Invoice Date: <strong>' + (inv.date||'') + '</strong><br>Due Date: <strong>' + (inv.due||'') + '</strong>';
+        if(inv.paidDate) datesHtml += '<br>Paid On: <strong>' + inv.paidDate + '</strong>';
+        document.getElementById('inv-print-dates').innerHTML = datesHtml;
 
-    // Line items
-    var lineHtml = '';
-    if(inv.lineItems && inv.lineItems.length > 0) {
-        inv.lineItems.forEach(function(l) {
-            lineHtml += '<tr><td style="padding:9px 12px;border-bottom:1px solid #f0f0f0">' + l.desc + '</td>' +
-                '<td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0f0f0">' + l.qty + '</td>' +
-                '<td style="padding:9px 12px;text-align:right;border-bottom:1px solid #f0f0f0">' + (l.price||0).toLocaleString(undefined,{minimumFractionDigits:2}) + '</td>' +
-                '<td style="padding:9px 12px;text-align:right;border-bottom:1px solid #f0f0f0;font-weight:700">' + (l.total||0).toLocaleString(undefined,{minimumFractionDigits:2}) + '</td></tr>';
-        });
-    } else {
-        lineHtml = '<tr><td colspan="4" style="padding:9px 12px;color:#666">Services rendered</td></tr>';
+        // Line items
+        var html = '';
+        if(inv.lineItems && inv.lineItems.length > 0) {
+            inv.lineItems.forEach(function(l) {
+                html += '<tr><td style="padding:9px 12px;border-bottom:1px solid #f0f0f0">' + (l.desc||'') + '</td>' +
+                    '<td style="padding:9px 12px;text-align:center;border-bottom:1px solid #f0f0f0">' + (l.qty||0) + '</td>' +
+                    '<td style="padding:9px 12px;text-align:right;border-bottom:1px solid #f0f0f0">VUV ' + (l.price||0).toLocaleString(undefined,{minimumFractionDigits:2}) + '</td>' +
+                    '<td style="padding:9px 12px;text-align:right;border-bottom:1px solid #f0f0f0;font-weight:700">VUV ' + (l.total||0).toLocaleString(undefined,{minimumFractionDigits:2}) + '</td></tr>';
+            });
+        } else {
+            html = '<tr><td colspan="4" style="padding:9px 12px;color:#666">Services rendered</td></tr>';
+        }
+        document.getElementById('inv-print-lines').innerHTML = html;
+        document.getElementById('inv-print-total').textContent = 'VUV ' + (inv.amount||0).toLocaleString(undefined,{minimumFractionDigits:2});
+
+        // Notes
+        if(inv.notes) {
+            document.getElementById('inv-print-notes').textContent = inv.notes;
+            document.getElementById('inv-print-notes-wrap').style.display = 'block';
+        } else {
+            document.getElementById('inv-print-notes-wrap').style.display = 'none';
+        }
+
+        document.getElementById('invoice-print-overlay').style.display = 'flex';
+        
+        // Setup action buttons based on status
+        var btnPay = document.getElementById('inv-print-btn-pay');
+        if (btnPay) {
+            if (s !== 'Paid') {
+                btnPay.style.display = 'inline-block';
+                btnPay.onclick = function() {
+                    markInvoicePaid(inv._id, inv.num, inv.client, inv.amount, true);
+                };
+            } else {
+                btnPay.style.display = 'none';
+            }
+        }
+        
+    } catch (e) {
+        console.error('printInvoice error:', e);
+        alert('Failed to view invoice: ' + e.message);
     }
-    document.getElementById('inv-print-lines').innerHTML = lineHtml;
-    document.getElementById('inv-print-total').textContent = (inv.amount||0).toLocaleString(undefined,{minimumFractionDigits:2});
-
-    // Notes
-    if(inv.notes) {
-        document.getElementById('inv-print-notes').textContent = inv.notes;
-        document.getElementById('inv-print-notes-wrap').style.display = 'block';
-    } else {
-        document.getElementById('inv-print-notes-wrap').style.display = 'none';
-    }
-
-    document.getElementById('invoice-print-overlay').style.display = 'flex';
 }
 
 async function printReceipt(id) {
-    var res = await fetch('/api/finance_invoices/' + id);
-    var inv = await res.json();
-    var companyRes = await fetch('/api/company_settings');
-    var companyArr = await companyRes.json();
-    var company = Array.isArray(companyArr) ? (companyArr[0]||{}) : (companyArr||{});
-    var cName = company.name || 'WokManeja';
-    var cAddress = company.address || 'Vanuatu';
-    var rcptNum = 'RCPT-' + (inv.num||'').replace('INV-', '');
-    var lineDesc = (inv.lineItems && inv.lineItems.length > 0) ? inv.lineItems.map(function(l){return l.desc;}).join(', ') : 'Services rendered';
+    try {
+        // Close any other open print/preview overlays so they don't bleed through behind this one
+        ['print-overlay','invoice-print-overlay','modal-edit-je'].forEach(function(oid){
+            var o = document.getElementById(oid);
+            if(o) o.style.display = 'none';
+        });
+        var token = sessionStorage.getItem('api_token');
+        var headers = { 'Authorization': 'Bearer ' + token };
 
-    document.getElementById('rcpt-print-company').textContent = cName;
-    document.getElementById('rcpt-print-address').textContent = cAddress;
-    document.getElementById('rcpt-print-amount').textContent = (inv.amount||0).toLocaleString(undefined,{minimumFractionDigits:2});
+        var res = await fetch('/api/finance_invoices/' + id, { headers: headers });
+        if (!res.ok) throw new Error('Failed to fetch invoice: ' + res.status + ' ' + res.statusText);
+        var inv = await res.json();
+        if (inv.error) throw new Error(inv.error);
 
-    var rowData = [
-        ['Receipt No.', rcptNum],
-        ['Invoice Ref.', inv.num||''],
-        ['Received From', inv.client||''],
-        ['Invoice Date', inv.date||''],
-        ['Payment Date', inv.paidDate || new Date().toLocaleDateString()],
-        ['Description', lineDesc]
-    ];
-    var rowsHtml = rowData.map(function(r) {
-        return '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f5f5f5;font-size:13px">' +
-            '<span style="color:#888;font-weight:600">' + r[0] + '</span>' +
-            '<span style="font-weight:700;text-align:right;max-width:260px;word-break:break-word">' + r[1] + '</span></div>';
-    }).join('');
-    document.getElementById('rcpt-print-rows').innerHTML = rowsHtml;
-    document.getElementById('rcpt-print-footer').innerHTML = 'This is your official receipt. Thank you for your payment.<br>Generated by WokManeja · ' + new Date().toLocaleString();
+        var company = window.DB ? (window.DB.findOne('settings', {_id: 'company'}) || {}) : {};
+        var cName = company.name || 'War Horse Saloon';
+        var cAddress = company.address || 'Wharf Rd, Port Vila';
+        var cPhone = company.phone || '';
+        var cEmail = company.email || '';
+        var cBank = company.bank || '';
+        var rcptNum = 'RCPT-' + (inv.num||'').replace('INV-', '');
+        var lineDesc = (inv.lineItems && inv.lineItems.length > 0) ? inv.lineItems.map(function(l){return l.desc;}).join(', ') : 'Services rendered';
 
-    document.getElementById('receipt-print-overlay').style.display = 'flex';
+        if(company.logo){
+            var logoEl = document.getElementById('rcpt-print-company-logo');
+            if(logoEl){ logoEl.src = company.logo; logoEl.style.display = 'block'; }
+        }
+        document.getElementById('rcpt-print-company').textContent = cName;
+        document.getElementById('rcpt-print-address').textContent = cAddress;
+        document.getElementById('rcpt-print-phone').textContent = cPhone ? 'Tel: ' + cPhone : '';
+        document.getElementById('rcpt-print-email').textContent = cEmail ? 'Email: ' + cEmail : '';
+        document.getElementById('rcpt-print-bank').textContent = cBank ? 'Bank Details: ' + cBank : '';
+        document.getElementById('rcpt-print-amount').textContent = 'VUV ' + (inv.amount||0).toLocaleString(undefined,{minimumFractionDigits:2});
+
+        var rowData = [
+            ['Receipt No.', rcptNum],
+            ['Invoice Ref.', inv.num||''],
+            ['Received From', inv.client||''],
+            ['Invoice Date', inv.date||''],
+            ['Payment Date', inv.paidDate || new Date().toLocaleDateString()],
+            ['Description', lineDesc]
+        ];
+        var rowsHtml = rowData.map(function(r) {
+            return '<div style="display:flex;justify-content:space-between;padding:9px 0;border-bottom:1px solid #f5f5f5;font-size:13px">' +
+                '<span style="color:#888;font-weight:600">' + r[0] + '</span>' +
+                '<span style="font-weight:700;text-align:right;max-width:260px;word-break:break-word">' + r[1] + '</span></div>';
+        }).join('');
+        document.getElementById('rcpt-print-rows').innerHTML = rowsHtml;
+        document.getElementById('rcpt-print-footer').innerHTML = 'This is your official receipt. Thank you for your payment.<br>Generated by WokManeja · ' + new Date().toLocaleString();
+
+        document.getElementById('receipt-print-overlay').style.display = 'flex';
+    } catch (e) {
+        console.error('printReceipt error:', e);
+        alert('Failed to view receipt: ' + e.message);
+    }
 }
 
 

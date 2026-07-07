@@ -442,103 +442,195 @@ window.customConfirm = function(msg, onConfirm) {
   cancelBtn.addEventListener('click', onCancel);
 };
 
-var MEMORY_DB = { users: [], staff: [], payslips: [], hr_requests: [], departments: [], audit_logs: [], settings: [], archive: [], bulk_templates: [] };
-var DB=(function(){
-  function _id(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)}
+// ══════════════════════════════════════════════════════════════
+// SERVER-SIDE DB LAYER — replaces the old MEMORY_DB approach.
+// Collections are fetched from SQLite via REST API and cached
+// locally. The cache is refreshed automatically after every write
+// and can be manually refreshed before rendering a section.
+// All read methods (findAll, findOne, count, raw) remain synchronous
+// so no caller code needs to change.
+// ══════════════════════════════════════════════════════════════
+var MEMORY_DB = {};   // local collection cache (keyed by collection name)
+var _DB_LOADING = {}; // per-collection inflight fetch promises
+
+var DB = (function () {
+  // ── helpers ──────────────────────────────────────────────────
+  function _id() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
   function _auditLog(action, c, details) {
     if (c === 'audit_logs') return;
     var user = (window.APP && APP.currentUser) ? APP.currentUser.username : 'system';
     var entry = { _id: _id(), timestamp: new Date().toISOString(), user: user, action: action, collection: c, details: JSON.stringify(details) };
-    if(!MEMORY_DB['audit_logs']) MEMORY_DB['audit_logs'] = [];
+    if (!MEMORY_DB['audit_logs']) MEMORY_DB['audit_logs'] = [];
     MEMORY_DB['audit_logs'].push(entry);
-    fetch('/api/audit_logs', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(entry) });
+    fetch('/api/audit_logs', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(entry) });
   }
-  return{
-    init: async function() {
-        const res = await fetch('/api/admin/export');
-        const data = await res.json();
-        Object.assign(MEMORY_DB, data);
-        if(!MEMORY_DB.settings) MEMORY_DB.settings = [];
-        if(!MEMORY_DB.archive) MEMORY_DB.archive = [];
-        if(MEMORY_DB.archive.length > 0){
-            var now=new Date().toISOString();
-            var expired=MEMORY_DB.archive.filter(function(a){return a.expiresAt < now});
-            expired.forEach(function(a){ DB.remove('archive',{_id:a._id},true); });
+
+  // ── fetch a collection from server and store in cache ────────
+  async function _fetchCollection(c) {
+    // Deduplicate in-flight requests for the same collection
+    if (_DB_LOADING[c]) return _DB_LOADING[c];
+    _DB_LOADING[c] = fetch('/api/' + c)
+      .then(function (r) { return r.json(); })
+      .then(function (data) {
+        MEMORY_DB[c] = Array.isArray(data) ? data : [];
+        delete _DB_LOADING[c];
+        return MEMORY_DB[c];
+      })
+      .catch(function () {
+        MEMORY_DB[c] = MEMORY_DB[c] || [];
+        delete _DB_LOADING[c];
+        return MEMORY_DB[c];
+      });
+    return _DB_LOADING[c];
+  }
+
+  return {
+    // ── init: load company settings + clean expired archive ──────
+    init: async function () {
+      // Load only the collections needed at startup
+      await Promise.all([
+        _fetchCollection('settings'),
+        _fetchCollection('archive'),
+      ]);
+
+      // Clean up expired archive items
+      var now = new Date().toISOString();
+      var expired = (MEMORY_DB['archive'] || []).filter(function (a) { return a.expiresAt < now; });
+      expired.forEach(function (a) { DB.remove('archive', { _id: a._id }, true); });
+
+      // Apply company settings to UI
+      var s = DB.findOne('settings', { _id: 'company' });
+      if (s) {
+        if (s.name) {
+          var el = document.getElementById('login-company-name');
+          if (el) el.textContent = s.name;
+          var headerEl = document.getElementById('menu-company-name');
+          if (headerEl) headerEl.textContent = s.name;
+          var printRepName = document.getElementById('print-report-company-name');
+          if (printRepName) printRepName.textContent = s.name;
         }
-        var s=DB.findOne('settings',{_id:'company'});
-        if(s&&s.name){
-            var el=document.getElementById('login-company-name');
-            if(el)el.textContent=s.name;
-            var headerEl=document.getElementById('menu-company-name');
-            if(headerEl)headerEl.textContent=s.name;
+        if (s.logo) {
+          var logoImg = document.getElementById('login-company-logo');
+          if (logoImg) { logoImg.src = s.logo; logoImg.style.display = 'block'; }
+          var menuLogo = document.getElementById('menu-company-logo');
+          if (menuLogo) { menuLogo.src = s.logo; menuLogo.style.display = 'inline-block'; }
+          var printRepLogo = document.getElementById('print-report-company-logo');
+          if (printRepLogo) { printRepLogo.src = s.logo; printRepLogo.style.display = 'block'; }
         }
+      }
     },
-    insert:function(c,doc){
-        doc._id=_id();
-        doc._created=new Date().toISOString();
-        if(!MEMORY_DB[c]) MEMORY_DB[c] = [];
-        MEMORY_DB[c].push(doc);
-        fetch('/api/'+c, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(doc) });
+
+    // ── refresh: pull fresh data from server for one collection ──
+    refresh: async function (c) {
+      return _fetchCollection(c);
+    },
+
+    // ── refreshAll: refresh a list of collections in parallel ────
+    refreshAll: async function (collections) {
+      return Promise.all(collections.map(function (c) { return _fetchCollection(c); }));
+    },
+
+    // ── ensure: fetch collection if not already in cache ─────────
+    ensure: async function (c) {
+      if (!MEMORY_DB[c]) await _fetchCollection(c);
+      return MEMORY_DB[c];
+    },
+
+    // ── synchronous reads (from local cache) ─────────────────────
+    findAll: function (c, q) {
+      var d = MEMORY_DB[c] || [];
+      if (!q) return d;
+      return d.filter(function (x) {
+        return Object.keys(q).every(function (k) { return String(x[k]) === String(q[k]); });
+      });
+    },
+
+    findOne: function (c, q) { return this.findAll(c, q)[0] || null; },
+
+    count: function (c) { return (MEMORY_DB[c] || []).length; },
+
+    raw: function (c) { return MEMORY_DB[c] || []; },
+
+    // ── writes: update cache immediately then persist + refresh ──
+    insert: function (c, doc) {
+      doc._id = _id();
+      doc._created = new Date().toISOString();
+      if (!MEMORY_DB[c]) MEMORY_DB[c] = [];
+      MEMORY_DB[c].push(doc);
+      // Persist to server then refresh collection to sync any server-side changes
+      fetch('/api/' + c, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(doc) })
+        .then(function () { return _fetchCollection(c); })
+        .catch(function () {});
+      updateDBIndicator();
+      _auditLog('INSERT', c, doc);
+      return doc;
+    },
+
+    update: function (c, q, u) {
+      var d = MEMORY_DB[c] || [];
+      var updated = false;
+      d.forEach(function (x) {
+        if (Object.keys(q).every(function (k) { return String(x[k]) === String(q[k]); })) {
+          Object.assign(x, u);
+          x._updated = new Date().toISOString();
+          updated = true;
+        }
+      });
+      if (updated) {
+        fetch('/api/' + c, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ query: q, update: u }) })
+          .then(function () { return _fetchCollection(c); })
+          .catch(function () {});
         updateDBIndicator();
-        _auditLog('INSERT', c, doc);
-        return doc;
+        _auditLog('UPDATE', c, { query: q, changes: u });
+      }
     },
-    findAll:function(c,q){
-        var d=MEMORY_DB[c] || [];
-        if(!q)return d;
-        return d.filter(function(x){return Object.keys(q).every(function(k){return String(x[k])===String(q[k])})})
-    },
-    findOne:function(c,q){return this.findAll(c,q)[0]||null},
-    update:function(c,q,u){
-        var d=MEMORY_DB[c] || [];
-        var updated = false;
-        d.forEach(function(x){
-            if(Object.keys(q).every(function(k){return String(x[k])===String(q[k])})){
-                Object.assign(x,u);
-                x._updated=new Date().toISOString();
-                updated = true;
-            }
-        });
-        if (updated) {
-            fetch('/api/'+c, { method: 'PUT', headers: {'Content-Type':'application/json'}, body: JSON.stringify({query:q, update:u}) });
-            updateDBIndicator();
-            _auditLog('UPDATE', c, {query: q, changes: u});
-        }
-    },
-    remove:function(c,q,bypassArchive){
-        var d=MEMORY_DB[c] || [];
-        var toRemove = d.filter(function(x){return Object.keys(q).every(function(k){return String(x[k])===String(q[k])})});
-        MEMORY_DB[c] = d.filter(function(x){return!Object.keys(q).every(function(k){return String(x[k])===String(q[k])})});
-        if(toRemove.length > 0){
-            fetch('/api/'+c, { method: 'DELETE', headers: {'Content-Type':'application/json'}, body: JSON.stringify(q) });
-            updateDBIndicator();
-            _auditLog('DELETE', c, {query: q, removed: toRemove});
-            if(!bypassArchive && c !== 'archive' && c !== 'audit_logs' && c !== 'settings'){
-                var user=(window.APP&&APP.currentUser)?APP.currentUser.username:'system';
-                var exp=new Date();exp.setDate(exp.getDate()+30);
-                toRemove.forEach(function(doc){
-                    var arc={originalCollection:c,originalData:doc,deletedAt:new Date().toISOString(),deletedBy:user,expiresAt:exp.toISOString()};
-                    DB.insert('archive',arc);
-                });
-            }
-        }
-    },
-    drop:function(c){
-        MEMORY_DB[c] = [];
-        fetch('/api/drop/'+c, { method: 'POST' });
+
+    remove: function (c, q, bypassArchive) {
+      var d = MEMORY_DB[c] || [];
+      var toRemove = d.filter(function (x) {
+        return Object.keys(q).every(function (k) { return String(x[k]) === String(q[k]); });
+      });
+      MEMORY_DB[c] = d.filter(function (x) {
+        return !Object.keys(q).every(function (k) { return String(x[k]) === String(q[k]); });
+      });
+      if (toRemove.length > 0) {
+        fetch('/api/' + c, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q) })
+          .then(function () { return _fetchCollection(c); })
+          .catch(function () {});
         updateDBIndicator();
+        _auditLog('DELETE', c, { query: q, removed: toRemove });
+        if (!bypassArchive && c !== 'archive' && c !== 'audit_logs' && c !== 'settings') {
+          var user = (window.APP && APP.currentUser) ? APP.currentUser.username : 'system';
+          var exp = new Date(); exp.setDate(exp.getDate() + 30);
+          toRemove.forEach(function (doc) {
+            var arc = { originalCollection: c, originalData: doc, deletedAt: new Date().toISOString(), deletedBy: user, expiresAt: exp.toISOString() };
+            DB.insert('archive', arc);
+          });
+        }
+      }
     },
-    count:function(c){return (MEMORY_DB[c]||[]).length},
-    raw:function(c){return MEMORY_DB[c]||[]},
-    exportAll:function(){return Object.assign({}, MEMORY_DB, {_exported:new Date().toISOString()})},
-    importAll:function(data){
-        Object.assign(MEMORY_DB, data);
-        fetch('/api/admin/import', { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(data) });
-        updateDBIndicator();
+
+    drop: function (c) {
+      MEMORY_DB[c] = [];
+      fetch('/api/drop/' + c, { method: 'POST' })
+        .then(function () { return _fetchCollection(c); })
+        .catch(function () {});
+      updateDBIndicator();
+    },
+
+    exportAll: function () { return Object.assign({}, MEMORY_DB, { _exported: new Date().toISOString() }); },
+
+    importAll: function (data) {
+      Object.assign(MEMORY_DB, data);
+      fetch('/api/admin/import', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+      updateDBIndicator();
     }
-  }
+  };
 })();
-function seedDB(){
+async function seedDB(){
+  // Ensure core collections are loaded before checking counts
+  await DB.refreshAll(['users','staff','departments']);
   if(DB.count('users')===0){DB.insert('users',{name:'Administrator',username:'admin',password:'admin123',role:'admin'});DB.insert('users',{name:'IT Officer',username:'it_user',password:'it123',role:'it'});DB.insert('users',{name:'John Doe',username:'jdoe',password:'user123',role:'staff'});DB.insert('users',{name:'Manager',username:'manager',password:'mgr123',role:'manager'});}
   if(DB.count('staff')===0){DB.insert('staff',{name:'Alice Bule',empid:'EMP001',designation:'Accountant',department:'Finance',email:'alice@tripleK.vu',phone:'+678 123456',annualLeave:21,sickLeave:10,status:'Active'});DB.insert('staff',{name:'Bob Tarileo',empid:'EMP002',designation:'Sales Manager',department:'Operations',email:'bob@tripleK.vu',phone:'+678 234567',annualLeave:21,sickLeave:10,status:'Active'});DB.insert('staff',{name:'Carol Vira',empid:'EMP003',designation:'HR Officer',department:'Administration',email:'carol@tripleK.vu',phone:'+678 345678',annualLeave:21,sickLeave:10,status:'Active'});}
   if(DB.count('departments')===0){['Finance','Operations','Administration','Executive','Support & Consultant'].forEach(function(d){DB.insert('departments',{name:d})});}
@@ -558,10 +650,65 @@ function resetIdleTimer(){if(!APP.currentUser)return;if(idleTimer)clearTimeout(i
 document.addEventListener('mousemove',resetIdleTimer);
 document.addEventListener('keydown',resetIdleTimer);
 document.addEventListener('click',resetIdleTimer);
-async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;await DB.init();seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();}catch(e){document.getElementById('login-error').style.display='block';}}
+async function doLogin(){var u=document.getElementById('login-user').value.trim();var p=document.getElementById('login-pass').value.trim();try{const res=await fetch('/api/auth/login',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({username:u,password:p})});if(res.status===402||res.status===403){const errData=await res.json();showLicenseLockScreen(errData.error, errData.reason);return;}if(!res.ok){document.getElementById('login-error').style.display='block';return}const data=await res.json();document.getElementById('login-error').style.display='none';sessionStorage.setItem('api_token',data.token);sessionStorage.setItem('api_user',JSON.stringify(data.user));APP.currentUser=data.user;
+  // Init loads settings + archive; then prefetch all core collections
+  await DB.init();
+  await DB.refreshAll(['users','staff','payslips','hr_requests','departments','audit_logs','bulk_templates']);
+  await seedDB();updateDBIndicator();document.getElementById('page-login').classList.add('hidden');document.getElementById('page-main').classList.remove('hidden');document.getElementById('nav-username').textContent=data.user.name;document.getElementById('nav-badge').textContent=data.user.role.toUpperCase();document.getElementById('nav-badge').className='badge badge-'+data.user.role;buildNav(data.user.role);changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();}catch(e){document.getElementById('login-error').style.display='block';}}
 function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
-function buildNav(role){var nav=document.getElementById('sidebar-nav');nav.innerHTML='';MENUS[role].forEach(function(item){if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}var a=document.createElement('button');a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};a.onclick=function(){document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';showSection(item.id);if(item.id==='records')renderRecords();if(item.id==='staff'){renderStaffTable();setNextEmpId()}if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}if(item.id==='dashboard')renderDashboard();if(item.id==='database')renderDBStats();if(item.id==='audit')renderAuditLogs();if(item.id==='company')renderCompanySettings();if(item.id==='archive')renderArchiveTable();if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}if(item.id==='bulk'){renderBulkTable()}if(item.id==='updates'){loadVersionInfo();}};nav.appendChild(a);});nav.querySelector('button').click();}
-var ALL_SECTIONS=['payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs'];
+function buildNav(role){
+  var nav=document.getElementById('sidebar-nav');nav.innerHTML='';
+  // Map section IDs to the DB collections they need fresh data from
+  var SECTION_DEPS={
+    'records':['payslips'],
+    'staff':['staff','hr_requests'],
+    'users':['users','staff'],
+    'dashboard':['staff','payslips','hr_requests'],
+    'database':['users','staff','payslips','hr_requests'],
+    'audit':['audit_logs'],
+    'company':['settings'],
+    'archive':['archive'],
+    'hr':['staff','hr_requests'],
+    'bulk':['staff','bulk_templates'],
+    'compliance':['payslips','hr_requests','staff']
+  };
+  MENUS[role].forEach(function(item){
+    if(item.divider){var d=document.createElement('div');d.className='nav-divider';d.innerHTML='<span data-i18n="nav_'+item.divider.toLowerCase()+'">'+item.divider+'</span>';nav.appendChild(d);return}
+    var a=document.createElement('button');
+    a.innerHTML='<i class="ti '+item.icon+'" style="font-size:15px"></i> <span data-i18n="menu_'+item.id+'">'+item.label+'</span>';
+    a.style.cssText='display:flex;align-items:center;gap:9px;width:calc(100% - 16px);margin:1px 8px;text-align:left;justify-content:flex-start;border:none;border-radius:7px;font-size:13px;font-weight:500;padding:9px 12px;cursor:pointer;color:#444;background:transparent;font-family:inherit;transition:all .12s';
+    a.onmouseover=function(){if(a.dataset.active!=='1')a.style.background='#f0f0f0'};
+    a.onmouseout=function(){if(a.dataset.active!=='1')a.style.background='transparent'};
+    a.onclick=async function(){
+      document.querySelectorAll('#sidebar-nav button').forEach(function(b){b.style.background='transparent';b.style.color='#444';b.style.fontWeight='500';b.dataset.active=''});
+      a.style.background='#0a0a0a';a.style.color='#fff';a.style.fontWeight='700';a.dataset.active='1';
+      showSection(item.id);
+      // Refresh the collections this section depends on
+      var deps = SECTION_DEPS[item.id];
+      if(deps) await DB.refreshAll(deps);
+      if(item.id==='records')renderRecords();
+      if(item.id==='staff'){renderStaffTable();setNextEmpId()}
+      if(item.id==='users'){renderUsersTable();populateStaffLinkDropdown();}
+      if(item.id==='dashboard')renderDashboard();
+      if(item.id==='database')renderDBStats();
+      if(item.id==='audit')renderAuditLogs();
+      if(item.id==='company')renderCompanySettings();
+      if(item.id==='archive')renderArchiveTable();
+      if(item.id==='hr'){refreshHRStaffDropdown();renderHRTable();renderHRSummary()}
+      if(item.id==='bulk'){renderBulkTable()}
+      if(item.id==='finance-dashboard'){renderFinanceDashboard()}
+      if(item.id==='finance-contacts'){renderFinanceContacts()}
+      if(item.id==='finance-accounts'){renderFinanceCOA()}
+      if(item.id==='finance-journals'){renderFinanceGL()}
+      if(item.id==='finance-bills'){renderFinanceBills()}
+      if(item.id==='finance-invoices'){renderFinanceInvoices()}
+      if(item.id==='updates'){loadVersionInfo();}
+    };
+    nav.appendChild(a);
+  });
+  nav.querySelector('button').click();
+}
+var ALL_SECTIONS=['payslip','bulk','records','staff','hr','users','roles','compliance','dashboard','database','audit','company','archive','updates','docs','finance-dashboard','finance-contacts','finance-accounts','finance-journals','finance-bills','finance-invoices'];
 function showSection(id){ALL_SECTIONS.forEach(function(s){var el=document.getElementById('section-'+s);if(el)el.classList.add('hidden')});var target=document.getElementById('section-'+id);if(target)target.classList.remove('hidden');if(id==='payslip'){refreshStaffDropdown();setTodayPayDate()}if(id==='bulk'){setTodayBulkPayDate();renderBulkTemplates();}}
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
 function fmtDate(dateStr,opts){if(!dateStr)return'';return new Date(dateStr+'T00:00:00').toLocaleDateString('en-GB',opts||{day:'2-digit',month:'short',year:'numeric'});}
@@ -1202,7 +1349,7 @@ async function transferLicense() {
         alert('Network error. Please check your connection.');
     }
 }
-function saveCompanySettings(){var obj={name:document.getElementById('cs-name').value.trim(),address:document.getElementById('cs-address').value.trim(),phone:document.getElementById('cs-phone').value.trim(),email:document.getElementById('cs-email').value.trim(),license:document.getElementById('cs-license').value.trim()};var s=DB.findOne('settings',{_id:'company'});if(s){DB.update('settings',{_id:'company'},obj);}else{obj._id='company';if(!MEMORY_DB.settings)MEMORY_DB.settings=[];MEMORY_DB.settings.push(obj);fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});}var n=obj.name;if(n){var el=document.getElementById('login-company-name');if(el)el.textContent=n;var hEl=document.getElementById('menu-company-name');if(hEl)hEl.textContent=n;}var m=document.getElementById('cs-msg');m.textContent='Company settings saved.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
+function saveCompanySettings(){var bankEl=document.getElementById('cs-bank');var obj={name:document.getElementById('cs-name').value.trim(),address:document.getElementById('cs-address').value.trim(),phone:document.getElementById('cs-phone').value.trim(),email:document.getElementById('cs-email').value.trim(),license:document.getElementById('cs-license').value.trim(),bank:(bankEl?bankEl.value.trim():'')};var s=DB.findOne('settings',{_id:'company'});if(s){DB.update('settings',{_id:'company'},obj);}else{obj._id='company';DB.insert('settings',obj);}var n=obj.name;if(n){var el=document.getElementById('login-company-name');if(el)el.textContent=n;var hEl=document.getElementById('menu-company-name');if(hEl)hEl.textContent=n;}var m=document.getElementById('cs-msg');m.textContent='Company settings saved.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
 
 async function activateLicense(){
   var key=(document.getElementById('cs-appkey').value||'').trim().toUpperCase();
@@ -1307,7 +1454,7 @@ function loadReleases(){
     }).catch(function(e){wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#a32d2d;font-size:13px">Failed to load releases: '+e.message+'</div>';});
   }).catch(function(){});
 }
-function applyUpdate(tag,zipball_url){
+async function applyUpdate(tag,zipball_url){
   if(!await uiConfirm('Apply update '+tag+'?\n\nThe app will:\n1. Backup your database automatically\n2. Download and install the update\n3. Restart the server\n\nYour data will not be affected. Continue?'))return;
   var wrap=document.getElementById('upd-releases-wrap');
   wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#185fa5;font-size:13px"><i class="ti ti-loader-2" style="font-size:36px;display:block;margin-bottom:.75rem;animation:spin 1s linear infinite"></i><strong>Installing '+tag+'...</strong><br><span style="font-size:11px;color:#888;margin-top:.5rem;display:block">Downloading from GitHub. The server will restart automatically.</span></div>';
@@ -1321,7 +1468,7 @@ function applyUpdate(tag,zipball_url){
   }).catch(function(e){wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#a32d2d;font-size:13px">Connection error: '+e.message+'</div>';});
 }
 function renderArchiveTable(){var wrap=document.getElementById('archive-table-wrap');var all=DB.findAll('archive');if(!all.length){wrap.innerHTML='<div style="padding:2rem;text-align:center;color:#888;font-size:13px"><span data-i18n="msg_trash_empty">Trash Bin is empty.</span></div>';return}var html='<table class="table" style="font-size:12px"><thead><tr><th><span data-i18n="tbl_deleted_at">Deleted At</span></th><th><span data-i18n="tbl_original_coll">Original Collection</span></th><th><span data-i18n="tbl_deleted_by">Deleted By</span></th><th><span data-i18n="tbl_expires_at">Expires At</span></th><th style="text-align:right"><span data-i18n="tbl_actions">Actions</span></th></tr></thead><tbody>';var sorted=all.slice().sort(function(a,b){return new Date(b.deletedAt)-new Date(a.deletedAt)});sorted.forEach(function(arc){html+='<tr>';html+='<td style="color:#666">'+new Date(arc.deletedAt).toLocaleString()+'</td>';html+='<td style="font-weight:600;color:var(--navy)">'+arc.originalCollection+'</td>';html+='<td style="font-weight:600">'+arc.deletedBy+'</td>';html+='<td style="color:#dc2626">'+new Date(arc.expiresAt).toLocaleDateString()+'</td>';html+='<td style="text-align:right"><button class="btn btn-sm btn-outline" style="margin-right:4px" onclick="restoreArchive(\''+arc._id+'\')"><i class="ti ti-rotate-clockwise"></i> <span data-i18n="btn_restore">Restore</span></button><button class="btn btn-sm btn-danger" onclick="deleteForever(\''+arc._id+'\')"><i class="ti ti-trash"></i> <span data-i18n="btn_delete_forever">Delete Forever</span></button></td>';html+='</tr>'});html+='</tbody></table>';wrap.innerHTML=html; setTimeout(translateUI, 10); }
-function restoreArchive(id){var arc=DB.findOne('archive',{_id:id});if(!arc)return;customConfirm('Restore this record to '+arc.originalCollection+'?', function(){ var doc=arc.originalData;if(!MEMORY_DB[arc.originalCollection])MEMORY_DB[arc.originalCollection]=[];MEMORY_DB[arc.originalCollection].push(doc);fetch('/api/'+arc.originalCollection,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(doc)});DB.remove('archive',{_id:id},true);renderArchiveTable(); });}
+function restoreArchive(id){var arc=DB.findOne('archive',{_id:id});if(!arc)return;customConfirm('Restore this record to '+arc.originalCollection+'?', function(){ var doc=arc.originalData;DB.insert(arc.originalCollection,doc);DB.remove('archive',{_id:id},true);renderArchiveTable(); });}
 function deleteForever(id){customConfirm('Permanently delete this record? This cannot be undone.', function(){ DB.remove('archive',{_id:id},true);renderArchiveTable(); });}
 function viewCollection(col){var docs=DB.raw(col);document.getElementById('db-viewer').textContent='// Collection: '+col+' ('+docs.length+' documents)\n\n'+JSON.stringify(docs,null,2)}
 function exportDB(){var data=DB.exportAll();var blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});var a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='triple_k_database_'+new Date().toISOString().split('T')[0]+'.json';a.click();URL.revokeObjectURL(a.href);showDBMsg('Database exported.','#ddf0dd','#27500a')}
