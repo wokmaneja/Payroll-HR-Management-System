@@ -74,9 +74,9 @@ tr:hover td{background:#fafafa}
 .rpt-summary-table td{padding:10px 14px;border-bottom:1px solid #eee;font-size:13px}
 .rpt-summary-table td:last-child{text-align:right;font-weight:700;color:#000000}
 .rpt-summary-table tr:last-child td{border-bottom:2px solid #0a0a0a;font-weight:800;font-size:14px}
-.rpt-detail-table{width:100%;border-collapse:collapse;font-size:12px}
+.rpt-detail-table{width:100%;table-layout:fixed;border-collapse:collapse;font-size:12px}
 .rpt-detail-table th{background:#0a0a0a;color:#fff;padding:9px 10px;text-align:left;font-size:11px;letter-spacing:.3px}
-.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0}
+.rpt-detail-table td{padding:9px 10px;border-bottom:1px solid #f0f0f0;word-break:break-word;overflow-wrap:anywhere;vertical-align:top}
 .rpt-detail-table tr:nth-child(even) td{background:#fafafa}
 .rpt-obs-block{background:#f8f9fb;border-radius:8px;padding:1rem;margin-bottom:.75rem;border-left:3px solid #0a0a0a}
 .rpt-obs-title{font-size:12px;font-weight:700;color:#0a0a0a;margin-bottom:.4rem}
@@ -109,7 +109,9 @@ tr:hover td{background:#fafafa}
   #page-login,#db-indicator,#page-main,.db-indicator{display:none!important}
   #print-overlay[style*="flex"]{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
   #print-overlay>div{width:100%!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;padding:0.6cm 0.8cm!important;border:none!important;overflow:visible!important}
-  .btn{display:none!important}
+  #invoice-print-overlay[style*="flex"],#receipt-print-overlay[style*="flex"]{position:static!important;background:none!important;padding:0!important;display:block!important;width:100%!important;height:auto!important}
+  #invoice-print-overlay>div,#receipt-print-overlay>div{width:100%!important;max-width:none!important;max-height:none!important;border-radius:0!important;box-shadow:none!important;padding:0.6cm 0.8cm!important;border:none!important;overflow:visible!important}
+  .btn,.no-print{display:none!important}
   * {-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important;color-adjust:exact!important}
   /* Scale everything down to fit one page */
   #print-overlay>div{font-size:11px!important}
@@ -136,7 +138,7 @@ tr:hover td{background:#fafafa}
 <script src="html2pdf.bundle.min.js"></script>
 
 <script>
-window.generatePDF = function(content, filename) {
+window.generatePDF = function(content, filename, format) {
   try {
     if(typeof html2pdf === 'undefined') {
       alert('html2pdf library is not loaded. Please ensure you are connected to the internet or that the local file exists.');
@@ -147,7 +149,7 @@ window.generatePDF = function(content, filename) {
       filename: filename || 'Document.pdf',
       image: { type: 'jpeg', quality: 0.98 },
       html2canvas: { scale: 2, useCORS: true },
-      jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+      jsPDF: { unit: 'in', format: format || 'letter', orientation: 'portrait' }
     };
     html2pdf().set(opt).from(content).save().catch(function(err) {
       alert('PDF Save Error: ' + err);
@@ -202,11 +204,19 @@ window.emailReportPDF = function(content, filename, subject) {
       <img id="login-company-logo" src="" alt="Company Logo" style="width:96px; height:96px; object-fit:cover; border-radius:16px; margin-bottom:12px; display:none; box-shadow:0 2px 10px rgba(0,0,0,.15)" />
       <div id="login-company-name" style="font-family: Montserrat, sans-serif;font-size:26px;font-weight:800;color:var(--navy);text-align:center;letter-spacing:-0.5px"></div>
     </div>
-    <div class="card" style="padding:2rem;width:100%">
+    <div class="card" id="login-card" style="padding:2rem;width:100%">
       <div style="margin-bottom:1.25rem"><label><span data-i18n="lbl_username">Username</span></label><input id="login-user" type="text" placeholder="Enter username" autocomplete="username" data-i18n-placeholder="ph_enter_username"></div>
-      <div style="margin-bottom:1.25rem"><label><span data-i18n="lbl_password">Password</span></label><input id="login-pass" type="password" placeholder="Enter password" autocomplete="current-password" data-i18n-placeholder="ph_enter_password"></div>
+      <div style="margin-bottom:.5rem"><label><span data-i18n="lbl_password">Password</span></label><input id="login-pass" type="password" placeholder="Enter password" autocomplete="current-password" data-i18n-placeholder="ph_enter_password"></div>
+      <div style="text-align:right;margin-bottom:1rem"><a href="javascript:void(0)" onclick="showForgotPassword()" style="font-size:12px;color:var(--navy);font-weight:600;text-decoration:none">Forgot password?</a></div>
       <div id="login-error" style="color:#e24b4a;font-size:12px;margin-bottom:.85rem;display:none;background:#fff0f0;padding:8px 12px;border-radius:6px;border:1px solid #f5c0c0"><i class="ti ti-alert-circle"></i><span data-i18n="msg_invalid_login"> Invalid username or password.</span></div>
       <button class="btn btn-primary" onclick="doLogin()" style="width:100%;font-size:15px;padding:13px;justify-content:center;border-radius:10px"><i class="ti ti-login"></i><span data-i18n="btn_sign_in"> Sign In</span></button>
+    </div>
+    <div class="card hidden" id="forgot-card" style="padding:2rem;width:100%">
+      <p style="font-size:13px;color:#666;margin-bottom:1.25rem;line-height:1.5">Enter the email address on your staff record. If it matches an account, we'll send a temporary password to it.</p>
+      <div style="margin-bottom:1.25rem"><label>Email Address</label><input id="forgot-email" type="email" placeholder="you@example.com"></div>
+      <div id="forgot-msg" style="font-size:12px;margin-bottom:.85rem;display:none;padding:8px 12px;border-radius:6px"></div>
+      <button class="btn btn-primary" id="forgot-submit-btn" onclick="submitForgotPassword()" style="width:100%;font-size:15px;padding:13px;justify-content:center;border-radius:10px;margin-bottom:.75rem"><i class="ti ti-send"></i> Send Temporary Password</button>
+      <button class="btn btn-outline" onclick="hideForgotPassword()" style="width:100%;font-size:14px;padding:11px;justify-content:center;border-radius:10px"><i class="ti ti-arrow-left"></i> Back to Sign In</button>
     </div>
   </div>
   <!-- MeleTech Footer -->
@@ -496,7 +506,7 @@ window.emailReportPDF = function(content, filename, subject) {
       <!-- HR -->
       <div id="section-hr" class="hidden"><p class="section-title"><i class="fa-solid fa-plane-departure" style="color:var(--gold)"></i> <span data-i18n="menu_hr">HR Leave &amp; Advance</span></p><div class="hr-summary-grid"><div class="hr-summary-card"><div class="hr-icon annual"><i class="fa-solid fa-plane-departure"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_annual_l">Annual Leave</span></p><h3 id="hr-count-annual"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon sick"><i class="fa-solid fa-notes-medical"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_sick_l">Sick Leave</span></p><h3 id="hr-count-sick"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon unpaid"><i class="fa-solid fa-calendar-xmark"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_lwp">Leave Without Pay</span></p><h3 id="hr-count-unpaid"><span data-i18n="txt_0">0</span></h3></div></div><div class="hr-summary-card"><div class="hr-icon advance"><i class="fa-solid fa-money-bill-wave"></i></div><div class="hr-card-info"><p><span data-i18n="lbl_advances">Advances Issued</span></p><h3 id="hr-total-advance"><span data-i18n="txt_vuv_0">VUV 0</span></h3></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem"><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="hr-form-title"><i class="fa-solid fa-paper-plane" style="color:var(--gold)"></i><span data-i18n="lbl_submit_req"> Submit Leave / Advance Request</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_employee">Employee</span></label><select id="hr-staff"><option value="" data-i18n="opt_select_staff">-- Select Staff --</option></select></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_req_type">Request Type</span></label><select id="hr-type" onchange="toggleAdvanceAmount()"><option value="Annual Leave" data-i18n="opt_annual_leave">Annual Leave</option><option value="Sick Leave" data-i18n="opt_sick_leave">Sick Leave</option><option value="Leave Without Pay" data-i18n="opt_leave_without_pay">Leave Without Pay</option><option value="Payment Advance" data-i18n="opt_payment_advance">Payment Advance</option><option value="Medical Claim" data-i18n="opt_medical_claim">Medical Claim</option></select></div><div id="hr-advance-wrap" style="visibility:hidden"><label><span data-i18n="lbl_adv_amount">Advance Amount (VUV)</span></label><input id="hr-amount" type="number" placeholder="0" data-i18n-placeholder="txt_0"></div></div><div id="hr-medical-wrap" style="display:none;margin-bottom:.85rem;background:#f8f9fa;padding:10px;border-radius:6px;border:1px solid var(--border)"><div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:.75rem;"><div><label><span data-i18n="lbl_supplier">Supplier</span></label><select id="hr-supplier"><option>Clinic</option><option>Hospital</option><option>Private Hospital</option><option>Pharmacy</option></select></div><div><label><span data-i18n="lbl_claim_amount">Claim Amount (VUV)</span></label><input id="hr-medical-amount" type="number" placeholder="0"></div><div><label><span data-i18n="lbl_receipt">Medical Receipt</span></label><input id="hr-receipt" type="file" accept="image/*,.pdf" style="padding:4px;font-size:12px;width:100%"></div></div></div><div style="display:grid;grid-template-columns:1fr 1fr;gap:.75rem;margin-bottom:.85rem"><div><label><span data-i18n="lbl_start_date">Start Date</span></label><input id="hr-start" type="date"></div><div><label><span data-i18n="lbl_end_date">End Date</span></label><input id="hr-end" type="date"></div></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_reason">Reason / Notes</span></label><textarea id="hr-notes" placeholder="Enter reason here..." style="min-height:80px;resize:none" data-i18n-placeholder="ph_reason"></textarea></div><div style="display:flex;gap:.5rem;align-items:center"><button class="btn btn-primary" onclick="saveHRRequest()"><i class="fa-solid fa-paper-plane"></i><span data-i18n="btn_submit_req"> Submit Request</span></button><button class="btn btn-outline" onclick="clearHRForm()"><i class="ti ti-refresh"></i><span data-i18n="btn_clear"> Clear</span></button><span id="hr-save-msg" style="font-size:12px;color:#27500a;background:#ddf0dd;padding:6px 12px;border-radius:6px;display:none"><i class="ti ti-check"></i><span data-i18n="msg_saved"> Saved.</span></span></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><i class="fa-solid fa-clock-rotate-left" style="color:var(--gold)"></i><span data-i18n="lbl_recent_req"> Recent Requests</span></p><select id="hr-filter-status" onchange="renderHRTable()" style="width:auto;font-size:12px;padding:5px 8px"><option value="" data-i18n="opt_all_status">All Status</option><option value="Pending" data-i18n="opt_pending">Pending</option><option value="Approved" data-i18n="opt_approved">Approved</option><option value="Rejected" data-i18n="opt_rejected">Rejected</option></select></div><div id="hr-recent-wrap" style="overflow:auto;max-height:380px"></div></div></div><div class="card"><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><i class="ti ti-table" style="color:var(--gold)"></i><span data-i18n="lbl_all_records"> All Leave &amp; Advance Records</span></p><select id="hr-filter-type" onchange="renderHRTable()" style="width:auto;font-size:12px;padding:5px 8px"><option value="" data-i18n="opt_all_types">All Types</option><option value="Annual Leave" data-i18n="opt_annual_leave">Annual Leave</option><option value="Sick Leave" data-i18n="opt_sick_leave">Sick Leave</option><option value="Leave Without Pay" data-i18n="opt_leave_without_pay">Leave Without Pay</option><option value="Payment Advance" data-i18n="opt_payment_advance">Payment Advance</option></select></div><div id="hr-table-wrap" style="overflow:auto"></div></div></div>
       <!-- USERS -->
-      <div id="section-users" class="hidden"><p class="section-title"><i class="ti ti-user-shield" style="color:var(--gold)"></i> <span data-i18n="menu_users">User Management</span></p><div style="display:grid;grid-template-columns:350px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="uf-form-title"><span data-i18n="lbl_add_user">Add New User</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="uf-name" type="text" placeholder="Full name" data-i18n-placeholder="ph_full_name"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_username">Username</span></label><input id="uf-username" type="text" placeholder="Username" data-i18n-placeholder="lbl_username"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_password">Password</span></label><input id="uf-password" type="password" placeholder="Password" data-i18n-placeholder="lbl_password"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_assign_role">Assign Role</span></label><select id="uf-role"><option value="admin" data-i18n="opt_admin">Admin</option><option value="manager" data-i18n="opt_manager">Manager</option><option value="it" data-i18n="opt_it">IT</option><option value="staff" selected="" data-i18n="opt_staff">Staff</option></select></div>
+      <div id="section-users" class="hidden"><p class="section-title"><i class="ti ti-user-shield" style="color:var(--gold)"></i> <span data-i18n="menu_users">User Management</span></p><div style="display:grid;grid-template-columns:350px 1fr;gap:1rem"><div class="card" style="height:fit-content"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)" id="uf-form-title"><span data-i18n="lbl_add_user">Add New User</span></p><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_full_name">Full Name</span></label><input id="uf-name" type="text" placeholder="Full name" data-i18n-placeholder="ph_full_name"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_username">Username</span></label><input id="uf-username" type="text" placeholder="Username" data-i18n-placeholder="lbl_username"></div><div style="margin-bottom:.85rem"><label>Email Address <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa;font-size:11px">(optional — for Forgot Password)</span></label><input id="uf-email" type="email" placeholder="user@example.com"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_password">Password</span></label><input id="uf-password" type="password" placeholder="Password" data-i18n-placeholder="lbl_password"></div><div style="margin-bottom:.85rem"><label><span data-i18n="lbl_assign_role">Assign Role</span></label><select id="uf-role"><option value="admin" data-i18n="opt_admin">Admin</option><option value="manager" data-i18n="opt_manager">Manager</option><option value="it" data-i18n="opt_it">IT</option><option value="staff" selected="" data-i18n="opt_staff">Staff</option></select></div>
 <div style="margin-bottom:1rem"><label><span data-i18n="lbl_link_staff">Link to Staff Record </span><span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa;font-size:11px"><span data-i18n="txt_opt_hr">(optional — for HR leave tracking)</span></span></label><select id="uf-staff-link"><option value="" data-i18n="opt_not_linked">-- Not linked --</option></select><p class="hint"><i class="ti ti-link"></i><span data-i18n="txt_link_desc"> Links this user to a staff record so they can view their own HR leave records</span></p></div><button class="btn btn-primary" id="uf-save-btn" onclick="saveUser()"><i class="ti ti-user-plus"></i><span data-i18n="btn_add_user"> Add User</span></button> <button class="btn btn-outline" id="uf-cancel-btn" onclick="cancelEditUser()" style="display:none"><i class="ti ti-x"></i><span data-i18n="btn_cancel"> Cancel</span></button><div id="uf-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"><span data-i18n="msg_user_added">User added successfully.</span></div></div><div class="card"><p style="font-size:13px;font-weight:700;margin-bottom:1rem;color:var(--navy)"><span data-i18n="lbl_users_roles">Users &amp; Roles</span></p><div id="users-table-wrap"></div></div></div></div>
       <!-- ROLES -->
       
@@ -553,7 +563,7 @@ window.emailReportPDF = function(content, filename, subject) {
       <!-- AUDIT LOGS -->
       <div id="section-audit" class="hidden"><p class="section-title"><i class="ti ti-history" style="color:var(--gold)"></i> <span data-i18n="menu_audit">Audit Logs</span></p><div class="card"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem"><p style="font-size:13px;font-weight:700;color:var(--navy)"><span data-i18n="lbl_sys_activity">System Activity</span></p><button class="btn btn-sm btn-outline" onclick="renderAuditLogs()"><i class="ti ti-refresh"></i><span data-i18n="btn_refresh"> Refresh</span></button></div><div id="audit-table-wrap" style="overflow:auto;max-height:600px"></div></div></div>
       <!-- COMPANY SETTINGS -->
-      <div id="section-company" class="hidden"><p class="section-title"><i class="ti ti-building" style="color:var(--gold)"></i> <span data-i18n="menu_company">Company Settings</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start"><div class="card"><div style="margin-bottom:1rem"><label><span data-i18n="lbl_company_name">Company Name</span></label><input type="text" id="cs-name" placeholder="Triple K Company" data-i18n-placeholder="ph_triple_k"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_address">Address</span></label><input type="text" id="cs-address" placeholder="Port Vila, Vanuatu" data-i18n-placeholder="ph_port_vila"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_phone">Phone Number</span></label><input type="text" id="cs-phone" placeholder="+678 12345" data-i18n-placeholder="ph_phone_12345"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_email">Email Address</span></label><input type="email" id="cs-email" placeholder="info@triplek.vu" data-i18n-placeholder="ph_email_info"></div><div style="margin-bottom:1rem"><label>VNPF Employer Contribution (%)</label><input type="number" id="cs-vnpf-percent" placeholder="6" step="0.1" min="0"></div><div style="margin-bottom:1.5rem"><label><span data-i18n="lbl_bus_license">Business License</span></label><input type="text" id="cs-license" placeholder="e.g. BL-123456" data-i18n-placeholder="ph_bl_123456"></div><div style="margin-bottom:1.5rem"><label>Company Logo</label><div style="display:flex;align-items:center;gap:1rem"><img id="cs-logo-preview" src="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none;background:#f5f5f5"><div id="cs-logo-placeholder" style="width:64px;height:64px;border-radius:10px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;text-align:center;flex-shrink:0">No Logo</div><div><input type="file" id="cs-logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)"><button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('cs-logo-file').click()"><i class="ti ti-upload"></i> Upload</button> <button type="button" class="btn btn-outline btn-sm" style="color:#c0392b" onclick="removeCompanyLogo()"><i class="ti ti-trash"></i> Remove</button><p class="hint" style="margin-top:4px">Square image recommended (shown on the sign-in page). Auto-cropped to fit.</p></div></div><input type="hidden" id="cs-logo-data" value=""></div><button class="btn btn-primary" onclick="saveCompanySettings()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_settings"> Save Settings</span></button><div id="cs-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-license" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_soft_license">Software License</span></p><p style="font-size:12px;color:#888;margin:0"><span data-i18n="lbl_wm_sys">WokManeja Payroll System</span></p></div></div><div id="lic-status-card" style="padding:10px 14px;border-radius:8px;margin-bottom:1.25rem;font-size:13px;font-weight:600"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_license_key">License Key</span></label><input type="text" id="cs-appkey" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:14px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()" data-i18n-placeholder="ph_wm_key"><p class="hint" style="margin-top:4px"><i class="ti ti-info-circle"></i><span data-i18n="txt_enter_key"> Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key</span></p></div><button class="btn btn-primary" onclick="activateLicense()" style="width:100%;justify-content:center"><i class="ti ti-key"></i><span data-i18n="btn_activate_lic"> Activate License</span></button><div id="lic-msg" style="margin-top:.75rem;font-size:12px;padding:7px 12px;border-radius:6px;display:none"></div><hr style="margin:1.25rem 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><span data-i18n="txt_need_lic">Need a license? Contact </span><a href="mailto:help@wokmaneja.vu" style="color:#0a0a0a;font-weight:700">help@wokmaneja.vu</a></p></div></div></div>
+      <div id="section-company" class="hidden"><p class="section-title"><i class="ti ti-building" style="color:var(--gold)"></i> <span data-i18n="menu_company">Company Settings</span></p><div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;align-items:start"><div class="card"><div style="margin-bottom:1rem"><label><span data-i18n="lbl_company_name">Company Name</span></label><input type="text" id="cs-name" placeholder="Triple K Company" data-i18n-placeholder="ph_triple_k"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_address">Address</span></label><input type="text" id="cs-address" placeholder="Port Vila, Vanuatu" data-i18n-placeholder="ph_port_vila"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_phone">Phone Number</span></label><input type="text" id="cs-phone" placeholder="+678 12345" data-i18n-placeholder="ph_phone_12345"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_email">Email Address</span></label><input type="email" id="cs-email" placeholder="info@triplek.vu" data-i18n-placeholder="ph_email_info"></div><div style="margin-bottom:1rem;padding:10px 12px;background:#f8f9fb;border-radius:8px"><label style="margin-bottom:6px">Test Email Notifications</label><div style="display:flex;gap:.5rem"><input type="email" id="test-email-addr" placeholder="you@example.com" style="flex:1"><button type="button" class="btn btn-outline btn-sm" onclick="sendTestEmail()"><i class="ti ti-send"></i> Send Test</button></div><div id="test-email-msg" style="margin-top:6px;font-size:12px;display:none"></div></div><div style="margin-bottom:1rem"><label>VNPF Employer Contribution (%)</label><input type="number" id="cs-vnpf-percent" placeholder="6" step="0.1" min="0"></div><div style="margin-bottom:1.5rem"><label><span data-i18n="lbl_bus_license">Business License</span></label><input type="text" id="cs-license" placeholder="e.g. BL-123456" data-i18n-placeholder="ph_bl_123456"></div><div style="margin-bottom:1.5rem"><label>Bank Details <span style="font-weight:400;text-transform:none;letter-spacing:0;color:#aaa;font-size:11px">(shown on Invoices &amp; Receipts)</span></label><input type="text" id="cs-bank" placeholder="e.g. ANZ Vanuatu - Acc: 01911876001"></div><div style="margin-bottom:1.5rem"><label>Company Logo</label><div style="display:flex;align-items:center;gap:1rem"><img id="cs-logo-preview" src="" style="width:64px;height:64px;object-fit:cover;border-radius:10px;border:1px solid var(--border);display:none;background:#f5f5f5"><div id="cs-logo-placeholder" style="width:64px;height:64px;border-radius:10px;border:1px dashed var(--border);display:flex;align-items:center;justify-content:center;color:#aaa;font-size:10px;text-align:center;flex-shrink:0">No Logo</div><div><input type="file" id="cs-logo-file" accept="image/*" style="display:none" onchange="handleLogoUpload(event)"><button type="button" class="btn btn-outline btn-sm" onclick="document.getElementById('cs-logo-file').click()"><i class="ti ti-upload"></i> Upload</button> <button type="button" class="btn btn-outline btn-sm" style="color:#c0392b" onclick="removeCompanyLogo()"><i class="ti ti-trash"></i> Remove</button><p class="hint" style="margin-top:4px">Square image recommended (shown on the sign-in page). Auto-cropped to fit.</p></div></div><input type="hidden" id="cs-logo-data" value=""></div><button class="btn btn-primary" onclick="saveCompanySettings()"><i class="ti ti-device-floppy"></i><span data-i18n="btn_save_settings"> Save Settings</span></button><div id="cs-msg" style="margin-top:.75rem;font-size:12px;color:#27500a;background:#ddf0dd;padding:7px 12px;border-radius:6px;display:none"></div></div><div class="card" style="border-top:4px solid #0a0a0a"><div style="display:flex;align-items:center;gap:10px;margin-bottom:1.25rem;padding-bottom:1rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-license" style="font-size:24px;color:#0a0a0a"></i><div><p style="font-size:14px;font-weight:800;color:#0a0a0a;margin:0"><span data-i18n="lbl_soft_license">Software License</span></p><p style="font-size:12px;color:#888;margin:0"><span data-i18n="lbl_wm_sys">WokManeja Payroll System</span></p></div></div><div id="lic-status-card" style="padding:10px 14px;border-radius:8px;margin-bottom:1.25rem;font-size:13px;font-weight:600"></div><div style="margin-bottom:1rem"><label><span data-i18n="lbl_license_key">License Key</span></label><input type="text" id="cs-appkey" placeholder="WM-XXXX-XXXX-XXXX" style="font-family:monospace;font-size:14px;letter-spacing:1px" oninput="this.value=this.value.toUpperCase()" data-i18n-placeholder="ph_wm_key"><p class="hint" style="margin-top:4px"><i class="ti ti-info-circle"></i><span data-i18n="txt_enter_key"> Enter your Monthly (WM-MTH...), Yearly (WM-YR...), or Lifetime (WM-...-LIFETIME) license key</span></p></div><button class="btn btn-primary" onclick="activateLicense()" style="width:100%;justify-content:center"><i class="ti ti-key"></i><span data-i18n="btn_activate_lic"> Activate License</span></button><div id="lic-msg" style="margin-top:.75rem;font-size:12px;padding:7px 12px;border-radius:6px;display:none"></div><hr style="margin:1.25rem 0;border:none;border-top:1px solid #eee"><p style="font-size:11px;color:#aaa;text-align:center"><span data-i18n="txt_need_lic">Need a license? Contact </span><a href="mailto:help@wokmaneja.vu" style="color:#0a0a0a;font-weight:700">help@wokmaneja.vu</a></p></div></div></div>
       <!-- ARCHIVE -->
       <div id="section-docs" class="hidden">
         <p class="section-title"><i class="ti ti-book" style="color:var(--gold)"></i> <span data-i18n="menu_guides">User Guides & Documentation</span></p>
@@ -1477,6 +1487,34 @@ document.getElementById('nav-badge').className = 'badge badge-' + bClass;
 await refreshLicenseEntitlements();
 buildNav(buildRole);
 changeLang();renderNotifBadge();startNotifPolling();refreshDeptDropdown();resetIdleTimer();checkForErrors(); if(typeof checkSystemAlerts==="function") checkSystemAlerts();if(data.user.mustChangePassword){setTimeout(function(){var pw=document.getElementById('modal-changepw');if(pw){pw.style.display='flex';var warn=document.createElement('p');warn.style.cssText='color:#e24b4a;font-size:12px;margin-bottom:12px;padding:8px 12px;background:#fff0f0;border-radius:6px;border:1px solid #f5c0c0;text-align:center';warn.innerHTML='<i class="ti ti-lock" style="margin-right:4px"></i>Please set a new password before continuing.';var inner=pw.querySelector('[style*="background:#fff"]')||pw;inner.insertBefore(warn,inner.firstChild);}},200);}}catch(e){document.getElementById('login-error').style.display='block';}}
+function showForgotPassword(){
+  document.getElementById('login-card').classList.add('hidden');
+  document.getElementById('forgot-card').classList.remove('hidden');
+  document.getElementById('forgot-email').value='';
+  document.getElementById('forgot-msg').style.display='none';
+}
+function hideForgotPassword(){
+  document.getElementById('forgot-card').classList.add('hidden');
+  document.getElementById('login-card').classList.remove('hidden');
+}
+async function submitForgotPassword(){
+  var email=(document.getElementById('forgot-email').value||'').trim();
+  var msg=document.getElementById('forgot-msg');
+  var btn=document.getElementById('forgot-submit-btn');
+  if(!email){msg.style.display='block';msg.style.background='#fff0f0';msg.style.color='#a32d2d';msg.textContent='Please enter an email address.';return;}
+  btn.disabled=true;
+  msg.style.display='block';msg.style.background='#f0f0f0';msg.style.color='#555';msg.textContent='Sending...';
+  try{
+    var res=await fetch('/api/auth/forgot-password',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email})});
+    var data=await res.json().catch(function(){return{}});
+    msg.style.background='#ddf0dd';msg.style.color='#27500a';
+    msg.textContent=data.message||'If that email is on file for a WokManeja account, a temporary password has been sent.';
+    setTimeout(function(){hideForgotPassword();},2500);
+  }catch(e){
+    msg.style.background='#fff0f0';msg.style.color='#a32d2d';msg.textContent='Network error. Please try again.';
+  }
+  btn.disabled=false;
+}
 function doLogout(){stopNotifPolling();if(idleTimer)clearTimeout(idleTimer);APP.currentUser=null;sessionStorage.removeItem('api_token');sessionStorage.removeItem('api_user');document.getElementById('login-user').value='';document.getElementById('login-pass').value='';document.getElementById('page-main').classList.add('hidden');document.getElementById('page-login').classList.remove('hidden');}
 function filterMenuByLicense(items){
   var result=[];
@@ -1511,7 +1549,7 @@ if(item.divider){var groupDiv=document.createElement('div');groupDiv.className='
 var ALL_SECTIONS=['hr-dashboard','payroll-dashboard','reports-dashboard','admin-dashboard','payslip','bulk','records','staff-directory','staff-add','hr','users','roles','dashboard','database','audit','company','archive','updates','docs','documents','kpi','recruitment','discipline','finance-dashboard','finance-contacts','finance-invoices','finance-bills','finance-daily-income','finance-banking','finance-reconciliation','finance-expenses','finance-reimbursements','finance-coa','finance-gl','finance-budget','pc-dashboard','pc-register','pc-vouchers','pc-summary','pc-settings','report-hr','report-finance','report-payroll','report-admin','report-vnpf','report-executive'];
 function showSection(id){ALL_SECTIONS.forEach(function(s){var el=document.getElementById('section-'+s);if(el)el.classList.add('hidden')});var target=document.getElementById('section-'+id);if(target)target.classList.remove('hidden');if(id==='payslip'){refreshStaffDropdown();setTodayPayDate()}if(id==='bulk'){setTodayBulkPayDate();renderBulkTemplates();}}
 var MONTHS=['January','February','March','April','May','June','July','August','September','October','November','December'];
-function fmtDate(dateStr,opts){if(!dateStr)return'';return new Date(dateStr+'T00:00:00').toLocaleDateString('en-GB',opts||{day:'2-digit',month:'short',year:'numeric'});}
+function fmtDate(dateStr,opts){if(!dateStr)return'';var d=(typeof dateStr==='string'&&dateStr.indexOf('T')!==-1)?new Date(dateStr):new Date(dateStr+'T00:00:00');if(isNaN(d))return'';return d.toLocaleDateString('en-GB',opts||{day:'2-digit',month:'short',year:'numeric'});}
 function calcPeriod(payDateStr, cycle){if(!payDateStr)return{start:'',end:'',label:''};var payDay=new Date(payDateStr+'T00:00:00');var periodEnd=new Date(payDay);periodEnd.setDate(payDay.getDate()-1);var periodStart=new Date(periodEnd);var daysToSub = cycle==='weekly'?6:13;periodStart.setDate(periodEnd.getDate()-daysToSub);var toStr=function(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')};var s=toStr(periodStart);var e=toStr(periodEnd);var cycleLabel = cycle==='weekly'?'Weekly':'Fortnightly';return{start:s,end:e,label:'Pay Period: '+fmtDate(s)+' – '+fmtDate(e)+' | Pay Day: '+new Date(payDateStr+'T00:00:00').toLocaleDateString('en-GB',{weekday:'long',day:'2-digit',month:'long',year:'numeric'})};}
 function getPeriodRange(p){var cyc=(p.paycycle||'monthly').toLowerCase();if((cyc==='fortnightly'||cyc==='weekly')&&p.periodStart&&p.periodEnd){return{start:p.periodStart,end:p.periodEnd};}var mIdx=MONTHS.indexOf(p.month);var yr=parseInt(p.year)||2026;if(mIdx<0)return{start:'',end:''};var dStart=new Date(yr,mIdx,1);var dEnd=new Date(yr,mIdx+1,0);var toStr=function(dt){return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0')};return{start:toStr(dStart),end:toStr(dEnd)};}
 function onPayCycleChange(){var cycle=document.getElementById('ps-paycycle').value;document.getElementById('ps-period-wrap').style.display=(cycle==='fortnightly'||cycle==='weekly')?'block':'none';document.getElementById('ps-monthly-wrap').style.display=cycle==='monthly'?'block':'none';onPayDateChange();}
@@ -1686,18 +1724,19 @@ function renderUsersTable(){ populateRolesDropdown();
 function saveUser(){
   var n=document.getElementById('uf-name').value.trim();
   var u=document.getElementById('uf-username').value.trim();
+  var em=document.getElementById('uf-email')?document.getElementById('uf-email').value.trim():'';
   var p=document.getElementById('uf-password').value.trim();
   var r=document.getElementById('uf-role').value;
   if(!n||!u||!p){alert('All fields required.');return}
   if(APP.editingUserId){
-    var lsid2=document.getElementById('uf-staff-link')?document.getElementById('uf-staff-link').value:'';DB.update('users',{_id:APP.editingUserId},{name:n,username:u,password:p,role:r,linkedStaffId:lsid2});
+    var lsid2=document.getElementById('uf-staff-link')?document.getElementById('uf-staff-link').value:'';DB.update('users',{_id:APP.editingUserId},{name:n,username:u,email:em,password:p,role:r,linkedStaffId:lsid2});
     cancelEditUser();
     renderUsersTable();
     var m=document.getElementById('uf-msg');m.textContent='User updated successfully.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);
   }else{
     if(DB.findOne('users',{username:u})){alert('Username already exists.');return}
-    var lsid=document.getElementById('uf-staff-link')?document.getElementById('uf-staff-link').value:'';DB.insert('users',{name:n,username:u,password:p,role:r,linkedStaffId:lsid});
-    ['uf-name','uf-username','uf-password'].forEach(function(id){document.getElementById(id).value=''});
+    var lsid=document.getElementById('uf-staff-link')?document.getElementById('uf-staff-link').value:'';DB.insert('users',{name:n,username:u,email:em,password:p,role:r,linkedStaffId:lsid});
+    ['uf-name','uf-username','uf-email','uf-password'].forEach(function(id){document.getElementById(id).value=''});
     renderUsersTable();
     var m=document.getElementById('uf-msg');m.textContent='User added successfully.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);
   }
@@ -1708,6 +1747,7 @@ function editUser(dbId){
   APP.editingUserId=dbId;
   document.getElementById('uf-name').value=u.name;
   document.getElementById('uf-username').value=u.username;
+  if(document.getElementById('uf-email'))document.getElementById('uf-email').value=u.email||'';
   document.getElementById('uf-password').value=u.password||'';
   document.getElementById('uf-role').value=u.role;
   document.getElementById('uf-form-title').textContent='Edit User — '+u.name;
@@ -1734,7 +1774,7 @@ function populateStaffLinkDropdown(){
 }
 function cancelEditUser(){
   APP.editingUserId=null;
-  ['uf-name','uf-username','uf-password'].forEach(function(id){document.getElementById(id).value=''});
+  ['uf-name','uf-username','uf-email','uf-password'].forEach(function(id){document.getElementById(id).value=''});
   document.getElementById('uf-role').value='staff';
   document.getElementById('uf-form-title').textContent='Add New User';
   document.getElementById('uf-save-btn').innerHTML='<i class="ti ti-user-plus"></i> Add User';
@@ -1757,17 +1797,51 @@ function getUserPayslips(){
   }
   return all;
 }
+// Computes Net Income / Total Expenses / Cash & Bank from actual General Ledger
+// postings - the same data source and aggregation logic as the Finance Dashboard's own
+// overview widget - so the Admin Dashboard's Finance Overview card never drifts out of
+// sync with the Finance Dashboard again (previously each computed its own approximation
+// from raw collection sums, which could and did disagree).
+async function refreshDashboardFinanceOverview(){
+  var netEl=document.getElementById('dash-fin-net');
+  if(!netEl)return; // not on this dashboard view (e.g. staff dashboard)
+  try{
+    var res=await fetch('/api/fin/journals',{headers:{'Authorization':'Bearer '+sessionStorage.getItem('api_token')}});
+    var entries=await res.json();
+    var balances={};
+    (entries||[]).forEach(function(e){
+      if(!e.lines)return;
+      e.lines.forEach(function(l){
+        if(!balances[l.account_code])balances[l.account_code]={name:l.account_name,type:l.account_type,val:0};
+        balances[l.account_code].val+=(parseFloat(l.debit)||0)-(parseFloat(l.credit)||0);
+      });
+    });
+    var income=0,expenses=0,cashBank=0;
+    Object.keys(balances).forEach(function(code){
+      var a=balances[code];
+      if(a.type==='Revenue')income-=a.val;
+      if(a.type==='Expense')expenses+=a.val;
+      if(code==='1000'||(a.name&&a.name.toLowerCase().indexOf('cash')!==-1)||(a.name&&a.name.toLowerCase().indexOf('bank')!==-1))cashBank+=a.val;
+    });
+    var netIncome=income-expenses;
+    document.getElementById('dash-fin-net').textContent=vuvFmt(netIncome);
+    document.getElementById('dash-fin-net').style.color=netIncome>=0?'#3b82f6':'#ef4444';
+    document.getElementById('dash-fin-exp').textContent=vuvFmt(expenses);
+    document.getElementById('dash-fin-cash').textContent=vuvFmt(cashBank);
+  }catch(e){
+    ['dash-fin-net','dash-fin-exp','dash-fin-cash'].forEach(function(id){var el=document.getElementById(id);if(el)el.textContent='—';});
+  }
+}
 function renderDashboard(){var role=APP.currentUser.role;if(role==='staff'){renderStaffDashboard();return;}var activeStaff=DB.findAll('staff',{status:'Active'}).length;var mySlips=getUserPayslips();var allHR=getUserHRRecords();var tN=mySlips.reduce(function(s,p){return s+p.net},0);var tV=mySlips.reduce(function(s,p){return s+p.vnpf},0);var pendingHR=allHR.filter(function(r){return r.status==='Pending'}).length;var approvedAdv=allHR.filter(function(r){return r.type==='Payment Advance'&&r.status==='Approved'}).reduce(function(s,r){return s+(r.amount||0)},0);var html='';
-// Finance Section
-var f_exp = DB.findAll('finance_expenses').reduce(function(s,e){return s+(parseFloat(e.amount)||0)},0) + DB.findAll('finance_bills').filter(function(b){return b.status==='Paid'}).reduce(function(s,b){return s+(parseFloat(b.amount)||0)},0);
-var f_inc = DB.findAll('finance_daily_income').reduce(function(s,e){return s+(parseFloat(e.amount)||0)},0) + DB.findAll('finance_invoices').filter(function(i){return i.status==='Paid'}).reduce(function(s,i){return s+(parseFloat(i.amount)||0)},0);
-var f_net = f_inc - f_exp;
-var f_net_color = f_net>=0?'#10b981':'#ef4444';
+// Finance Section - figures come from the General Ledger (same source as the Finance
+// Dashboard's own overview widget) via refreshDashboardFinanceOverview() below, so the
+// two views can never show inconsistent numbers again. Placeholders render first since
+// that requires an async fetch, then get patched in once the data arrives.
 html+='<h4 style="margin:0 0 1rem 0;color:var(--navy)"><i class="ti ti-chart-bar"></i> Finance Overview</h4>';
 html+='<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem;margin-bottom:1.5rem">';
-html+='<div class="card" style="border-top:3px solid #3b82f6"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Net Income</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:#3b82f6">'+vuvFmt(f_inc)+'</p></div>';
-html+='<div class="card" style="border-top:3px solid #ef4444"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Total Expenses</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:#ef4444">'+vuvFmt(f_exp)+'</p></div>';
-html+='<div class="card" style="border-top:3px solid '+f_net_color+'"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Net Profit</p><p style="font-size:20px;font-weight:800;margin-top:6px;color:'+f_net_color+'">'+vuvFmt(f_net)+'</p></div>';
+html+='<div class="card" style="border-top:3px solid #3b82f6"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Net Income</p><p id="dash-fin-net" style="font-size:20px;font-weight:800;margin-top:6px;color:#3b82f6">...</p></div>';
+html+='<div class="card" style="border-top:3px solid #ef4444"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Total Expenses</p><p id="dash-fin-exp" style="font-size:20px;font-weight:800;margin-top:6px;color:#ef4444">...</p></div>';
+html+='<div class="card" style="border-top:3px solid #10b981"><p style="font-size:11px;color:#888;text-transform:uppercase;letter-spacing:.4px">Cash &amp; Bank</p><p id="dash-fin-cash" style="font-size:20px;font-weight:800;margin-top:6px;color:#10b981">...</p></div>';
 html+='</div>';
 
 
@@ -1798,7 +1872,8 @@ html+='<div class="card" style="border-top:3px solid #8b5cf6"><p style="font-siz
 html+='</div>';
 
 html+='<h4 style="margin:2rem 0 1rem 0;color:var(--navy)"><i class="ti ti-file-text"></i> Recent Activity</h4>';
-html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">';html+='<div class="card"><p style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-file-invoice" style="color:var(--gold)"></i> <span data-i18n="lbl_recent_payslips">Recent Payslips</span></p>';if(!mySlips.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_payslips">No payslips yet.</span></p>'}else{var recent=mySlips.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_staff">Staff</span></th><th><span data-i18n="tbl_period">Period</span></th><th style="text-align:right"><span data-i18n="tbl_net_pay">Net Pay</span></th></tr></thead><tbody>';recent.forEach(function(p){var pr=getPeriodRange(p);var periodStr=pr.start&&pr.end?fmtDate(pr.start)+' &ndash; '+fmtDate(pr.end):p.month+' '+p.year;html+='<tr><td style="font-weight:600">'+p.staff+'</td><td style="font-size:12px">'+periodStr+'</td><td style="text-align:right;font-weight:700;color:#000000">'+vuvFmt(p.net)+'</td></tr>';});html+='</tbody></table>';}html+='</div>';html+='<div class="card"><p style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #f0f0f0"><i class="fa-solid fa-calendar-check" style="color:var(--gold)"></i> <span data-i18n="lbl_recent_hr">Recent HR Requests</span></p>';if(!allHR.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_hr_req">No HR requests yet.</span></p>'}else{var recentHR=allHR.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_staff">Staff</span></th><th><span data-i18n="tbl_type">Type</span></th><th><span data-i18n="tbl_status">Status</span></th></tr></thead><tbody>';recentHR.forEach(function(r){html+='<tr><td style="font-weight:600">'+r.staff+'</td><td style="font-size:12px">'+r.type+'</td><td><span class="status-pill '+pillClass(r.status)+'">'+r.status+'</span></td></tr>';});html+='</tbody></table>';}html+='</div></div>';document.getElementById('dashboard-content').innerHTML=html; 
+html+='<div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">';html+='<div class="card"><p style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #f0f0f0"><i class="ti ti-file-invoice" style="color:var(--gold)"></i> <span data-i18n="lbl_recent_payslips">Recent Payslips</span></p>';if(!mySlips.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_payslips">No payslips yet.</span></p>'}else{var recent=mySlips.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_staff">Staff</span></th><th><span data-i18n="tbl_period">Period</span></th><th style="text-align:right"><span data-i18n="tbl_net_pay">Net Pay</span></th></tr></thead><tbody>';recent.forEach(function(p){var pr=getPeriodRange(p);var periodStr=pr.start&&pr.end?fmtDate(pr.start)+' &ndash; '+fmtDate(pr.end):p.month+' '+p.year;html+='<tr><td style="font-weight:600">'+p.staff+'</td><td style="font-size:12px">'+periodStr+'</td><td style="text-align:right;font-weight:700;color:#000000">'+vuvFmt(p.net)+'</td></tr>';});html+='</tbody></table>';}html+='</div>';html+='<div class="card"><p style="font-size:13px;font-weight:700;color:var(--navy);margin-bottom:1rem;padding-bottom:.75rem;border-bottom:2px solid #f0f0f0"><i class="fa-solid fa-calendar-check" style="color:var(--gold)"></i> <span data-i18n="lbl_recent_hr">Recent HR Requests</span></p>';if(!allHR.length){html+='<p style="font-size:13px;color:#aaa;text-align:center;padding:1.5rem 0"><span data-i18n="msg_no_hr_req">No HR requests yet.</span></p>'}else{var recentHR=allHR.slice(-5).reverse();html+='<table><thead><tr><th><span data-i18n="tbl_staff">Staff</span></th><th><span data-i18n="tbl_type">Type</span></th><th><span data-i18n="tbl_status">Status</span></th></tr></thead><tbody>';recentHR.forEach(function(r){html+='<tr><td style="font-weight:600">'+r.staff+'</td><td style="font-size:12px">'+r.type+'</td><td><span class="status-pill '+pillClass(r.status)+'">'+r.status+'</span></td></tr>';});html+='</tbody></table>';}html+='</div></div>';document.getElementById('dashboard-content').innerHTML=html;
+refreshDashboardFinanceOverview();
 setTimeout(translateUI, 10);
 setTimeout(function(){
   if(typeof createChart !== 'function') return;
@@ -1872,6 +1947,7 @@ function renderCompanySettings(){
     document.getElementById('cs-email').value=s.email||'';
     document.getElementById('cs-vnpf-percent').value=s.vnpfPercent||6;
     document.getElementById('cs-license').value=s.license||'';
+    document.getElementById('cs-bank').value=s.bank||'';
     if(s.logo){
       document.getElementById('cs-logo-data').value=s.logo;
       var pImg=document.getElementById('cs-logo-preview');pImg.src=s.logo;pImg.style.display='block';
@@ -1911,9 +1987,26 @@ async function renderLicenseStatus(){
       card.innerHTML='<i class="ti ti-alert-circle" style="font-size:16px"></i> License Error<br><span style="font-size:11px;font-weight:400">Could not verify license status.</span>';
   }
 }
+async function sendTestEmail(){
+  var addr=(document.getElementById('test-email-addr').value||'').trim();
+  var msg=document.getElementById('test-email-msg');
+  if(!addr){msg.style.display='block';msg.style.background='#fff0f0';msg.style.color='#a32d2d';msg.textContent='Enter an email address first.';setTimeout(function(){msg.style.display='none'},3000);return;}
+  msg.style.display='block';msg.style.background='#f0f0f0';msg.style.color='#555';msg.textContent='Sending...';
+  try{
+    var res=await fetch('/api/notify/send',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({
+      to:addr,
+      subject:'WokManeja Test Notification',
+      title:'Test Notification',
+      bodyHtml:'This is a test email to confirm the WokManeja notification system is working correctly. If you received this, SMTP delivery is functioning as expected.'
+    })});
+    if(res.ok){msg.style.background='#ddf0dd';msg.style.color='#27500a';msg.textContent='Test email sent to '+addr+'. Check the inbox (and spam folder).';}
+    else{var err=await res.json().catch(function(){return{}});msg.style.background='#fff0f0';msg.style.color='#a32d2d';msg.textContent='Failed to send: '+(err.error||'Unknown error');}
+  }catch(e){msg.style.background='#fff0f0';msg.style.color='#a32d2d';msg.textContent='Network error sending test email.';}
+  setTimeout(function(){msg.style.display='none'},6000);
+}
 function handleLogoUpload(e){var file=e.target.files&&e.target.files[0];if(!file)return;if(!file.type.match(/^image\//)){alert('Please choose an image file.');return}if(file.size>2*1024*1024){alert('Logo image must be smaller than 2MB.');return}var reader=new FileReader();reader.onload=function(ev){var dataUrl=ev.target.result;document.getElementById('cs-logo-data').value=dataUrl;var img=document.getElementById('cs-logo-preview');img.src=dataUrl;img.style.display='block';var ph=document.getElementById('cs-logo-placeholder');if(ph)ph.style.display='none';};reader.readAsDataURL(file);}
 function removeCompanyLogo(){document.getElementById('cs-logo-data').value='';var img=document.getElementById('cs-logo-preview');img.src='';img.style.display='none';var ph=document.getElementById('cs-logo-placeholder');if(ph)ph.style.display='flex';var f=document.getElementById('cs-logo-file');if(f)f.value='';}
-function saveCompanySettings(){var obj={name:document.getElementById('cs-name').value.trim(),address:document.getElementById('cs-address').value.trim(),phone:document.getElementById('cs-phone').value.trim(),email:document.getElementById('cs-email').value.trim(),license:document.getElementById('cs-license').value.trim(),vnpfPercent:parseFloat(document.getElementById('cs-vnpf-percent').value)||6,logo:document.getElementById('cs-logo-data').value||''};var s=DB.findOne('settings',{_id:'company'});if(s){DB.update('settings',{_id:'company'},obj);}else{obj._id='company';if(!MEMORY_DB.settings)MEMORY_DB.settings=[];MEMORY_DB.settings.push(obj);fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});}var n=obj.name;if(n){var el=document.getElementById('login-company-name');if(el)el.textContent=n;var hEl=document.getElementById('menu-company-name');if(hEl)hEl.textContent=n;}if(obj.logo){var loginLogo=document.getElementById('login-company-logo');if(loginLogo){loginLogo.src=obj.logo;loginLogo.style.display='block';}}var m=document.getElementById('cs-msg');m.textContent='Company settings saved.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
+function saveCompanySettings(){var obj={name:document.getElementById('cs-name').value.trim(),address:document.getElementById('cs-address').value.trim(),phone:document.getElementById('cs-phone').value.trim(),email:document.getElementById('cs-email').value.trim(),license:document.getElementById('cs-license').value.trim(),bank:document.getElementById('cs-bank').value.trim(),vnpfPercent:parseFloat(document.getElementById('cs-vnpf-percent').value)||6,logo:document.getElementById('cs-logo-data').value||''};var s=DB.findOne('settings',{_id:'company'});if(s){DB.update('settings',{_id:'company'},obj);}else{obj._id='company';if(!MEMORY_DB.settings)MEMORY_DB.settings=[];MEMORY_DB.settings.push(obj);fetch('/api/settings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(obj)});}var n=obj.name;if(n){var el=document.getElementById('login-company-name');if(el)el.textContent=n;var hEl=document.getElementById('menu-company-name');if(hEl)hEl.textContent=n;}if(obj.logo){var loginLogo=document.getElementById('login-company-logo');if(loginLogo){loginLogo.src=obj.logo;loginLogo.style.display='block';}}var m=document.getElementById('cs-msg');m.textContent='Company settings saved.';m.style.display='block';setTimeout(function(){m.style.display='none'},2500);}
 
 async function activateLicense(){
   var key=(document.getElementById('cs-appkey').value||'').trim().toUpperCase();
@@ -2632,7 +2725,7 @@ document.addEventListener('DOMContentLoaded', function() {
       <button class="btn btn-outline" onclick="document.getElementById('invoice-print-overlay').style.display='none'" style="margin-right:8px"><i class="ti ti-x"></i> Close</button>
       <button id="inv-print-btn-pay" class="btn btn-primary" style="display:none;margin-right:8px"><i class="ti ti-check"></i> Mark Paid</button>
       <button class="btn btn-outline" onclick="window.print()" style="margin-right:8px"><i class="ti ti-printer"></i> Print</button>
-      <button class="btn btn-primary" onclick="generatePDF(document.querySelector('#invoice-print-overlay > div'), 'Invoice.pdf')"><i class="ti ti-download"></i> Save PDF</button>
+      <button class="btn btn-primary" onclick="generatePDF(document.querySelector('#invoice-print-overlay > div'), 'Invoice.pdf', 'a4')"><i class="ti ti-download"></i> Save PDF</button>
     </div>
   </div>
 </div>
@@ -2671,7 +2764,7 @@ document.addEventListener('DOMContentLoaded', function() {
     <div style="margin-top:1.5rem;text-align:center" class="no-print">
       <button class="btn btn-outline" onclick="document.getElementById('receipt-print-overlay').style.display='none'" style="margin-right:8px"><i class="ti ti-x"></i> Close</button>
       <button class="btn btn-outline" onclick="window.print()" style="margin-right:8px"><i class="ti ti-printer"></i> Print</button>
-      <button class="btn btn-primary" onclick="generatePDF(document.querySelector('#receipt-print-overlay > div'), 'Receipt.pdf')"><i class="ti ti-download"></i> Save PDF</button>
+      <button class="btn btn-primary" onclick="generatePDF(document.querySelector('#receipt-print-overlay > div'), 'Receipt.pdf', 'a4')"><i class="ti ti-download"></i> Save PDF</button>
     </div>
   </div>
 </div>

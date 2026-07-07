@@ -529,12 +529,11 @@ function renderFinanceBanking() {
     var el = document.getElementById('section-finance-banking');
     var today = new Date().toISOString().split('T')[0];
 
-    // Seed a default bank account if none exist
+    // NOTE: previously this auto-seeded a default "Main Operating Account" whenever
+    // none existed - but since this function re-runs after every delete, that made
+    // removing the last bank account impossible (it would instantly reappear). Bank
+    // accounts are now only ever created via "Add Account" below.
     var accounts = DB.findAll('finance_bank_accounts') || [];
-    if (accounts.length === 0) {
-        DB.insert('finance_bank_accounts', { name: 'Main Operating Account', bank: 'ANZ Vanuatu', accountNo: '', balance: 0 });
-        accounts = DB.findAll('finance_bank_accounts') || [];
-    }
 
     var acctOptions = accounts.map(a => `<option value="${a._id}">${a.name} — ${a.bank}</option>`).join('');
 
@@ -929,7 +928,7 @@ function submitExpense() {
         department: dept,
         status: 'Pending',
         submittedBy: APP.currentUser.name,
-        date: new Date().toISOString()
+        date: new Date().toISOString().split('T')[0]
     };
     
     DB.insert('finance_expenses', exp);

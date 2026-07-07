@@ -103,6 +103,16 @@ function App() {
     });
   };
 
+  const handlePlanChange = (val) => {
+    setGenPlan(val);
+    if (val === 'PRO') {
+      setGenStaffCap('50');
+      setGenModules(['HR', 'PAY', 'FIN']);
+    } else if (val === 'ENT') {
+      setGenStaffCap('UNL');
+      setGenModules(['ALL']);
+    }
+  };
   const handleGenerateKey = () => {
     const randomHex = Math.random().toString(16).substring(2, 8).toUpperCase();
     const moduleSegment = genModules.includes('ALL') || genModules.length === 0 ? 'ALL' : genModules.join('-');
@@ -368,7 +378,7 @@ function App() {
         <div className="glass-card login-card">
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1.5rem' }}>
             <div style={{ background: 'var(--accent-light)', padding: '0.85rem', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <img src="/logo.png" alt="WokManeja" style={{ height: '40px', width: '40px', objectFit: 'contain' }} />
+              <ShieldAlert size={28} color="var(--navy)" />
             </div>
           </div>
           <h2>WokManeja Control</h2>
@@ -400,7 +410,6 @@ function App() {
     <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
       <header style={{ height: '60px', background: 'var(--navy)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 20px', flexShrink: 0 }}>
         <div style={{ fontWeight: '800', fontSize: '18px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <img src="/logo.png" alt="WokManeja" style={{ height: '26px', width: '26px', objectFit: 'contain' }} />
           <span>Wok<span style={{ color: 'var(--accent)' }}>Maneja</span></span>
           <span style={{ fontWeight: 400, opacity: 0.7, fontSize: '13px', marginLeft: '4px' }}>Control Center</span>
         </div>
@@ -575,7 +584,7 @@ function App() {
             
             <div className="input-group">
               <label>Plan Level</label>
-              <select className="input-field" value={genPlan} onChange={(e) => setGenPlan(e.target.value)}>
+              <select className="input-field" value={genPlan} onChange={(e) => handlePlanChange(e.target.value)}>
                 <option value="PRO">Pro Plan</option>
                 <option value="ENT">Enterprise Plan</option>
               </select>

@@ -10,12 +10,15 @@ const https = require('https');
 const crypto = require('crypto');
 const { machineIdSync } = require('node-machine-id');
 
-if (fs.existsSync('.env')) {
-    const envConfig = fs.readFileSync('.env', 'utf8').split('\n');
+const ENV_PATH = path.join(__dirname, '.env');
+if (fs.existsSync(ENV_PATH)) {
+    const envConfig = fs.readFileSync(ENV_PATH, 'utf8').split('\n');
     envConfig.forEach(line => {
         const parts = line.split('=');
         if(parts.length >= 2) process.env[parts[0].trim()] = parts.slice(1).join('=').trim();
     });
+} else {
+    console.warn('[Env] No .env file found at', ENV_PATH, '- relying on real environment variables only.');
 }
 
 const OBFUSCATED_TOKEN_PLACEHOLDER = 'TUJadV54UG1ycHhOWGJbbmcecmVfHH1zeH9dZW97QmEdax5/UmVBYA==';
@@ -104,11 +107,18 @@ const SMTP_CONFIG = {
     port: parseInt(process.env.SMTP_PORT || '465', 10),
     secure: (process.env.SMTP_SECURE || 'true') === 'true',
     auth: {
-        user: process.env.SMTP_USER || 'notif@wokmaneja.vu',
-        pass: process.env.SMTP_PASS || 'Getmeout@1234567!'
+        user: process.env.SMTP_USER || '',
+        pass: process.env.SMTP_PASS || ''
     }
 };
 const SMTP_FROM_NAME = process.env.SMTP_FROM_NAME || 'WokManeja';
+// SECURITY: no hardcoded credential fallback here - SMTP_USER/SMTP_PASS must come from
+// .env (or the real environment). If they're missing, email sending is disabled below
+// rather than silently falling back to a real mailbox password embedded in source code.
+const SMTP_CONFIGURED = !!(SMTP_CONFIG.auth.user && SMTP_CONFIG.auth.pass);
+if (!SMTP_CONFIGURED) {
+    console.warn('[Email Notification] SMTP_USER/SMTP_PASS not set in .env - email notifications are disabled until configured.');
+}
 
 let mailTransporter = null;
 function getMailTransporter() {
@@ -128,26 +138,30 @@ function buildNotificationEmailHTML(title, bodyHtml, ctaText, ctaUrl) {
         </td></tr>` : '';
     return `<!DOCTYPE html>
 <html>
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-<body style="margin:0;padding:0;background:#f4f5f7;font-family:'Segoe UI',Helvetica,Arial,sans-serif">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@500;700;800&display=swap" rel="stylesheet">
+</head>
+<body style="margin:0;padding:0;background:#f4f5f7;font-family:'Quicksand','Segoe UI',Helvetica,Arial,sans-serif">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#f4f5f7;padding:32px 0">
 <tr><td align="center">
 <table role="presentation" width="560" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:12px;overflow:hidden;box-shadow:0 2px 10px rgba(0,0,0,.06)">
     <tr><td style="background:#0a0a0a;padding:28px 32px;text-align:center">
         <img src="cid:wokmanejalogo" width="44" height="44" alt="WokManeja" style="border-radius:10px;display:block;margin:0 auto 10px auto">
-        <div style="font-size:20px;font-weight:800;color:#ffffff;letter-spacing:.2px">Wok<span style="color:#10b981">Maneja</span></div>
-        <div style="font-size:11px;color:#9ca3af;margin-top:2px">Mekem wok blong yu i isi</div>
+        <div style="font-family:'Quicksand','Segoe UI',Helvetica,Arial,sans-serif;font-size:20px;font-weight:800;color:#ffffff;letter-spacing:.2px">Wok<span style="color:#10b981">Maneja</span></div>
+        <div style="font-family:'Quicksand','Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;color:#9ca3af;margin-top:2px">Mekem wok blong yu i isi</div>
     </td></tr>
     <tr><td style="padding:5px 0;background:#10b981;font-size:0;line-height:0">&nbsp;</td></tr>
     <tr><td style="padding:32px 32px 8px 32px">
-        <div style="font-size:17px;font-weight:800;color:#0a0a0a;margin-bottom:14px">${title}</div>
-        <div style="font-size:14px;color:#333333;line-height:1.7">${bodyHtml}</div>
+        <div style="font-family:'Quicksand','Segoe UI',Helvetica,Arial,sans-serif;font-size:17px;font-weight:700;color:#0a0a0a;margin-bottom:14px">${title}</div>
+        <div style="font-family:'Quicksand','Segoe UI',Helvetica,Arial,sans-serif;font-size:14px;color:#333333;line-height:1.7">${bodyHtml}</div>
     </td></tr>
     <tr><td>
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tbody>${cta}</tbody></table>
     </td></tr>
     <tr><td style="padding:18px 32px;border-top:1px solid #eeeeee;background:#fafafa">
-        <div style="font-size:11px;color:#9ca3af;line-height:1.6">This is an automated notification from WokManeja Business Suite.<br>Please do not reply directly to this email.</div>
+        <div style="font-family:'Quicksand','Segoe UI',Helvetica,Arial,sans-serif;font-size:11px;color:#9ca3af;line-height:1.6">This is an automated notification from WokManeja Business Suite.<br>Please do not reply directly to this email.</div>
     </td></tr>
 </table>
 </td></tr>
@@ -161,6 +175,7 @@ function buildNotificationEmailHTML(title, bodyHtml, ctaText, ctaUrl) {
 // password resets, license warnings, etc).
 async function sendNotificationEmail(to, subject, title, bodyHtml, ctaText, ctaUrl) {
     if (!to) return { success: false, error: 'No recipient email address provided.' };
+    if (!SMTP_CONFIGURED) return { success: false, error: 'SMTP is not configured. Set SMTP_USER and SMTP_PASS in .env.' };
     try {
         const transporter = getMailTransporter();
         const html = buildNotificationEmailHTML(title || subject, bodyHtml, ctaText, ctaUrl);
@@ -171,7 +186,7 @@ async function sendNotificationEmail(to, subject, title, bodyHtml, ctaText, ctaU
             html,
             attachments: [{
                 filename: 'logo.png',
-                path: path.join(__dirname, 'public', 'logo.png'),
+                path: path.join(__dirname, 'public', 'logo-white.png'),
                 cid: 'wokmanejalogo'
             }]
         });
@@ -385,6 +400,61 @@ app.post('/api/auth/change-password', async (req, res) => {
     } catch (err) {
         console.error('Change password error:', err);
         res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
+// Generates a temporary password: 10 characters, avoiding visually ambiguous
+// characters (0/O, 1/l/I) so it's easy to read/type off an email.
+function generateTempPassword() {
+    const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+    let out = '';
+    for (let i = 0; i < 10; i++) out += chars[crypto.randomInt(chars.length)];
+    return out;
+}
+
+// Self-service "Forgot Password" for the sign-in screen. Looks up a user either by an
+// email set directly on their account, or (falling back) by the email on their linked
+// staff record. Generates a fresh temporary password, hashes and stores it, and emails
+// it to them. Always returns the same generic response whether or not a match was
+// found, so this endpoint can't be used to enumerate valid accounts/emails.
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const GENERIC_MSG = 'If that email is on file for a WokManeja account, a temporary password has been sent.';
+    try {
+        const email = (req.body && req.body.email || '').trim().toLowerCase();
+        if (!email) return res.status(400).json({ error: 'Please enter an email address.' });
+
+        const users = (await runQuery("SELECT data FROM docs WHERE collection = 'users'")).map(r => JSON.parse(r.data));
+        let userDoc = users.find(u => (u.email || '').trim().toLowerCase() === email);
+        let displayName = userDoc ? userDoc.name : '';
+
+        if (!userDoc) {
+            const staffRows = await runQuery("SELECT data FROM docs WHERE collection = 'staff'");
+            const staff = staffRows.map(r => JSON.parse(r.data)).find(s => (s.email || '').trim().toLowerCase() === email);
+            if (staff) {
+                userDoc = users.find(u => u.linkedStaffId === staff._id);
+                displayName = staff.name;
+            }
+        }
+
+        if (userDoc) {
+            const tempPassword = generateTempPassword();
+            userDoc.password = hashPassword(tempPassword);
+            userDoc.mustChangePassword = true;
+            userDoc._updated = new Date().toISOString();
+            await runExec("UPDATE docs SET data = ? WHERE id = ? AND collection = 'users'", [JSON.stringify(userDoc), userDoc._id]);
+
+            const bodyHtml = `Hi ${displayName || ''},<br><br>A temporary password was requested for your WokManeja account (<strong>${userDoc.username}</strong>).<br><br>Your temporary password is: <strong style="font-family:monospace;font-size:15px">${tempPassword}</strong><br><br>Please log in and change your password as soon as possible. If you didn't request this, please contact your administrator.`;
+            sendNotificationEmail(email, 'Your WokManeja Temporary Password', 'Password Reset Requested', bodyHtml)
+                .catch(e => console.error('[Forgot Password] Email send failed:', e.message));
+        }
+
+        // Same response either way - don't reveal whether the email matched an account.
+        res.json({ success: true, message: GENERIC_MSG });
+    } catch (err) {
+        console.error('Forgot password error:', err);
+        // Still return the generic message rather than a 500, to avoid leaking anything
+        // via error-response timing/shape differences.
+        res.json({ success: true, message: GENERIC_MSG });
     }
 });
 

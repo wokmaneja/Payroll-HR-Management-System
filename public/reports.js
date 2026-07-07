@@ -279,7 +279,7 @@ async function renderReportAdmin() {
             <div class="rpt-section">
                 <p class="rpt-section-title"><span class="rpt-section-num">2.</span> Recent Audit Logs</p>
                 <table class="rpt-detail-table">
-                    <thead><tr><th>Time</th><th>User</th><th>Action</th><th>Details</th></tr></thead>
+                    <thead><tr><th style="width:16%">Time</th><th style="width:12%">User</th><th style="width:12%">Action</th><th style="width:60%">Details</th></tr></thead>
                     <tbody>
                         ${recentLogs.map(l => `<tr><td>${new Date(l.timestamp).toLocaleString()}</td><td>${l.user}</td><td>${l.action}</td><td>${l.details}</td></tr>`).join('')}
                     </tbody>
