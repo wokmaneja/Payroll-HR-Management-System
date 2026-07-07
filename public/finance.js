@@ -686,9 +686,11 @@ function addBankAccount() {
 }
 
 function deleteBankAccount(id) {
-    if (!confirm('Remove this bank account? Transactions will remain.')) return;
-    DB.remove('finance_bank_accounts', {_id: id});
-    renderFinanceBanking();
+    uiConfirm('Remove this bank account? Transactions will remain.').then(function(confirmed) {
+        if (!confirmed) return;
+        DB.remove('finance_bank_accounts', {_id: id});
+        renderFinanceBanking();
+    });
 }
 
 async function submitBankTransaction() {

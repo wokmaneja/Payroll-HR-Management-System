@@ -595,8 +595,10 @@ var DB = (function () {
         return !Object.keys(q).every(function (k) { return String(x[k]) === String(q[k]); });
       });
       if (toRemove.length > 0) {
+        // Fire DELETE to server. We do NOT re-fetch after delete because MEMORY_DB
+        // is already correct (item removed above) and a re-fetch could race with the
+        // server commit and bring the deleted item back into the local cache.
         fetch('/api/' + c, { method: 'DELETE', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(q) })
-          .then(function () { return _fetchCollection(c); })
           .catch(function () {});
         updateDBIndicator();
         _auditLog('DELETE', c, { query: q, removed: toRemove });
@@ -610,6 +612,7 @@ var DB = (function () {
         }
       }
     },
+
 
     drop: function (c) {
       MEMORY_DB[c] = [];
