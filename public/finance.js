@@ -952,10 +952,10 @@ function refreshExpenseList() {
     expenses.forEach(e => {
         var statusColor = e.status==='Approved'?'#10b981':(e.status==='Rejected'?'#e24b4a':'#f59e0b');
         var btn = '';
-        if (e.status === 'Pending' && (APP.currentUser.role === 'admin' || APP.currentUser.role === 'manager')) {
+        if (e.status === 'Pending' && hasCapability('approveExpense')) {
             btn = `<button onclick="updateExpenseStatus('${e._id}', 'Approved')" style="background:transparent;border:none;color:#10b981;cursor:pointer;margin-right:5px" title="Approve"><i class="ti ti-check"></i></button>` +
                   `<button onclick="updateExpenseStatus('${e._id}', 'Rejected')" style="background:transparent;border:none;color:#e24b4a;cursor:pointer" title="Reject"><i class="ti ti-x"></i></button>`;
-        } else if (e.status === 'Approved' && (APP.currentUser.role === 'admin' || APP.currentUser.role === 'manager')) {
+        } else if (e.status === 'Approved' && hasCapability('approveExpense')) {
             btn = '<span style="font-size:10px;color:#aaa">By ' + (e.approvedBy || 'Admin') + '</span>';
         }
         html += `<tr>
@@ -1232,7 +1232,8 @@ async function refreshReimbursements() {
 
 
 async function markReimbursed(id) {
-    if(!confirm('Mark this claim as paid/reimbursed?')) return;
+    let confirmed = await uiConfirm('Mark this claim as paid/reimbursed?');
+    if(!confirmed) return;
     
     if(id.startsWith('HR_')) {
         var hrId = id.substring(3);
@@ -2081,7 +2082,8 @@ function renderInvoiceTable(invoices) {
 }
 
 async function markInvoicePaid(id, num, client, amount, fromOverlay) {
-    if(!confirm('Mark Invoice ' + num + ' as PAID? This will post a GL entry and allow receipt printing.')) return;
+    let confirmed = await uiConfirm('Mark Invoice ' + num + ' as PAID? This will post a GL entry and allow receipt printing.');
+    if(!confirmed) return;
     try {
         var token = sessionStorage.getItem('api_token');
         var headers = { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' };
