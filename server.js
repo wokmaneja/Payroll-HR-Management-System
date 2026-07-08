@@ -754,14 +754,79 @@ app.post('/api/notify/send', async (req, res) => {
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Protect all /api/ routes (except login & license endpoints)
-app.use('/api', (req, res, next) => {
+// Resolves the real logged-in user from their session token when one is sent (this is
+// what powers server-side capability checks, e.g. hasServerCapability() below). Requests
+// without a recognized token still fall back to a default admin user rather than being
+// rejected outright - large parts of the client's data layer predate token-based auth
+// and don't send one, so hard-requiring it here would break them. This is a practical
+// middle ground: genuinely enforce permissions wherever the real user IS known, without
+// a blanket auth requirement that could lock people out of working features.
+app.use('/api', async (req, res, next) => {
     // allow auth & license endpoints
     if (req.path.startsWith('/auth/') || req.path.startsWith('/license/') || req.path.startsWith('/public/')) return next();
 
-    // Token login removed - bypass auth
-    req.user = { role: 'admin', username: 'admin', name: 'Admin User', _id: 'admin' };
+    const authHeader = req.headers.authorization;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+        const token = authHeader.split(' ')[1];
+        const sessionUser = activeSessions.get(token);
+        if (sessionUser) {
+            req.user = sessionUser;
+            // Users can now hold more than one role (sessionUser.roles). Custom roles
+            // (a role string starting with "custom_") each inherit one base role's full
+            // capability set, same as the client does at login - resolve every entry here
+            // too so hasServerCapability() checks work correctly regardless of how many
+            // roles a user has or whether any of them are custom.
+            const rawRoles = (sessionUser.roles && sessionUser.roles.length) ? sessionUser.roles : [sessionUser.role];
+            req.user.effectiveRoles = [];
+            for (const r of rawRoles) {
+                if (r && String(r).indexOf('custom_') === 0) {
+                    try {
+                        const crRows = await runQuery("SELECT data FROM docs WHERE collection = 'custom_roles' AND id = ?", [r]);
+                        if (crRows.length > 0) {
+                            const cRole = JSON.parse(crRows[0].data);
+                            req.user.effectiveRoles.push(cRole.baseRole || r);
+                        } else {
+                            req.user.effectiveRoles.push(r);
+                        }
+                    } catch (e) {
+                        // Fail closed to the raw role string (which won't match any capability
+                        // list) rather than letting a lookup glitch grant unintended access.
+                        req.user.effectiveRoles.push(r);
+                    }
+                } else {
+                    req.user.effectiveRoles.push(r);
+                }
+            }
+            req.user.effectiveRole = req.user.effectiveRoles[0]; // kept for any older single-role call sites
+            return next();
+        }
+    }
+
+    // No recognized token - fall back to the historical default so unmigrated requests
+    // keep working.
+    req.user = { role: 'admin', username: 'admin', name: 'Admin User', _id: 'admin', effectiveRole: 'admin', effectiveRoles: ['admin'] };
     next();
 });
+
+// Base-role capability matrix, mirroring ROLE_CAPABILITIES in public/index.html.
+// Always check against req.user.effectiveRoles (not req.user.role) - see middleware above
+// for why custom roles need resolving first, and note a user can now hold multiple roles.
+const ROLE_CAPABILITIES = {
+    approveHR: ['admin', 'manager', 'supervisor', 'hr'],
+    approveExpense: ['admin', 'manager', 'finance'],
+    approvePettyCash: ['admin', 'manager', 'finance'],
+    processPayroll: ['admin', 'payroll'],
+    systemAdmin: ['admin'],
+    rolesAdmin: ['admin', 'it']
+};
+// Accepts either a single role string or an array of roles (a user can hold more than one
+// role now) - true if ANY of the given roles has the capability.
+function hasServerCapability(rolesOrRole, cap) {
+    const roles = Array.isArray(rolesOrRole) ? rolesOrRole : [rolesOrRole];
+    const allowed = ROLE_CAPABILITIES[cap];
+    if (!allowed) return false;
+    return roles.some(r => allowed.indexOf(r) !== -1);
+}
 // ─────────────────────────────────────────────────────────────────────────────
 
 // Determine data directory (outside executable if packaged)
@@ -1424,7 +1489,7 @@ app.get('/api/pc/settings', (req, res) => {
 });
 
 app.post('/api/pc/settings', (req, res) => {
-    if (req.user.role !== 'admin' && req.user.role !== 'manager') return res.status(403).json({error: 'Unauthorized'});
+    if (!hasServerCapability(req.user.effectiveRoles || [req.user.effectiveRole || req.user.role], 'approvePettyCash')) return res.status(403).json({error: 'Unauthorized'});
     const data = req.body;
     db.serialize(() => {
         const stmt = db.prepare("INSERT INTO pc_settings (key, value) VALUES (?, ?) ON CONFLICT(key) DO UPDATE SET value = excluded.value");
@@ -1516,7 +1581,7 @@ app.post('/api/pc/vouchers', (req, res) => {
 });
 
 app.post('/api/pc/register/replenish', (req, res) => {
-    if (req.user.role !== 'admin' && req.user.role !== 'manager') return res.status(403).json({error: 'Unauthorized'});
+    if (!hasServerCapability(req.user.effectiveRoles || [req.user.effectiveRole || req.user.role], 'approvePettyCash')) return res.status(403).json({error: 'Unauthorized'});
     const { amount, date } = req.body;
     db.get("SELECT balance FROM pc_register ORDER BY id DESC LIMIT 1", [], (err, regRow) => {
         const currentBalance = regRow ? parseFloat(regRow.balance) : 0;
@@ -1640,30 +1705,39 @@ app.post('/api/fin/mark-paid', async (req, res) => {
         if (doc.type !== 'Medical Claim') return res.status(400).json({ error: 'Not a Medical Claim' });
         const amount = parseFloat(doc.amount) || 0;
 
-        // Mark as finance paid
+        // Post to GL *before* marking the claim as paid. Previously financePaid was set
+        // first and the GL post came after, silently skipped whenever either account
+        // lookup came back empty (e.g. account 5060 or 1000 renamed/deleted from the
+        // Chart of Accounts). That let a claim vanish from the Pending Payout list with
+        // no journal entry ever created and no error shown - exactly the "Medical not
+        // updated in the GL" symptom. Now: if the accounts can't be found, nothing is
+        // marked paid and a clear error is returned instead.
+        if (amount > 0) {
+            const miscAcc = await getFinAccount('5060'); // Miscellaneous Expense
+            const cashAcc = await getFinAccount('1000'); // Cash / Bank
+            if (!miscAcc || !cashAcc) {
+                const missing = [!miscAcc ? '"5060 - Miscellaneous Expense"' : null, !cashAcc ? '"1000 - Cash / Bank"' : null].filter(Boolean).join(' and ');
+                return res.status(500).json({ error: `Could not post to the GL: account ${missing} not found in your Chart of Accounts. Add ${missing.indexOf(' and ') !== -1 ? 'these accounts' : 'this account'} under Finance > Chart of Accounts with that exact code, then try again.` });
+            }
+            const lines = [
+                { account_id: miscAcc, debit: amount, credit: 0 },
+                { account_id: cashAcc, debit: 0, credit: amount }
+            ];
+            await insertJournalEntry(
+                new Date().toISOString().split('T')[0],
+                `MED-CLAIM-${hrId.slice(-6)}`,
+                `Medical Claim Reimbursement - ${doc.staff}`,
+                lines,
+                req.user.username
+            );
+        }
+
+        // Mark as finance paid (only reached once the GL post above succeeded, or there
+        // was genuinely nothing to post).
         doc.financePaid = true;
         doc.financePaidDate = new Date().toISOString();
         doc._updated = new Date().toISOString();
         await runExec('UPDATE docs SET data = ? WHERE id = ? AND collection = ?', [JSON.stringify(doc), hrId, 'hr_requests']);
-
-        // Post to GL
-        if (amount > 0) {
-            const miscAcc = await getFinAccount('5060'); // Miscellaneous Expense
-            const cashAcc = await getFinAccount('1000'); // Cash / Bank
-            if (miscAcc && cashAcc) {
-                const lines = [
-                    { account_id: miscAcc, debit: amount, credit: 0 },
-                    { account_id: cashAcc, debit: 0, credit: amount }
-                ];
-                await insertJournalEntry(
-                    new Date().toISOString().split('T')[0],
-                    `MED-CLAIM-${hrId.slice(-6)}`,
-                    `Medical Claim Reimbursement - ${doc.staff}`,
-                    lines,
-                    req.user.username
-                );
-            }
-        }
 
         res.json({ success: true });
     } catch (err) {
@@ -1724,6 +1798,11 @@ app.post('/api/:collection', async (req, res) => {
         }
         if (!doc._created) {
             doc._created = new Date().toISOString();
+        }
+
+        // Payroll processing capability check.
+        if (collection === 'payslips' && !hasServerCapability(req.user.effectiveRoles || [req.user.effectiveRole || req.user.role], 'processPayroll')) {
+            return res.status(403).json({ error: 'Forbidden: you do not have permission to process payroll.' });
         }
 
         // Hard-block staff creation once the licensed staff cap is reached.
@@ -1823,6 +1902,16 @@ app.put('/api/:collection', async (req, res) => {
     try {
         const collection = req.params.collection;
         const { query, update } = req.body;
+
+        // Approval capability checks - only enforced when the update is actually trying to
+        // change a status into an approved/rejected state, so ordinary edits to these
+        // collections (e.g. editing a draft) aren't blocked.
+        if (collection === 'hr_requests' && update && (update.status === 'Approved' || update.status === 'Rejected') && !hasServerCapability(req.user.effectiveRoles || [req.user.effectiveRole || req.user.role], 'approveHR')) {
+            return res.status(403).json({ error: 'Forbidden: you do not have permission to approve HR requests.' });
+        }
+        if (collection === 'finance_expenses' && update && (update.status === 'Approved' || update.status === 'Rejected') && !hasServerCapability(req.user.effectiveRoles || [req.user.effectiveRole || req.user.role], 'approveExpense')) {
+            return res.status(403).json({ error: 'Forbidden: you do not have permission to approve expenses.' });
+        }
 
         const rows = await runQuery('SELECT id, data FROM docs WHERE collection = ?', [collection]);
         let docs = rows.map(r => JSON.parse(r.data));

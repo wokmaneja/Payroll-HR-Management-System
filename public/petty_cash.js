@@ -74,7 +74,7 @@ async function renderPCRegister() {
     let html = `
         <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem">
             <p class="section-title"><i class="ti ti-book" style="color:var(--gold)"></i> Petty Cash Register</p>
-            ${(APP.currentUser.role === 'admin' || APP.currentUser.role === 'manager') ? `<button class="btn btn-navy" onclick="replenishFloatPrompt(${bal.replenishAmount})"><i class="ti ti-cash"></i> Replenish Float</button>` : ''}
+            ${hasCapability('approvePettyCash') ? `<button class="btn btn-navy" onclick="replenishFloatPrompt(${bal.replenishAmount})"><i class="ti ti-cash"></i> Replenish Float</button>` : ''}
         </div>
         <div class="card" style="padding:0;overflow-x:auto">
             <table style="width:100%" class="rpt-detail-table">
@@ -252,7 +252,7 @@ function renderPCSummary() {
 }
 
 async function renderPCSettings() {
-    if(APP.currentUser.role !== 'admin' && APP.currentUser.role !== 'manager') {
+    if(!hasCapability('approvePettyCash')) {
         document.getElementById('section-pc-settings').innerHTML = '<div class="card"><p style="color:#e24b4a">Unauthorized.</p></div>';
         return;
     }
