@@ -25,6 +25,9 @@ An enterprise-grade system powered by a local **Node.js** server and an embedded
 | ⚖️ **Staff Discipline** | Log incidents, request staff explanations, track status through to finalized corrective action. |
 | 🎯 **Performance KPI Tracking** | Assign KPI targets per staff, track scores and attach supporting documents. |
 | 🔔 **Staff Self-Service Portal** | Staff can view payslips, submit leave, upload documents, browse vacancies & view KPIs. |
+| 🛡️ **Control Center Licensing** | Manage secure deployments and validate offline software license keys. |
+| 🖥️ **Windows Service Installer** | Complete `.exe` setup that uses NSSM to run WokManeja silently in the background 24/7. |
+| 📧 **SMTP Notifications** | Real-time email dispatch pipeline for critical HR alerts and management requests. |
 
 ---
 
@@ -32,6 +35,7 @@ An enterprise-grade system powered by a local **Node.js** server and an embedded
 
 - **Local SQLite Database Engine** — High-speed, robust local operation via an embedded database. Zero configuration required.
 - **Network Accessibility** — The local server allows authorized devices on your network to connect securely.
+- **Automated Windows Installer** — Installs seamlessly and registers as a background Windows Service (NSSM) for absolute uptime.
 - **Staff Directory & Profiles** — Single source of truth for VNPF tracking, banking details, and employment records.
 - **Payroll Disbursements & Statutory Calculations** — Automated VNPF contributions, overtime, severance packages, and custom deductions.
 - **Bulk Payroll Processing** — Generate payslips for all active staff in one click (weekly, fortnightly, monthly).
@@ -40,8 +44,9 @@ An enterprise-grade system powered by a local **Node.js** server and an embedded
 - **Work Recruitment Management** — Full candidate pipeline with internal vacancy postings.
 - **Staff Discipline HRMS** — Policy enforcement with digital workflows and audit trails.
 - **Performance KPI Tracking** — Staff appraisals and key performance monitoring.
+- **Control Center Licensing** — Independent dashboard for generating and managing secure license keys.
 - **Role-Based Access Control (RBAC)** — Admin, Manager, IT, and Staff roles with granular permissions.
-- **Real-Time Notification System** — In-app alerts for HR requests, vacancies, and disciplinary actions.
+- **Real-Time Notification System** — In-app alerts and full SMTP email integration for HR requests, vacancies, and disciplinary actions.
 - **Compliance Reporting** — Payroll & VNPF compliance reports with PDF export.
 - **Full Audit Logs** — Complete system activity trail for accountability.
 - **Auto Backup** — Configurable scheduled backups of the SQLite database.
