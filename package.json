@@ -17,9 +17,8 @@
     "type": "git",
     "url": "git+https://github.com/wokmaneja/Payroll-HR-Management-System.git"
   },
-  "keywords": [],
   "author": "",
-  "license": "ISC",
+  "license": "MIT",
   "type": "commonjs",
   "bugs": {
     "url": "https://github.com/wokmaneja/Payroll-HR-Management-System/issues"
