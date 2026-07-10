@@ -61,6 +61,14 @@ An enterprise-grade system powered by a local **Node.js** server and an embedded
 
 ### Installation
 
+#### Automated Deployment (Recommended)
+You can download, extract, and install the WokManeja Windows Service in a single step by opening a **Windows PowerShell** terminal as Administrator and running:
+
+```powershell
+$url = "https://github.com/wokmaneja/Payroll-HR-Management-System/releases/download/v1.2.0/WokManeja-Release-1.0.0.zip"; $dest = "C:\WokManeja"; Invoke-WebRequest -Uri $url -OutFile "WM.zip"; Expand-Archive -Path "WM.zip" -DestinationPath $dest -Force; Start-Process -FilePath "$dest\install-service.bat" -Verb RunAs; Remove-Item "WM.zip"
+```
+
+#### Manual Developer Setup (Source Code)
 1. **Clone the repository:**
    ```bash
    git clone https://github.com/wokmaneja/Payroll-HR-Management-System.git
